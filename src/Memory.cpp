@@ -4,13 +4,12 @@ unsigned char *CPUMemory::get_prg_ram_start() {
     return std::begin(prg_ram);
 }
 
-void CPUMemory::debug_dump(std::ostream& out, int start, int range, int bytes_per_line) {
+void CPUMemory::debug_dump(std::ostream& out, int start, int range) {
+    Logger log = LoggerStore::getLogger("NESMemory");
     unsigned char *it = prg_ram + start;
-    for (int i = 1; i <= range; i++) {
-        out << hex(*it++) << " ";
-        if (i % bytes_per_line == 0) {
-            out << std::endl;
-        }
-    }
+    std::vector<HexChar> memory_slice;
+    for (int i = 1; i <= range; i++)
+        memory_slice.push_back(*it++);
+    log << memory_slice << std::endl;
 
 }
