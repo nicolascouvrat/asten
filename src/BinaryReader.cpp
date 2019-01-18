@@ -10,13 +10,15 @@ using std::ifstream;    using std::istreambuf_iterator;
 BinaryReader::BinaryReader(std::string name): file_name(name) {}
 
 std::string BinaryReader::get_file_name() { return file_name; }
-void BinaryReader::load_to_memory(CPUMemory &mem) {
+std::vector<uint8_t> BinaryReader::read_bytes() {
     ifstream in(file_name, std::ios::binary);
     istreambuf_iterator<char> it(in);
+    std::vector<uint8_t> buffer;
 
     std::copy(
         istreambuf_iterator<char>(in),
         istreambuf_iterator<char>(),
-        mem.get_prg_ram_start()
+        std::back_inserter(buffer)
     );
+    return buffer;
 }

@@ -11,8 +11,10 @@
 
 class CPUMemory {
 public:
-    uint8_t *get_prg_ram_start(); 
     void debug_dump(std::ostream&, int, int);
+    uint8_t read(uint16_t);
+    void write(uint16_t, uint8_t);
+    void load(uint16_t, const std::vector<uint8_t>&);
 private:
     static const int SIZE = 0x10000;
     uint8_t memory[SIZE];

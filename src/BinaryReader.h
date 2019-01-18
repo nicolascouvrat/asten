@@ -3,6 +3,7 @@
 
 #include "Memory.h"
 #include <string>
+#include <cstdint>
 
 class BinaryReader {
     private:
@@ -10,6 +11,7 @@ class BinaryReader {
     public:
         BinaryReader(std::string name);
         std::string get_file_name();
+        std::vector<uint8_t> read_bytes();
         void load_to_memory(CPUMemory &mem);
 };
 

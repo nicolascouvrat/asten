@@ -1,2 +1,5 @@
 # binaries
 build/
+
+# vim
+*.swp

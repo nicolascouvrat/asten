@@ -8,10 +8,8 @@
  * The last 6 bytes ($fffa - $ffff) are reserved.
  * */
 
-uint8_t *CPUMemory::get_prg_ram_start() {
-    return memory + 0x6000;
-}
 
+/* DEBUG FUNCTIONS */
 void CPUMemory::debug_dump(std::ostream& out, int offset, int range) {
     Logger log = LoggerStore::getLogger("NESMemory");
     uint8_t *it = memory + offset;
@@ -22,3 +20,14 @@ void CPUMemory::debug_dump(std::ostream& out, int offset, int range) {
 
 }
 
+/* PUBLIC FUNCTIONS */
+uint8_t CPUMemory::read(uint16_t address) { return memory[address]; }
+
+void CPUMemory::write(uint16_t address, uint8_t value) { memory[address] = value; }
+
+void CPUMemory::load(uint16_t address, const std::vector<uint8_t>& values) {
+    std::vector<uint8_t>::const_iterator it;
+    uint16_t i = address;
+    for (it = values.begin(); it != values.end(); it++)
+        memory[i++] = *it;
+}
