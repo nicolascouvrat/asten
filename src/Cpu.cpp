@@ -1,7 +1,7 @@
 #include "Cpu.h"
 
-int CPU::read_id() {
-    return id;
-}
+CPU::CPU() {}
 
-CPU::CPU(): id(1) {}
+CPUMemory& CPU::get_memory() {
+    return mem;
+}
