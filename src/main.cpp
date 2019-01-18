@@ -13,5 +13,5 @@ int main(void) {
     CPU c;
     // should have the values $a9 $01 $8d $02
     r.load_to_memory(c.get_memory());
-    c.get_memory().debug_dump(std::cout, 0, 4);
+    c.get_memory().debug_dump(std::cout, 0x6000, 4);
 }

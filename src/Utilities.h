@@ -2,10 +2,11 @@
 #define GUARD_UTILITIES_H
 
 #include <iostream>
+#include <cstdint>
 
 struct HexChar {
-    unsigned char c;
-    HexChar(unsigned char _c): c(_c) {};
+    uint8_t c;
+    HexChar(uint8_t _c): c(_c) {};
 };
 
 inline std::ostream& operator<< (std::ostream& o, const HexChar &hc) {
@@ -13,7 +14,7 @@ inline std::ostream& operator<< (std::ostream& o, const HexChar &hc) {
     // TODO: reset stream to previous state
 }
 
-inline HexChar hex(unsigned char c) { return HexChar(c); } 
+inline HexChar hex(uint8_t c) { return HexChar(c); } 
 
 #endif
 

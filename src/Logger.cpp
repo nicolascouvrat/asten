@@ -26,8 +26,9 @@ std::ostream& operator<< (Logger& l, string s) {
 std::ostream& operator<< (Logger& l, const std::vector<HexChar>& hcs) {
     std::ostream& out = l.dump_log_infos();
     std::vector<HexChar>::const_iterator it = hcs.begin();
-    while (it != hcs.end())
+    while (it != hcs.end()) {
         out << *it++ << " ";
+    }
     return out;
 }
 
