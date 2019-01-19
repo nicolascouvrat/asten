@@ -2,15 +2,12 @@
 #define GUARD_CPU_H
 
 #include "Memory.h"
+#include "Logger.h"
 #include <iostream>
 #include <cstdint>
+#include <iomanip>
+#include <bitset>
 
-// info for instructions
-struct StepInfo {
-    uint16_t pc;
-    uint16_t address;
-    uint8_t mode;
-};
 
 class CPU {
 public:
@@ -18,32 +15,40 @@ public:
     CPUMemory& get_memory();
     // TODO: remove
     void execute(uint8_t);
+    void debug_dump();
+    friend std::ostream& operator<< (std::ostream&, const CPU&);
 private:
     CPUMemory mem;
     uint8_t A, X, Y;                // registers
     uint8_t sp;                     // stack pointer
     uint16_t pc;                    // program counter
     bool C, Z, I, D, B, U, O, N;    // processor flags
+    // addressing modes (1 to 13)
+    enum AddressingMode: uint16_t {
+        _, // unused
+        ABSOLUTE_MODE,
+        ABSOLUTEX_MODE,
+        ABSOLUTEY_MODE,
+        ACCUMULATOR_MODE,
+        IMMEDIATE_MODE,
+        IMPLIED_MODE,
+        INDEXED_INDIRECT_MODE,
+        INDIRECT_MODE,
+        INDIRECT_INDEXED_MODE,
+        RELATIVE_MODE,
+        ZERO_PAGE_MODE,
+        ZERO_PAGEX_MODE,
+        ZERO_PAGEY_MODE
+    };
+    // info for instructions
+    struct StepInfo {
+        uint16_t pc;
+        uint16_t address;
+        AddressingMode mode;
+    };
     // instruction table
     typedef void (CPU::*cpu_instruction)(const StepInfo&);
     cpu_instruction instruction_table[256];
-    // addressing modes (1 to 13)
-    enum addressing_mode: uint16_t {
-        _, // unused
-        absolute_mode,
-        absoluteX_mode,
-        absoluteY_mode,
-        accumulator_mode,
-        immediate_mode,
-        implied_mode,
-        indexed_indirect_mode,
-        indirect_mode,
-        indirect_indexed_mode,
-        relative_mode,
-        zero_page_mode,
-        zero_pageX_mode,
-        zero_pageY_mode
-    };
     // addressing mode for each of the 256 instructions
     static constexpr uint8_t instruction_modes[256] = {
         6, 7, 6, 7, 11, 11, 11, 11, 6, 5, 4, 5, 1, 1, 1, 1,
@@ -120,6 +125,9 @@ private:
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0,
     };
+    // private functions
+    uint8_t get_flags();
+    void set_flags(uint8_t);
     // instructions
     void adc(const StepInfo&);
     void ahx(const StepInfo&);

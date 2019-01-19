@@ -4,37 +4,66 @@
 using std::string;
 
 
-std::map<string, Logger> LoggerStore::logger_map = std::map<string, Logger>();
+std::map<string, Logger> Logger::logger_map = std::map<string, Logger>();
 
-Logger LoggerStore::getLogger(string name) {
+Logger Logger::get_logger(string name) {
     std::map<string, Logger>::iterator it = logger_map.find(name);
     if (it != logger_map.end())
         return it->second;
     else
-        return Logger(name, std::cout);
+        return Logger(name);
 }
 
-Logger::Logger(string _name, std::ostream& os): name(_name), output_stream(os) { }
+Logger::Logger(string _name):
+    name(_name),
+    out(std::cout),
+    level(INFO)
+{}
 
-std::ostream& Logger::dump_log_infos() {
-    return output_stream << name << ": ";
-}
-std::ostream& operator<< (Logger& l, string s) {
-    return l.dump_log_infos() << s;
-}
-
-std::ostream& operator<< (Logger& l, const std::vector<HexChar>& hcs) {
-    std::ostream& out = l.dump_log_infos();
-    std::vector<HexChar>::const_iterator it = hcs.begin();
-    while (it != hcs.end()) {
-        out << *it++ << " ";
+void Logger::output_header(LogLevel l) {
+    string label;
+    switch(l) {
+        case DEBUG: label = "DEBUG"; break;
+        case INFO: label = "INFO"; break;
+        case WARN: label = "WARN"; break;
+        case ERROR: label = "ERROR"; break;
     }
-    return out;
+    out << "[" + label + "]" << " " << name << ": ";
 }
 
-std::ostream& operator<< (Logger& l, const HexChar& hc) {
-    return l.dump_log_infos() << hc;
+Logger& Logger::log(LogLevel l) {
+    if (level > l)
+        output_enabled = false;
+    else {
+        output_enabled = true;
+        if (header_enabled)
+            output_header(l);
+    }
+    return *this;
 }
 
+Logger& Logger::debug() {
+    return log(DEBUG);
+}
 
+Logger& Logger::info() {
+    return log(INFO);
+}
 
+Logger& Logger::warn() {
+    return log(WARN);
+}
+
+Logger& Logger::error() {
+    return log(ERROR);
+}
+
+Logger& Logger::set_level(LogLevel l) {
+    level = l;
+    return *this;
+}
+
+Logger& Logger::toggle_header() {
+    header_enabled = !header_enabled;
+    return *this;
+}

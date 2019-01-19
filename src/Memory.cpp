@@ -1,4 +1,5 @@
 #include "Memory.h"
+#include <iomanip>
 
 /* 
  * CPU MEMORY ORGANIZATION (6502)
@@ -9,15 +10,21 @@
  * */
 
 
-/* DEBUG FUNCTIONS */
-void CPUMemory::debug_dump(std::ostream& out, int offset, int range) {
-    Logger log = LoggerStore::getLogger("NESMemory");
-    uint8_t *it = memory + offset;
-    std::vector<HexChar> memory_slice;
-    for (int i = 1; i <= range; i++)
-        memory_slice.push_back(*it++);
-    log << memory_slice << std::endl;
+namespace {
+    Logger log = Logger::get_logger("NESMemory").set_level(DEBUG);
+}
 
+/* DEBUG FUNCTIONS */
+void CPUMemory::debug_dump(int offset, int range, int per_line) {
+    uint8_t *it = memory + offset;
+    log.debug() << "Memory from " << std::hex << offset << " to " << offset + range << "\n";
+    log.toggle_header();
+    for (int i = 1; i <= range; i++) {
+        log.debug() << std::setw(5) << hex(*it++);
+        if (i % per_line == 0)
+            log.debug() << "\n";
+    }
+    log.toggle_header();
 }
 
 /* PUBLIC FUNCTIONS */

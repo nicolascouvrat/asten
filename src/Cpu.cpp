@@ -1,5 +1,8 @@
 #include "Cpu.h"
 
+namespace {
+    Logger log = Logger::get_logger("NESCpu").set_level(DEBUG);
+}
 /* CONSTRUCTOR */
 
 CPU::CPU(): instruction_table{
@@ -55,6 +58,21 @@ CPU::CPU(): instruction_table{
 
 /* PUBLIC FUNCTIONS */
 
+void CPU::debug_dump() {
+    log.debug()
+        << "CPU Status\n"
+        << std::left
+        << "A=" << std::setw(4) << (int)A
+        << "X=" << std::setw(4) << (int)X
+        << "Y=" << std::setw(4) << (int)Y
+        << "\n"
+        << "sp=" << std::setw(6) << (int)sp
+        << "pc=" << std::setw(6) << (int)pc
+        << "\n"
+        << "flags=" <<std::setw(12) << std::bitset<8>(get_flags())
+        << "\n";
+}
+
 CPUMemory& CPU::get_memory() {
     return mem;
 }
@@ -63,6 +81,31 @@ void CPU::execute(uint8_t opcode) {
     StepInfo t = {};
     (this->*instruction_table[opcode])(t);
     
+}
+
+/* PRIVATE FUNCTIONS */
+uint8_t CPU::get_flags() {
+    uint8_t flags = 0x00;
+    flags |= C << 0;
+    flags |= Z << 1;
+    flags |= I << 2;
+    flags |= D << 3;
+    flags |= B << 4;
+    flags |= U << 5;
+    flags |= O << 6;
+    flags |= N << 7;
+    return flags;
+}
+
+void CPU::set_flags(uint8_t flags) {
+    C = (flags >> 0) & 1;
+    C = (flags >> 1) & 1;
+    C = (flags >> 2) & 1;
+    C = (flags >> 3) & 1;
+    C = (flags >> 4) & 1;
+    C = (flags >> 5) & 1;
+    C = (flags >> 6) & 1;
+    C = (flags >> 7) & 1;
 }
 
 /* INSTRUCTIONS */
@@ -82,7 +125,7 @@ void CPU::bmi(const StepInfo&){}
 void CPU::bne(const StepInfo&){}
 void CPU::bpl(const StepInfo&){}
 void CPU::brk(const StepInfo&){
-    std::cout << "BRK";
+    log.debug() << "BRK" << "\n";
 }
 void CPU::bvc(const StepInfo&){}
 void CPU::bvs(const StepInfo&){}
