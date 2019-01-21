@@ -1,5 +1,4 @@
 #include "Memory.h"
-#include <iomanip>
 
 /* 
  * CPU MEMORY ORGANIZATION (6502)
@@ -17,13 +16,17 @@ namespace {
 /* DEBUG FUNCTIONS */
 void CPUMemory::debug_dump(int offset, int range, int per_line) {
     uint8_t *it = memory + offset;
-    log.debug() << "Memory from " << std::hex << offset << " to " << offset + range << "\n";
+    log.debug() << "Memory from " << std::hex << offset << " to " << offset + range;
     log.toggle_header();
-    for (int i = 1; i <= range; i++) {
-        log.debug() << hex(*it++);
-        if (i % per_line == 0)
+    for (int i = 0; i < range; i++) {
+        if (i % per_line == 0) {
             log.debug() << "\n";
+            if (i < range - 1)
+                log.debug() << std::hex << std::right << std::setw(4) << offset + i << ": ";
+        }
+        log.debug() << hex(*it++);
     }
+    log.debug() << "\n";
     log.toggle_header();
 }
 

@@ -1,4 +1,6 @@
 #include "Cpu.h"
+// TODO: add warning quand la stack boucle
+// QT/GTK/
 
 namespace {
     Logger log = Logger::get_logger("NESCpu").set_level(DEBUG);
@@ -159,9 +161,6 @@ void CPU::step() {
     (this->*instruction_table[opcode])(info);
     // increment clock
     clock += instruction_cycles[opcode];
-    
-    
-
 }
 
 /* PRIVATE FUNCTIONS */
@@ -295,18 +294,21 @@ void CPU::axs(const InstructionInfo& i){
 }
 
 void CPU::bcc(const InstructionInfo& i){
-    if (!C)
-        pc += i.address;
+    uint8_t temp = pc + i.address; // jumps are restricted to one byte
+    if (!C) 
+        pc = (pc & 0xff00) + temp; // replace lowest byte
 }
 
 void CPU::bcs(const InstructionInfo& i){
-    if (C)
-        pc += i.address;
+    uint8_t temp = pc + i.address; // jumps are restricted to one byte
+    if (C) 
+        pc = (pc & 0xff00) + temp; // replace lowest byte
 }
 
 void CPU::beq(const InstructionInfo& i){
-    if (Z)
-        pc += i.address;
+    uint8_t temp = pc + i.address; // jumps are restricted to one byte
+    if (Z) 
+        pc = (pc & 0xff00) + temp; // replace lowest byte
 }
 
 void CPU::bit(const InstructionInfo& i){
@@ -317,32 +319,38 @@ void CPU::bit(const InstructionInfo& i){
 }
 
 void CPU::bmi(const InstructionInfo& i){
-    if (N)
-        pc += i.address;
+    uint8_t temp = pc + i.address; // jumps are restricted to one byte
+    if (N) 
+        pc = (pc & 0xff00) + temp; // replace lowest byte
 }
 
 void CPU::bne(const InstructionInfo& i){
+    uint8_t temp = pc + i.address; // jumps are restricted to one byte
     if (!Z) 
-        pc += i.address;
+        pc = (pc & 0xff00) + temp; // replace lowest byte
 }
 
 void CPU::bpl(const InstructionInfo& i){
-    if (!N)
-        pc += i.address;
+    uint8_t temp = pc + i.address; // jumps are restricted to one byte
+    if (!N) 
+        pc = (pc & 0xff00) + temp; // replace lowest byte
 }
 
 void CPU::brk(const InstructionInfo& i){
-    interrupt(BRK);
+    // TODO: restablish
+    // interrupt(BRK);
 }
 
 void CPU::bvc(const InstructionInfo& i){
-    if (!O)
-        pc += i.address;
+    uint8_t temp = pc + i.address; // jumps are restricted to one byte
+    if (!O) 
+        pc = (pc & 0xff00) + temp; // replace lowest byte
 }
 
 void CPU::bvs(const InstructionInfo& i){
-    if (O)
-        pc += i.address;
+    uint8_t temp = pc + i.address; // jumps are restricted to one byte
+    if (O) 
+        pc = (pc & 0xff00) + temp; // replace lowest byte
 }
 
 void CPU::clc(const InstructionInfo& i){

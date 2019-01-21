@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <cstdint>
+#include <iomanip>
 
 #include "Utilities.h"
 #include "Logger.h"
