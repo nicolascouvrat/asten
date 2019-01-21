@@ -20,7 +20,7 @@ void CPUMemory::debug_dump(int offset, int range, int per_line) {
     log.debug() << "Memory from " << std::hex << offset << " to " << offset + range << "\n";
     log.toggle_header();
     for (int i = 1; i <= range; i++) {
-        log.debug() << std::setw(5) << hex(*it++);
+        log.debug() << hex(*it++);
         if (i % per_line == 0)
             log.debug() << "\n";
     }

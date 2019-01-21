@@ -13,6 +13,7 @@ class CPU {
 public:
     CPU();
     CPUMemory& get_memory();
+    void step();
     // TODO: remove
     void execute(uint8_t);
     void debug_dump();
@@ -23,6 +24,13 @@ private:
     uint8_t sp;                     // stack pointer
     uint16_t pc;                    // program counter
     bool C, Z, I, D, B, U, O, N;    // processor flags
+    long clock;                     // internal CPU clock (number of cycles)
+    enum InterruptType: uint8_t {
+        NMI,
+        RESET,
+        IRQ,
+        BRK
+    };
     // addressing modes (1 to 13)
     enum AddressingMode: uint16_t {
         _, // unused
@@ -41,13 +49,13 @@ private:
         ZERO_PAGEY_MODE
     };
     // info for instructions
-    struct StepInfo {
+    struct InstructionInfo {
         uint16_t pc;
         uint16_t address;
         AddressingMode mode;
     };
     // instruction table
-    typedef void (CPU::*cpu_instruction)(const StepInfo&);
+    typedef void (CPU::*cpu_instruction)(const InstructionInfo&);
     cpu_instruction instruction_table[256];
     // addressing mode for each of the 256 instructions
     static constexpr uint8_t instruction_modes[256] = {
@@ -128,84 +136,88 @@ private:
     // private functions
     uint8_t get_flags();
     void set_flags(uint8_t);
+    uint8_t next_byte();
+    uint16_t next_two_bytes();
+    void set_ZN_flags(uint8_t);
+    void push_stack(uint8_t);
+    uint8_t pull_stack();
+    void interrupt(InterruptType);
     // instructions
-    void adc(const StepInfo&);
-    void ahx(const StepInfo&);
-    void alr(const StepInfo&);
-    void anc(const StepInfo&);
-    void _and(const StepInfo&);
-    void arr(const StepInfo&);
-    void asl(const StepInfo&);
-    void axs(const StepInfo&);
-    void bcc(const StepInfo&);
-    void bcs(const StepInfo&);
-    void beq(const StepInfo&);
-    void bit(const StepInfo&);
-    void bmi(const StepInfo&);
-    void bne(const StepInfo&);
-    void bpl(const StepInfo&);
-    void brk(const StepInfo&);
-    void bvc(const StepInfo&);
-    void bvs(const StepInfo&);
-    void clc(const StepInfo&);
-    void cld(const StepInfo&);
-    void cli(const StepInfo&);
-    void clv(const StepInfo&);
-    void cmp(const StepInfo&);
-    void cpx(const StepInfo&);
-    void cpy(const StepInfo&);
-    void dcp(const StepInfo&);
-    void dec(const StepInfo&);
-    void dex(const StepInfo&);
-    void dey(const StepInfo&);
-    void eor(const StepInfo&);
-    void inc(const StepInfo&);
-    void inx(const StepInfo&);
-    void iny(const StepInfo&);
-    void isb(const StepInfo&);
-    void jmp(const StepInfo&);
-    void jsr(const StepInfo&);
-    void kil(const StepInfo&);
-    void las(const StepInfo&);
-    void lax(const StepInfo&);
-    void lda(const StepInfo&);
-    void ldx(const StepInfo&);
-    void ldy(const StepInfo&);
-    void lsr(const StepInfo&);
-    void nop(const StepInfo&);
-    void ora(const StepInfo&);
-    void pha(const StepInfo&);
-    void php(const StepInfo&);
-    void pla(const StepInfo&);
-    void plp(const StepInfo&);
-    void rla(const StepInfo&);
-    void rol(const StepInfo&);
-    void ror(const StepInfo&);
-    void rra(const StepInfo&);
-    void rti(const StepInfo&);
-    void rts(const StepInfo&);
-    void sax(const StepInfo&);
-    void sbc(const StepInfo&);
-    void sec(const StepInfo&);
-    void sed(const StepInfo&);
-    void sei(const StepInfo&);
-    void shx(const StepInfo&);
-    void shy(const StepInfo&);
-    void slo(const StepInfo&);
-    void sre(const StepInfo&);
-    void sta(const StepInfo&);
-    void stx(const StepInfo&);
-    void sty(const StepInfo&);
-    void tas(const StepInfo&);
-    void tax(const StepInfo&);
-    void tay(const StepInfo&);
-    void tsx(const StepInfo&);
-    void txa(const StepInfo&);
-    void txs(const StepInfo&);
-    void tya(const StepInfo&);
-    void xaa(const StepInfo&);
+    void adc(const InstructionInfo&);
+    void ahx(const InstructionInfo&);
+    void alr(const InstructionInfo&);
+    void anc(const InstructionInfo&);
+    void _and(const InstructionInfo&);
+    void arr(const InstructionInfo&);
+    void asl(const InstructionInfo&);
+    void axs(const InstructionInfo&);
+    void bcc(const InstructionInfo&);
+    void bcs(const InstructionInfo&);
+    void beq(const InstructionInfo&);
+    void bit(const InstructionInfo&);
+    void bmi(const InstructionInfo&);
+    void bne(const InstructionInfo&);
+    void bpl(const InstructionInfo&);
+    void brk(const InstructionInfo&);
+    void bvc(const InstructionInfo&);
+    void bvs(const InstructionInfo&);
+    void clc(const InstructionInfo&);
+    void cld(const InstructionInfo&);
+    void cli(const InstructionInfo&);
+    void clv(const InstructionInfo&);
+    void cmp(const InstructionInfo&);
+    void cpx(const InstructionInfo&);
+    void cpy(const InstructionInfo&);
+    void dcp(const InstructionInfo&);
+    void dec(const InstructionInfo&);
+    void dex(const InstructionInfo&);
+    void dey(const InstructionInfo&);
+    void eor(const InstructionInfo&);
+    void inc(const InstructionInfo&);
+    void inx(const InstructionInfo&);
+    void iny(const InstructionInfo&);
+    void isb(const InstructionInfo&);
+    void jmp(const InstructionInfo&);
+    void jsr(const InstructionInfo&);
+    void kil(const InstructionInfo&);
+    void las(const InstructionInfo&);
+    void lax(const InstructionInfo&);
+    void lda(const InstructionInfo&);
+    void ldx(const InstructionInfo&);
+    void ldy(const InstructionInfo&);
+    void lsr(const InstructionInfo&);
+    void nop(const InstructionInfo&);
+    void ora(const InstructionInfo&);
+    void pha(const InstructionInfo&);
+    void php(const InstructionInfo&);
+    void pla(const InstructionInfo&);
+    void plp(const InstructionInfo&);
+    void rla(const InstructionInfo&);
+    void rol(const InstructionInfo&);
+    void ror(const InstructionInfo&);
+    void rra(const InstructionInfo&);
+    void rti(const InstructionInfo&);
+    void rts(const InstructionInfo&);
+    void sax(const InstructionInfo&);
+    void sbc(const InstructionInfo&);
+    void sec(const InstructionInfo&);
+    void sed(const InstructionInfo&);
+    void sei(const InstructionInfo&);
+    void shx(const InstructionInfo&);
+    void shy(const InstructionInfo&);
+    void slo(const InstructionInfo&);
+    void sre(const InstructionInfo&);
+    void sta(const InstructionInfo&);
+    void stx(const InstructionInfo&);
+    void sty(const InstructionInfo&);
+    void tas(const InstructionInfo&);
+    void tax(const InstructionInfo&);
+    void tay(const InstructionInfo&);
+    void tsx(const InstructionInfo&);
+    void txa(const InstructionInfo&);
+    void txs(const InstructionInfo&);
+    void tya(const InstructionInfo&);
+    void xaa(const InstructionInfo&);
 };
-
-
 
 #endif
