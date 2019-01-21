@@ -28,6 +28,5 @@ int main(void) {
     }
     c.get_memory().debug_dump(0x200, 32, 16);
     c.get_memory().debug_dump(0x6000, 32, 16);
-    uint16_t t = 0x1150;
-    log.debug() << hex((uint8_t) t);
+    log.debug() << sizeof(uint16_t);
 }

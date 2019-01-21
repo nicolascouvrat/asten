@@ -14,15 +14,15 @@ namespace {
 }
 
 /* DEBUG FUNCTIONS */
-void CPUMemory::debug_dump(int offset, int range, int per_line) {
+void CPUMemory::debug_dump(uint16_t offset, uint16_t range, uint16_t per_line) {
     uint8_t *it = memory + offset;
-    log.debug() << "Memory from " << std::hex << offset << " to " << offset + range;
+    log.debug() << "Memory from " <<  hex(offset) << " to " << hex((uint16_t)(offset + range));
     log.toggle_header();
     for (int i = 0; i < range; i++) {
         if (i % per_line == 0) {
             log.debug() << "\n";
             if (i < range - 1)
-                log.debug() << std::hex << std::right << std::setw(4) << offset + i << ": ";
+                log.debug() << std::right << hex((uint16_t)(offset + i)) << ": ";
         }
         log.debug() << hex(*it++);
     }

@@ -12,7 +12,7 @@
 
 class CPUMemory {
 public:
-    void debug_dump(int, int, int per_line = 8);
+    void debug_dump(uint16_t, uint16_t, uint16_t per_line = 8);
     uint8_t read(uint16_t);
     void write(uint16_t, uint8_t);
     void load(uint16_t, const std::vector<uint8_t>&);
