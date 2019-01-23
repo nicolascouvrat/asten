@@ -33,7 +33,11 @@ void CPUMemory::debug_dump(uint16_t offset, uint16_t range, uint16_t per_line) {
 /* PUBLIC FUNCTIONS */
 uint8_t CPUMemory::read(uint16_t address) { return memory[address]; }
 
-void CPUMemory::write(uint16_t address, uint8_t value) { memory[address] = value; }
+void CPUMemory::write(uint16_t address, uint8_t value) { 
+    if (address == 0xffff)
+        log.debug() << hex(value) <<"\n";
+    memory[address] = value; 
+}
 
 void CPUMemory::load(uint16_t address, const std::vector<uint8_t>& values) {
     std::vector<uint8_t>::const_iterator it;

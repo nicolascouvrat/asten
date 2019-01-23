@@ -3,6 +3,7 @@
 
 #include "Memory.h"
 #include "Logger.h"
+#include "Utilities.h"
 #include <iostream>
 #include <cstdint>
 #include <iomanip>
@@ -14,10 +15,20 @@ public:
     CPU();
     CPUMemory& get_memory();
     void step();
+    void reset();
     // TODO: remove
     void execute(uint8_t);
     void debug_dump();
-    friend std::ostream& operator<< (std::ostream&, const CPU&);
+    friend CPUStateData& operator<< (CPUStateData& d, const CPU& c) {
+        d.A = c.A;
+        d.X = c.X;
+        d.Y = c.Y;
+        d.sp = c.sp;
+        d.pc = c.pc;
+        d.flags = c.get_flags();
+        d.latest_instruction = c.latest_instruction;
+        return d;
+    };
 private:
     CPUMemory mem;
     uint8_t A, X, Y;                // registers
@@ -25,6 +36,8 @@ private:
     uint16_t pc;                    // program counter
     bool C, Z, I, D, B, U, O, N;    // processor flags
     long clock;                     // internal CPU clock (number of cycles)
+    // debug
+    uint8_t latest_instruction;
     enum InterruptType: uint8_t {
         NMI,
         RESET,
@@ -57,41 +70,6 @@ private:
     // instruction table
     typedef void (CPU::*cpu_instruction)(const InstructionInfo&);
     cpu_instruction instruction_table[256];
-    // instruction names
-    // static constexpr char* instruction_names[256] = {
-    //     "BRK", "ORA", "KIL", "SLO", "NOP", "ORA", "ASL", "SLO",
-    //     "PHP", "ORA", "ASL", "ANC", "NOP", "ORA", "ASL", "SLO",
-    //     "BPL", "ORA", "KIL", "SLO", "NOP", "ORA", "ASL", "SLO",
-    //     "CLC", "ORA", "NOP", "SLO", "NOP", "ORA", "ASL", "SLO",
-    //     "JSR", "AND", "KIL", "RLA", "BIT", "AND", "ROL", "RLA",
-    //     "PLP", "AND", "ROL", "ANC", "BIT", "AND", "ROL", "RLA",
-    //     "BMI", "AND", "KIL", "RLA", "NOP", "AND", "ROL", "RLA",
-    //     "SEC", "AND", "NOP", "RLA", "NOP", "AND", "ROL", "RLA",
-    //     "RTI", "EOR", "KIL", "SRE", "NOP", "EOR", "LSR", "SRE",
-    //     "PHA", "EOR", "LSR", "ALR", "JMP", "EOR", "LSR", "SRE",
-    //     "BVC", "EOR", "KIL", "SRE", "NOP", "EOR", "LSR", "SRE",
-    //     "CLI", "EOR", "NOP", "SRE", "NOP", "EOR", "LSR", "SRE",
-    //     "RTS", "ADC", "KIL", "RRA", "NOP", "ADC", "ROR", "RRA",
-    //     "PLA", "ADC", "ROR", "ARR", "JMP", "ADC", "ROR", "RRA",
-    //     "BVS", "ADC", "KIL", "RRA", "NOP", "ADC", "ROR", "RRA",
-    //     "SEI", "ADC", "NOP", "RRA", "NOP", "ADC", "ROR", "RRA",
-    //     "NOP", "STA", "NOP", "SAX", "STY", "STA", "STX", "SAX",
-    //     "DEY", "NOP", "TXA", "XAA", "STY", "STA", "STX", "SAX",
-    //     "BCC", "STA", "KIL", "AHX", "STY", "STA", "STX", "SAX",
-    //     "TYA", "STA", "TXS", "TAS", "SHY", "STA", "SHX", "AHX",
-    //     "LDY", "LDA", "LDX", "LAX", "LDY", "LDA", "LDX", "LAX",
-    //     "TAY", "LDA", "TAX", "LAX", "LDY", "LDA", "LDX", "LAX",
-    //     "BCS", "LDA", "KIL", "LAX", "LDY", "LDA", "LDX", "LAX",
-    //     "CLV", "LDA", "TSX", "LAS", "LDY", "LDA", "LDX", "LAX",
-    //     "CPY", "CMP", "NOP", "DCP", "CPY", "CMP", "DEC", "DCP",
-    //     "INY", "CMP", "DEX", "AXS", "CPY", "CMP", "DEC", "DCP",
-    //     "BNE", "CMP", "KIL", "DCP", "NOP", "CMP", "DEC", "DCP",
-    //     "CLD", "CMP", "NOP", "DCP", "NOP", "CMP", "DEC", "DCP",
-    //     "CPX", "SBC", "NOP", "ISB", "CPX", "SBC", "INC", "ISB",
-    //     "INX", "SBC", "NOP", "SBC", "CPX", "SBC", "INC", "ISB",
-    //     "BEQ", "SBC", "KIL", "ISB", "NOP", "SBC", "INC", "ISB",
-    //     "SED", "SBC", "NOP", "ISB", "NOP", "SBC", "INC", "ISB",
-    // };
     // addressing mode for each of the 256 instructions
     static constexpr uint8_t instruction_modes[256] = {
         6, 7, 6, 7, 11, 11, 11, 11, 6, 5, 4, 5, 1, 1, 1, 1,
@@ -169,7 +147,7 @@ private:
         1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0,
     };
     // private functions
-    uint8_t get_flags();
+    uint8_t get_flags() const;
     void set_flags(uint8_t);
     uint8_t next_byte();
     uint16_t next_two_bytes();

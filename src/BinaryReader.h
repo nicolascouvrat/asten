@@ -10,7 +10,6 @@ class BinaryReader {
         std::string file_name;
     public:
         BinaryReader(std::string name);
-        std::string get_file_name();
         std::vector<uint8_t> read_bytes();
         void load_to_memory(CPUMemory &mem);
 };

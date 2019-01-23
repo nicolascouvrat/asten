@@ -51,8 +51,8 @@ CPU::CPU(): instruction_table{
     A = 0;
     X = 0;
     Y = 0;
-    sp = 0xff;
-    pc = 0x6000;
+    sp = 0xfd;
+    pc = 0xc000;
     C = false;  // Carry
     Z = false;  // Zero
     I = false;  // Interrupt Disable
@@ -62,6 +62,7 @@ CPU::CPU(): instruction_table{
     O = false;  // Overflow
     N = false;  // Negative
     clock = 0;
+    latest_instruction = 0x04; // NOP
 }
 
 /* PUBLIC FUNCTIONS */
@@ -96,7 +97,7 @@ void CPU::step() {
     AddressingMode mode = static_cast<AddressingMode>(CPU::instruction_modes[opcode]);
     // determine address
     uint16_t address = 0x0000;
-    uint16_t temp16;
+    uint16_t temp16, wrapped_increment;
     uint8_t temp8;
     switch (mode) {
         case ABSOLUTE_MODE:
@@ -125,19 +126,24 @@ void CPU::step() {
             break;
         case INDEXED_INDIRECT_MODE:
             // takes one byte as a one page address, adds X, the generates a 2-byte address
+            // force wrap if overflow
             temp8 = next_byte() + X;
-            address = mem.read(temp8) | (mem.read(temp8 + 1) << 8);
+            address = mem.read(temp8) | (mem.read((uint8_t)(temp8 + 1)) << 8);
             break;
         case INDIRECT_MODE:
             // look up the first address (on two bytes), 
             // then read two bytes to make up the real address
             temp16 = next_two_bytes();
-            address = mem.read(temp16) | (mem.read(temp16 + 1) << 8);
+            // make sure we do NOT get out of a page with the increment
+            wrapped_increment = (temp16 & 0xff00) +  ((temp16 + 1) & 0x00ff);
+            address = mem.read(temp16) | (mem.read(wrapped_increment) << 8);
             break;
         case INDIRECT_INDEXED_MODE:
             // takes one byte as a one page address, adds Y, the generates a 2-byte address
-            temp8 = next_byte() + Y;
-            address = mem.read(temp8) | (mem.read(temp8 + 1) << 8);
+            // force wrap if overflow
+            temp8 = next_byte();
+            address = mem.read(temp8) | (mem.read((uint8_t)(temp8 + 1)) << 8);
+            address += Y;
             break;
         case RELATIVE_MODE:
             // special mode: the address in that case is a single byte and indicates and offset
@@ -158,15 +164,26 @@ void CPU::step() {
     }
     // execute instruction
     InstructionInfo info = { pc, address, mode };
+    latest_instruction = opcode;
     (this->*instruction_table[opcode])(info);
     // increment clock
     clock += instruction_cycles[opcode];
+}
+
+// TODO: check this
+void CPU::reset() {
+    // TODO: fix
+    pc = 0xc000;
+    // interrupt(RESET);
+    sp = 0xfd;
+    set_flags(0b100100);
 }
 
 /* PRIVATE FUNCTIONS */
 void CPU::interrupt(InterruptType interrupt) {
     if (interrupt != RESET) {
         if (interrupt == BRK)
+            // TODO: isnt it only on the copy??
             B = true;
         // push lower then higher PC byte on stack
         push_stack(pc);
@@ -214,7 +231,7 @@ uint16_t CPU::next_two_bytes() {
     return next_byte() | (next_byte() << 8);
 }
 
-uint8_t CPU::get_flags() {
+uint8_t CPU::get_flags() const {
     uint8_t flags = 0x00;
     flags |= C << 0;
     flags |= Z << 1;
@@ -244,8 +261,8 @@ void CPU::adc(const InstructionInfo& i){
     uint8_t value;
     bool both_negative, both_positive;
     value = (i.mode == IMMEDIATE_MODE) ? i.address : mem.read(i.address);
-    both_negative = (A >> 7) & (value >> 7);
-    both_positive = ~((A >> 7) | (value >> 7));
+    both_negative = (A >> 7) && (value >> 7);
+    both_positive = !(A >> 7) && !(value >> 7);
     
     temp = A + value + C;
     // "cut" to lowest 8 bytes
@@ -253,7 +270,7 @@ void CPU::adc(const InstructionInfo& i){
     // handle carry flag
     C = (temp > 0xff) ? 1 : 0;
     // a change of sign when both arguments had the same one indicates an overflow
-    if ((both_negative & ~(A >> 7)) | (both_positive & (A >> 7)))
+    if ((both_negative && !(A >> 7)) || (both_positive && (A >> 7)))
         O = true;
     else
         O = false;
@@ -261,12 +278,15 @@ void CPU::adc(const InstructionInfo& i){
 }
  
 void CPU::ahx(const InstructionInfo& i){
+    log.debug() << "WARNING: UNIMPLEMENTED OP" << "\n";
 }
 
 void CPU::alr(const InstructionInfo& i){
+    log.debug() << "WARNING: UNIMPLEMENTED OP" << "\n";
 }
 
 void CPU::anc(const InstructionInfo& i){
+    log.debug() << "WARNING: UNIMPLEMENTED OP" << "\n";
 }
 
 void CPU::_and(const InstructionInfo& i){
@@ -275,15 +295,15 @@ void CPU::_and(const InstructionInfo& i){
 }
 
 void CPU::arr(const InstructionInfo& i){
+    log.debug() << "WARNING: UNIMPLEMENTED OP" << "\n";
 }
 
 void CPU::asl(const InstructionInfo& i){
-    // special: if immediate mode, act on A
-    bool is_acc = i.mode == IMMEDIATE_MODE;
-    uint8_t temp = is_acc ? A : mem.read(i.address);
+    // special: if accumulator mode, act on A
+    uint8_t temp = (i.mode == ACCUMULATOR_MODE ) ? A : mem.read(i.address);
     C = temp >> 7;
     temp = temp << 1;
-    if (i.mode == IMMEDIATE_MODE)
+    if (i.mode == ACCUMULATOR_MODE)
         A = temp;
     else
         mem.write(i.address, temp);
@@ -291,6 +311,7 @@ void CPU::asl(const InstructionInfo& i){
 }
 
 void CPU::axs(const InstructionInfo& i){
+    log.debug() << "WARNING: UNIMPLEMENTED OP" << "\n";
 }
 
 void CPU::bcc(const InstructionInfo& i){
@@ -306,16 +327,19 @@ void CPU::bcs(const InstructionInfo& i){
 }
 
 void CPU::beq(const InstructionInfo& i){
-    uint8_t temp = pc + i.address; // jumps are restricted to one byte
-    if (Z) 
-        pc = (pc & 0xff00) + temp; // replace lowest byte
+    if (Z)
+        pc += i.address;
+    // uint8_t temp = pc + i.address; // jumps are restricted to one byte
+    // log.debug() << hex(temp) << "\n";
+    // if (Z) 
+    //     pc = (pc & 0xff00) + (temp & 0x00ff); // replace lowest byte
 }
 
 void CPU::bit(const InstructionInfo& i){
     uint8_t tmp = mem.read(i.address);
     N = (tmp >> 7) & 1;
     O = (tmp >> 6) & 1;
-    Z = tmp & A;
+    Z = (tmp & A) == 0;
 }
 
 void CPU::bmi(const InstructionInfo& i){
@@ -370,45 +394,29 @@ void CPU::clv(const InstructionInfo& i){
 }
 
 void CPU::cmp(const InstructionInfo& i){
-    uint16_t temp;
-    uint8_t value;
-    value = (i.mode == IMMEDIATE_MODE) ? i.address : mem.read(i.address);
-    // two's complement
-    value = ~value + 1;
-    // then sum
-    temp = A + value;
-    // handle carry flag
-    C = (temp > 0xff) ? 1 : 0;
-    set_ZN_flags(temp);
+    uint8_t value = (i.mode == IMMEDIATE_MODE) ? i.address : mem.read(i.address);
+    // carry set if (A - value) >= 0 in NON SIGNED arithmetic
+    C = ((A - value) >= 0) ? 1 : 0;
+    set_ZN_flags(A - value);
 }
 
 void CPU::cpx(const InstructionInfo& i){
-    uint16_t temp;
-    uint8_t value;
-    value = (i.mode == IMMEDIATE_MODE) ? i.address : mem.read(i.address);
-    // two's complement
-    value = ~value + 1;
-    // then sum
-    temp = X + value;
-    // handle carry flag
-    C = (temp > 0xff) ? 1 : 0;
-    set_ZN_flags(temp);
+    uint8_t value = (i.mode == IMMEDIATE_MODE) ? i.address : mem.read(i.address);
+    C = ((X - value) >= 0) ? 1 : 0;
+    set_ZN_flags(X - value);
 }
 
 void CPU::cpy(const InstructionInfo& i){
-    uint16_t temp;
-    uint8_t value;
-    value = (i.mode == IMMEDIATE_MODE) ? i.address : mem.read(i.address);
-    // two's complement
-    value = ~value + 1;
-    // then sum
-    temp = Y + value;
-    // handle carry flag
-    C = (temp > 0xff) ? 1 : 0;
-    set_ZN_flags(temp);
+    uint8_t value = (i.mode == IMMEDIATE_MODE) ? i.address : mem.read(i.address);
+    C = ((Y - value) >= 0) ? 1 : 0;
+    set_ZN_flags(Y - value);
 }
 
 void CPU::dcp(const InstructionInfo& i){
+    uint8_t temp = mem.read(i.address) - 1;
+    mem.write(i.address, temp);
+    C = ((A - temp) >= 0) ? 1 : 0;
+    set_ZN_flags(A - temp);
 }
 
 void CPU::dec(const InstructionInfo& i){
@@ -449,6 +457,8 @@ void CPU::iny(const InstructionInfo& i){
 }
 
 void CPU::isb(const InstructionInfo& i){
+    inc(i);
+    sbc(i);
 }
 
 void CPU::jmp(const InstructionInfo& i){
@@ -458,19 +468,24 @@ void CPU::jmp(const InstructionInfo& i){
 
 void CPU::jsr(const InstructionInfo& i){
     // the pc already jump to the theoretical next instruction.
-    push_stack(pc);
-    push_stack(pc >> 8);
+    push_stack((pc - 1) >> 8);
+    push_stack(pc - 1);
     // this is a special case of absolute mode where the address is used to set the pc.
     pc = i.address;
 }
 
 void CPU::kil(const InstructionInfo& i){
+    log.debug() << "WARNING: UNIMPLEMENTED OP" << "\n";
 }
 
 void CPU::las(const InstructionInfo& i){
+    log.debug() << "WARNING: UNIMPLEMENTED OP" << "\n";
 }
 
 void CPU::lax(const InstructionInfo& i){
+    A = (i.mode == IMMEDIATE_MODE) ? i.address : mem.read(i.address);
+    X = (i.mode == IMMEDIATE_MODE) ? i.address : mem.read(i.address);
+    set_ZN_flags(A);
 }
 
 void CPU::lda(const InstructionInfo& i){
@@ -489,11 +504,11 @@ void CPU::ldy(const InstructionInfo& i){
 }
 
 void CPU::lsr(const InstructionInfo& i){
-    // special: if immediate mode, act on A
-    uint8_t temp = (i.mode == IMMEDIATE_MODE) ? A : mem.read(i.address);
+    // special: if accumulator mode, act on A
+    uint8_t temp = (i.mode == ACCUMULATOR_MODE) ? A : mem.read(i.address);
     C = temp & 1;
     temp = temp >> 1;
-    if (i.mode == IMMEDIATE_MODE)
+    if (i.mode == ACCUMULATOR_MODE)
         A = temp;
     else
         mem.write(i.address, temp);
@@ -514,7 +529,7 @@ void CPU::pha(const InstructionInfo& i){
 }
 
 void CPU::php(const InstructionInfo& i){
-    push_stack(get_flags());
+    push_stack(get_flags() | 0x10); // the B flag is set to true on the stack copy
 }
 
 void CPU::pla(const InstructionInfo& i){
@@ -523,19 +538,21 @@ void CPU::pla(const InstructionInfo& i){
 }
 
 void CPU::plp(const InstructionInfo& i){
-    set_flags(pull_stack());
+    // flag 4 always set to 0 and flag 5 to 1 (handled in set_flags)
+    set_flags(pull_stack() & 0xcf);
 }
 
 void CPU::rla(const InstructionInfo& i){
+    rol(i);
+    _and(i);
 }
 
 void CPU::rol(const InstructionInfo& i){
-    // special: if immediate mode, act on A
-    bool is_acc = i.mode == IMMEDIATE_MODE;
-    uint8_t temp = is_acc ? A : mem.read(i.address);
+    // special: if accumulator mode, act on A
+    uint8_t temp = (i.mode == ACCUMULATOR_MODE) ? A : mem.read(i.address);
     bool new_C = temp >> 7;
-    temp = temp << 1 + C;
-    if (i.mode == IMMEDIATE_MODE)
+    temp = temp << 1 | C;
+    if (i.mode == ACCUMULATOR_MODE)
         A = temp;
     else
         mem.write(i.address, temp);
@@ -544,12 +561,11 @@ void CPU::rol(const InstructionInfo& i){
 }
 
 void CPU::ror(const InstructionInfo& i){
-    // special: if immediate mode, act on A
-    bool is_acc = i.mode == IMMEDIATE_MODE;
-    uint8_t temp = is_acc ? A : mem.read(i.address);
+    // special: if accumulator mode, act on A
+    uint8_t temp = (i.mode == ACCUMULATOR_MODE) ? A : mem.read(i.address);
     bool new_C = temp & 1;
-    temp = temp >> 1 + ((uint8_t) C) << 7;
-    if (i.mode == IMMEDIATE_MODE)
+    temp = temp >> 1 | ((uint8_t) C) << 7;
+    if (i.mode == ACCUMULATOR_MODE)
         A = temp;
     else
         mem.write(i.address, temp);
@@ -558,18 +574,22 @@ void CPU::ror(const InstructionInfo& i){
 }
 
 void CPU::rra(const InstructionInfo& i){
+    ror(i);
+    adc(i);
 }
 
 void CPU::rti(const InstructionInfo& i){
-    set_flags(pull_stack());
+    set_flags(pull_stack() & 0xcf); // ignore flag 4 and 5
     pc = pull_stack() | (pull_stack() << 8);
 }
 
 void CPU::rts(const InstructionInfo& i){
-    pc = pull_stack() | (pull_stack() << 8);
+    pc = (pull_stack() | (pull_stack() << 8)) + 1;
 }
 
 void CPU::sax(const InstructionInfo& i){
+    uint8_t temp = A & X;
+    mem.write(i.address, temp);
 }
 
 void CPU::sbc(const InstructionInfo& i){
@@ -577,18 +597,19 @@ void CPU::sbc(const InstructionInfo& i){
     uint8_t value;
     bool both_negative, both_positive;
     value = (i.mode == IMMEDIATE_MODE) ? i.address : mem.read(i.address);
-    // two's complement
-    value = ~value + 1;
-    both_negative = (A >> 7) & (value >> 7);
-    both_positive = ~((A >> 7) | (value >> 7));
-    // then sum and SUBSTRACT opposite of the carry
-    temp = A + value - ~C;
+    // log.debug() << "ISB" << hex(value) << hex(i.address) << "\n";
+    // two's complement and sub opposite of cary
+    value = ~value;
+    both_negative = (A >> 7) && (value >> 7);
+    both_positive = !(A >> 7) && !(value >> 7);
+    // then sum 
+    temp = A + value + C;
     // "cut" to lowest 8 bytes
     A = temp;
     // handle carry flag
     C = (temp > 0xff) ? 1 : 0;
     // a change of sign when both arguments had the same one indicates an overflow
-    if ((both_negative & ~(A >> 7)) | (both_positive & (A >> 7)))
+    if ((both_negative && !(A >> 7)) || (both_positive && (A >> 7)))
         O = true;
     else
         O = false;
@@ -608,15 +629,25 @@ void CPU::sei(const InstructionInfo& i){
 }
 
 void CPU::shx(const InstructionInfo& i){
+    uint8_t temp = mem.read(i.address);
+    temp = (temp >> 7) + 1;
+    mem.write(i.address, X & temp);
 }
 
 void CPU::shy(const InstructionInfo& i){
+    uint8_t temp = mem.read(i.address);
+    temp = (temp >> 7) + 1;
+    mem.write(i.address, Y & temp);
 }
 
 void CPU::slo(const InstructionInfo& i){
+    asl(i);
+    ora(i);
 }
 
 void CPU::sre(const InstructionInfo& i){
+    lsr(i);
+    eor(i);
 }
 
 void CPU::sta(const InstructionInfo& i){
@@ -632,6 +663,7 @@ void CPU::sty(const InstructionInfo& i){
 }
 
 void CPU::tas(const InstructionInfo& i){
+    log.debug() << "WARNING: UNIMPLEMENTED OP" << "\n";
 }
 
 void CPU::tax(const InstructionInfo& i){
@@ -664,4 +696,5 @@ void CPU::tya(const InstructionInfo& i){
 }
 
 void CPU::xaa(const InstructionInfo& i){
+    log.debug() << "WARNING: UNIMPLEMENTED OP" << "\n";
 }
