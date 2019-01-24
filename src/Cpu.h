@@ -1,35 +1,28 @@
 #ifndef GUARD_CPU_H
 #define GUARD_CPU_H
 
-#include "Memory.h"
-#include "Logger.h"
-#include "Utilities.h"
 #include <iostream>
 #include <cstdint>
 #include <iomanip>
 #include <bitset>
 
+#include "Memory.h"
+#include "Utilities.h"
 
+
+class Console;
 class CPU {
 public:
-    CPU();
+    CPU(Console&);
     CPUMemory& get_memory();
     void step();
     void reset();
     // TODO: remove
     void execute(uint8_t);
     void debug_dump();
-    friend CPUStateData& operator<< (CPUStateData& d, const CPU& c) {
-        d.A = c.A;
-        d.X = c.X;
-        d.Y = c.Y;
-        d.sp = c.sp;
-        d.pc = c.pc;
-        d.flags = c.get_flags();
-        d.latest_instruction = c.latest_instruction;
-        return d;
-    };
+    friend CPUStateData& operator<< (CPUStateData&, const CPU&);
 private:
+    Console& console;
     CPUMemory mem;
     uint8_t A, X, Y;                // registers
     uint8_t sp;                     // stack pointer

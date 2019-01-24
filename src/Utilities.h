@@ -96,5 +96,10 @@ inline bool operator== (const CPUStateData& a, const CPUStateData& b) {
         && a.flags == b.flags;
 }
 
+struct NESCartridgeData {
+    int prg_rom_unit, chr_rom_unit;
+    int mirror_id, mapper_id;
+};
+
 #endif
 

@@ -1,4 +1,5 @@
 #include "Cpu.h"
+#include "Logger.h"
 // TODO: add warning quand la stack boucle
 // QT/GTK/
 
@@ -12,7 +13,7 @@ constexpr uint8_t CPU::instruction_cycles_extra[];
 
 /* CONSTRUCTOR */
 
-CPU::CPU(): instruction_table{
+CPU::CPU(Console& console): instruction_table{
     &CPU::brk, &CPU::ora, &CPU::kil, &CPU::slo, &CPU::nop, &CPU::ora, &CPU::asl, &CPU::slo,
     &CPU::php, &CPU::ora, &CPU::asl, &CPU::anc, &CPU::nop, &CPU::ora, &CPU::asl, &CPU::slo,
     &CPU::bpl, &CPU::ora, &CPU::kil, &CPU::slo, &CPU::nop, &CPU::ora, &CPU::asl, &CPU::slo,
@@ -45,7 +46,7 @@ CPU::CPU(): instruction_table{
     &CPU::inx, &CPU::sbc, &CPU::nop, &CPU::sbc, &CPU::cpx, &CPU::sbc, &CPU::inc, &CPU::isb,
     &CPU::beq, &CPU::sbc, &CPU::kil, &CPU::isb, &CPU::nop, &CPU::sbc, &CPU::inc, &CPU::isb,
     &CPU::sed, &CPU::sbc, &CPU::nop, &CPU::isb, &CPU::nop, &CPU::sbc, &CPU::inc, &CPU::isb,
-}
+}, console(console), mem(console)
 {
     // set initial state
     A = 0;
@@ -66,20 +67,21 @@ CPU::CPU(): instruction_table{
 }
 
 /* PUBLIC FUNCTIONS */
+CPUStateData& operator<< (CPUStateData& d, const CPU& c) {
+        d.A = c.A;
+        d.X = c.X;
+        d.Y = c.Y;
+        d.sp = c.sp;
+        d.pc = c.pc;
+        d.flags = c.get_flags();
+        d.latest_instruction = c.latest_instruction;
+        return d;
+}
 
 void CPU::debug_dump() {
-    log.debug()
-        << "CPU Status\n"
-        << std::left
-        << "A=" << hex(A)
-        << "X=" << hex(X)
-        << "Y=" << hex(Y)
-        << "\n"
-        << "sp=" << hex(sp)
-        << "pc=" << hex(pc)
-        << "\n"
-        << "flags=" << std::setw(12) << std::bitset<8>(get_flags())
-        << "\n";
+    CPUStateData d;
+    d << *this;
+    log.debug() << d << "\n";
 }
 
 CPUMemory& CPU::get_memory() {
@@ -188,7 +190,6 @@ void CPU::reset() {
 void CPU::interrupt(InterruptType interrupt) {
     if (interrupt != RESET) {
         if (interrupt == BRK)
-            // TODO: isnt it only on the copy??
             B = true;
         // push lower then higher PC byte on stack
         push_stack(pc);

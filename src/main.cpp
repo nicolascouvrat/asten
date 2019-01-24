@@ -1,6 +1,6 @@
-#include "Cpu.h"
-#include "BinaryReader.h"
+#include "Console.h"
 #include "Logger.h"
+#include "Mapper.h"
 
 #include <iostream>
 #include <string>
@@ -19,10 +19,9 @@ namespace {
     Logger log = Logger::get_logger("main").set_level(DEBUG);
 }
 
-int test() {
-    BinaryReader r("nestest.nes");
-    CPU c;
-    c.get_memory().load(0xc000, r.read_bytes());
+int test_CPU() {
+    Console console("nestest.nes");
+    CPU c = console.get_cpu();
     c.reset();
     int counter = 0;
     CPUStateData benchmark_state, cpu_state, prev_cpu_state;
@@ -50,19 +49,11 @@ int test() {
     return 0;
 }
 
+int test_Mapper() {
+    Console c = Console("nestest.nes");
+    return 0;
+}
+
 int main(void) {
-    return test();
-    // BinaryReader r("test.bin");
-    // CPU c;
-    // // load program in memory at pc start location
-    // c.get_memory().load(0x6000, r.read_bytes());
-    // uint16_t steps = 2;
-    // for (uint16_t i = 0; i < steps; i++) {
-    //     c.step();
-    //     log.debug() << "STEP " << i << "\n";
-    //     c.debug_dump();
-    // }
-    // c.get_memory().debug_dump(0x200, 32, 16);
-    // c.get_memory().debug_dump(0x6000, 32, 16);
-    // log.debug() << sizeof(uint16_t);
+    return test_Mapper();
 }

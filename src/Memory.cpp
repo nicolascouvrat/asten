@@ -1,4 +1,6 @@
 #include "Memory.h"
+#include "Console.h"
+#include "Mapper.h"
 
 /* 
  * CPU MEMORY ORGANIZATION (6502)
@@ -31,17 +33,17 @@ void CPUMemory::debug_dump(uint16_t offset, uint16_t range, uint16_t per_line) {
 }
 
 /* PUBLIC FUNCTIONS */
-uint8_t CPUMemory::read(uint16_t address) { return memory[address]; }
+uint8_t CPUMemory::read(uint16_t address) {
+    if (address < 0x6000)
+        return memory[address]; 
+    else
+        return console.get_mapper()->read_prg(address); 
+    }
 
-void CPUMemory::write(uint16_t address, uint8_t value) { 
-    if (address == 0xffff)
-        log.debug() << hex(value) <<"\n";
-    memory[address] = value; 
-}
 
-void CPUMemory::load(uint16_t address, const std::vector<uint8_t>& values) {
-    std::vector<uint8_t>::const_iterator it;
-    uint16_t i = address;
-    for (it = values.begin(); it != values.end(); it++)
-        memory[i++] = *it;
+void CPUMemory::write(uint16_t address, uint8_t value) {
+    if (address < 0x6000)
+        memory[address] = value;
+    else
+        console.get_mapper()->write_prg(address, value);
 }
