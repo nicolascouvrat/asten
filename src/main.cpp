@@ -1,18 +1,8 @@
 #include "Console.h"
 #include "Logger.h"
-#include "Mapper.h"
 
-#include <iostream>
 #include <string>
-#include <iterator>
-// file parsing
 #include <fstream>
-#include <sstream>
-#include <iomanip>
-
-
-using std::string;  using std::cout;    using std::endl;
-using std::ostream; using std::iterator;
 
 
 namespace {
@@ -39,21 +29,16 @@ int test_CPU() {
             log.debug() << std::setw(12) << "Should be: " << benchmark_state << "\n";
             log.debug() << std::setw(12) << "Got: " << cpu_state << "\n";
             log.debug() << std::setw(12) << "Prev: " << prev_cpu_state << "\n";
-            c.get_memory().debug_dump(0x0200, 0x100, 0x10);
             break;
         }
         prev_cpu_state = cpu_state;
         c.step();
         counter++;
     }
-    return 0;
-}
-
-int test_Mapper() {
-    Console c = Console("nestest.nes");
+    log.info() << "Ran " << counter << " instructions succesfully.\n";
     return 0;
 }
 
 int main(void) {
-    return test_Mapper();
+    return test_CPU();
 }

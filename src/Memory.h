@@ -18,8 +18,8 @@ public:
     void write(uint16_t, uint8_t);
     CPUMemory(Console& c): console(c) {}
 private:
-    static const int SIZE = 0x10000;
-    uint8_t memory[SIZE];
+    static const int RAM_SIZE = 0x800;
+    uint8_t ram[RAM_SIZE];
     Console& console;
 };
 
