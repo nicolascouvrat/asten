@@ -147,7 +147,12 @@ void CPU::step() {
             break;
         case RELATIVE_MODE:
             // special mode: the address in that case is a single byte and indicates and offset
-            address = next_byte();
+            // the offset is used as a SIGNED integer!
+            temp8 = next_byte();
+            if (temp8 > 0x80)
+                address = pc + temp8 - 0x100;
+            else
+                address = pc + temp8;
             break;
         case ZERO_PAGE_MODE:
             // access the first page of memory, next byte is least significant one
@@ -163,7 +168,7 @@ void CPU::step() {
             break;
     }
     // execute instruction
-    InstructionInfo info = { pc, address, mode };
+    InstructionInfo info = { address, mode };
     latest_instruction = opcode;
     (this->*instruction_table[opcode])(info);
     // increment clock
@@ -315,24 +320,18 @@ void CPU::axs(const InstructionInfo& i){
 }
 
 void CPU::bcc(const InstructionInfo& i){
-    uint8_t temp = pc + i.address; // jumps are restricted to one byte
     if (!C) 
-        pc = (pc & 0xff00) + temp; // replace lowest byte
+        pc = i.address;
 }
 
 void CPU::bcs(const InstructionInfo& i){
-    uint8_t temp = pc + i.address; // jumps are restricted to one byte
     if (C) 
-        pc = (pc & 0xff00) + temp; // replace lowest byte
+        pc = i.address;
 }
 
 void CPU::beq(const InstructionInfo& i){
     if (Z)
-        pc += i.address;
-    // uint8_t temp = pc + i.address; // jumps are restricted to one byte
-    // log.debug() << hex(temp) << "\n";
-    // if (Z) 
-    //     pc = (pc & 0xff00) + (temp & 0x00ff); // replace lowest byte
+        pc = i.address;
 }
 
 void CPU::bit(const InstructionInfo& i){
@@ -343,21 +342,18 @@ void CPU::bit(const InstructionInfo& i){
 }
 
 void CPU::bmi(const InstructionInfo& i){
-    uint8_t temp = pc + i.address; // jumps are restricted to one byte
     if (N) 
-        pc = (pc & 0xff00) + temp; // replace lowest byte
+        pc = i.address;
 }
 
 void CPU::bne(const InstructionInfo& i){
-    uint8_t temp = pc + i.address; // jumps are restricted to one byte
     if (!Z) 
-        pc = (pc & 0xff00) + temp; // replace lowest byte
+        pc = i.address;
 }
 
 void CPU::bpl(const InstructionInfo& i){
-    uint8_t temp = pc + i.address; // jumps are restricted to one byte
     if (!N) 
-        pc = (pc & 0xff00) + temp; // replace lowest byte
+        pc = i.address;
 }
 
 void CPU::brk(const InstructionInfo& i){
@@ -366,15 +362,13 @@ void CPU::brk(const InstructionInfo& i){
 }
 
 void CPU::bvc(const InstructionInfo& i){
-    uint8_t temp = pc + i.address; // jumps are restricted to one byte
     if (!O) 
-        pc = (pc & 0xff00) + temp; // replace lowest byte
+        pc = i.address;
 }
 
 void CPU::bvs(const InstructionInfo& i){
-    uint8_t temp = pc + i.address; // jumps are restricted to one byte
     if (O) 
-        pc = (pc & 0xff00) + temp; // replace lowest byte
+        pc = i.address;
 }
 
 void CPU::clc(const InstructionInfo& i){
@@ -413,10 +407,8 @@ void CPU::cpy(const InstructionInfo& i){
 }
 
 void CPU::dcp(const InstructionInfo& i){
-    uint8_t temp = mem.read(i.address) - 1;
-    mem.write(i.address, temp);
-    C = ((A - temp) >= 0) ? 1 : 0;
-    set_ZN_flags(A - temp);
+    dec(i);
+    cmp(i);
 }
 
 void CPU::dec(const InstructionInfo& i){
@@ -483,9 +475,8 @@ void CPU::las(const InstructionInfo& i){
 }
 
 void CPU::lax(const InstructionInfo& i){
-    A = (i.mode == IMMEDIATE_MODE) ? i.address : mem.read(i.address);
-    X = (i.mode == IMMEDIATE_MODE) ? i.address : mem.read(i.address);
-    set_ZN_flags(A);
+    lda(i);
+    ldx(i);
 }
 
 void CPU::lda(const InstructionInfo& i){
@@ -588,32 +579,15 @@ void CPU::rts(const InstructionInfo& i){
 }
 
 void CPU::sax(const InstructionInfo& i){
-    uint8_t temp = A & X;
-    mem.write(i.address, temp);
+    mem.write(i.address, A & X);
 }
 
 void CPU::sbc(const InstructionInfo& i){
-    uint16_t temp;
-    uint8_t value;
-    bool both_negative, both_positive;
-    value = (i.mode == IMMEDIATE_MODE) ? i.address : mem.read(i.address);
-    // log.debug() << "ISB" << hex(value) << hex(i.address) << "\n";
-    // two's complement and sub opposite of cary
-    value = ~value;
-    both_negative = (A >> 7) && (value >> 7);
-    both_positive = !(A >> 7) && !(value >> 7);
-    // then sum 
-    temp = A + value + C;
-    // "cut" to lowest 8 bytes
-    A = temp;
-    // handle carry flag
-    C = (temp > 0xff) ? 1 : 0;
-    // a change of sign when both arguments had the same one indicates an overflow
-    if ((both_negative && !(A >> 7)) || (both_positive && (A >> 7)))
-        O = true;
-    else
-        O = false;
-    set_ZN_flags(A);
+    // sbc(value) = A - value - (1 - C)
+    //            = A - (~value + 1) - 1 + C
+    //            = adc(~value)
+    uint8_t value = (i.mode == IMMEDIATE_MODE) ? i.address : mem.read(i.address);
+    adc({ (uint8_t)(~value), IMMEDIATE_MODE });
 }
 
 void CPU::sec(const InstructionInfo& i){

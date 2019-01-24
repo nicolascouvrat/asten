@@ -63,7 +63,6 @@ private:
     };
     // info for instructions
     struct InstructionInfo {
-        uint16_t pc;
         uint16_t address;
         AddressingMode mode;
     };
