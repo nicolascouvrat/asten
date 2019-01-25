@@ -26,9 +26,9 @@ inline HexInt<T> hex(T i) { return HexInt<T>(i); }
 struct CPUStateData {
     /* Used to view the inside of the CPU */
     int A, X, Y, sp, pc, flags;
-    int latest_instruction;
-    // TODO: cycle
+    int latest_instruction, cycle;
 };
+
 // instruction names
 static std::string instruction_names[256] = {
     "BRK", "ORA", "KIL", "SLO", "NOP", "ORA", "ASL", "SLO",
@@ -72,6 +72,7 @@ inline std::istream& operator>> (std::istream& in, CPUStateData& d) {
     in >> d.Y;
     in >> d.flags;
     in >> d.sp;
+    in >> std::dec >> d.cycle;
     return in;
 }
 
@@ -84,7 +85,8 @@ inline std::ostream& operator<< (std::ostream& o, const CPUStateData& d) {
         << "X: " << hex((uint8_t)d.X)
         << "Y: " << hex((uint8_t)d.Y)
         << "P: " << hex((uint8_t)d.flags)
-        << "SP: " << hex((uint8_t)d.sp);
+        << "SP: " << hex((uint8_t)d.sp)
+        << "CYC: " << hex((uint8_t)d.cycle);
 }
 
 inline bool operator== (const CPUStateData& a, const CPUStateData& b) {
@@ -93,7 +95,8 @@ inline bool operator== (const CPUStateData& a, const CPUStateData& b) {
         && a.Y == b.Y
         && a.sp == b.sp
         && a.pc == b.pc
-        && a.flags == b.flags;
+        && a.flags == b.flags
+        && a.cycle == b.cycle;
 }
 
 struct NESCartridgeData {

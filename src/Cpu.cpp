@@ -7,6 +7,10 @@ constexpr uint8_t CPU::instruction_modes[];
 constexpr uint8_t CPU::instruction_cycles[];
 constexpr uint8_t CPU::instruction_cycles_extra[];
 
+bool pages_differ(uint16_t a, uint16_t b) {
+    return (a & 0xff00) != (b & 0xff00);
+}
+
 /* CONSTRUCTOR */
 
 CPU::CPU(Console& console): instruction_table{
@@ -64,31 +68,24 @@ CPU::CPU(Console& console): instruction_table{
 }
 
 /* PUBLIC FUNCTIONS */
-CPUStateData& operator<< (CPUStateData& d, const CPU& c) {
-        d.A = c.A;
-        d.X = c.X;
-        d.Y = c.Y;
-        d.sp = c.sp;
-        d.pc = c.pc;
-        d.flags = c.get_flags();
-        d.latest_instruction = c.latest_instruction;
-        return d;
-}
-
-void CPU::debug_dump() {
-    CPUStateData d;
-    d << *this;
-    log.debug() << d << "\n";
+CPUStateData CPU::dump_state() {
+    CPUStateData data;
+    data.A = A;
+    data.X = X;
+    data.Y = Y;
+    data.sp = sp;
+    data.pc = pc;
+    data.flags = get_flags();
+    data.latest_instruction = latest_instruction;
+    data.cycle = clock % 341;
+    return data;
 }
 
 CPUMemory& CPU::get_memory() {
     return mem;
 }
 
-void CPU::execute(uint8_t opcode) {
-    InstructionInfo t = {};
-    (this->*instruction_table[opcode])(t);
-}
+void CPU::debug_set_pc(uint16_t address) { pc = address; }
 
 void CPU::step() {
     // read instruction
@@ -98,6 +95,8 @@ void CPU::step() {
     uint16_t address = 0x0000;
     uint16_t temp16, wrapped_increment;
     uint8_t temp8;
+    step_cycles = 0;
+    bool page_changed =  false;
     switch (mode) {
         case ABSOLUTE_MODE:
             // full memory location is being use as argument
@@ -106,10 +105,12 @@ void CPU::step() {
         case ABSOLUTEX_MODE:
             // adds the value of X to absolute address
             address = next_two_bytes() + X;
+            page_changed = pages_differ(address, address - X);
             break;
         case ABSOLUTEY_MODE:
             // adds the value of Y to absolute address
             address = next_two_bytes() + Y;
+            page_changed = pages_differ(address, address - Y);
             break;
         case ACCUMULATOR_MODE:
             break;
@@ -143,6 +144,7 @@ void CPU::step() {
             temp8 = next_byte();
             address = mem.read(temp8) | (mem.read((uint8_t)(temp8 + 1)) << 8);
             address += Y;
+            page_changed = pages_differ(address, address - Y);
             break;
         case RELATIVE_MODE:
             // special mode: the address in that case is a single byte and indicates and offset
@@ -171,14 +173,16 @@ void CPU::step() {
     latest_instruction = opcode;
     (this->*instruction_table[opcode])(info);
     // increment clock
-    clock += instruction_cycles[opcode];
+    step_cycles += instruction_cycles[opcode];
+    if (page_changed)
+        step_cycles += instruction_cycles_extra[opcode];
+        
+    // TODO: change that when PPU is there 
+    clock += 3 * step_cycles;
 }
 
-// TODO: check this
 void CPU::reset() {
-    // TODO: fix
-    pc = 0xc000;
-    // interrupt(RESET);
+    interrupt(RESET);
     sp = 0xfd;
     set_flags(0b100100);
 }
@@ -186,13 +190,14 @@ void CPU::reset() {
 /* PRIVATE FUNCTIONS */
 void CPU::interrupt(InterruptType interrupt) {
     if (interrupt != RESET) {
+        uint8_t current_flags = get_flags();
         if (interrupt == BRK)
-            B = true;
+            current_flags = current_flags & 0x10; // set B on the copy
         // push lower then higher PC byte on stack
         push_stack(pc);
         push_stack(pc >> 8);
         // save flags
-        push_stack(get_flags());
+        push_stack(current_flags);
         // disable interrupts
         I = true;
     }
@@ -258,6 +263,14 @@ void CPU::set_flags(uint8_t flags) {
     N = (flags >> 7) & 1;
 }
 
+void CPU::branch(uint16_t new_address) {
+    // branches to new address, handles extra cycles as well
+    step_cycles++;
+    if (pages_differ(pc, new_address))
+        step_cycles++;
+    pc = new_address;
+}
+
 /* INSTRUCTIONS */
 void CPU::adc(const InstructionInfo& i){
     uint16_t temp;
@@ -319,17 +332,17 @@ void CPU::axs(const InstructionInfo& i){
 
 void CPU::bcc(const InstructionInfo& i){
     if (!C) 
-        pc = i.address;
+        branch(i.address);
 }
 
 void CPU::bcs(const InstructionInfo& i){
     if (C) 
-        pc = i.address;
+        branch(i.address);
 }
 
 void CPU::beq(const InstructionInfo& i){
     if (Z)
-        pc = i.address;
+        branch(i.address);
 }
 
 void CPU::bit(const InstructionInfo& i){
@@ -341,32 +354,31 @@ void CPU::bit(const InstructionInfo& i){
 
 void CPU::bmi(const InstructionInfo& i){
     if (N) 
-        pc = i.address;
+        branch(i.address);
 }
 
 void CPU::bne(const InstructionInfo& i){
     if (!Z) 
-        pc = i.address;
+        branch(i.address);
 }
 
 void CPU::bpl(const InstructionInfo& i){
     if (!N) 
-        pc = i.address;
+        branch(i.address);
 }
 
 void CPU::brk(const InstructionInfo& i){
-    // TODO: restablish
-    // interrupt(BRK);
+    interrupt(BRK);
 }
 
 void CPU::bvc(const InstructionInfo& i){
     if (!O) 
-        pc = i.address;
+        branch(i.address);
 }
 
 void CPU::bvs(const InstructionInfo& i){
     if (O) 
-        pc = i.address;
+        branch(i.address);
 }
 
 void CPU::clc(const InstructionInfo& i){

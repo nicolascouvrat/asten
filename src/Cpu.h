@@ -18,10 +18,9 @@ public:
     CPUMemory& get_memory();
     void step();
     void reset();
-    // TODO: remove
-    void execute(uint8_t);
-    void debug_dump();
-    friend CPUStateData& operator<< (CPUStateData&, const CPU&);
+    // used to force the pc value for tests
+    void debug_set_pc(uint16_t);
+    CPUStateData dump_state();
 private:
     Logger log;
     CPUMemory mem;
@@ -29,7 +28,9 @@ private:
     uint8_t sp;                     // stack pointer
     uint16_t pc;                    // program counter
     bool C, Z, I, D, B, U, O, N;    // processor flags
-    long clock;                     // internal CPU clock (number of cycles)
+    // TODO: store only the % 341 version?
+    long clock;                     // internal CPU clock (total number of cycles)
+    int step_cycles;                // cycles for one step
     // debug
     uint8_t latest_instruction;
     enum InterruptType: uint8_t {
@@ -148,6 +149,7 @@ private:
     void push_stack(uint8_t);
     uint8_t pull_stack();
     void interrupt(InterruptType);
+    void branch(uint16_t);
     // instructions
     void adc(const InstructionInfo&);
     void ahx(const InstructionInfo&);

@@ -7,11 +7,13 @@
 
 int test_CPU() {
     Logger log = Logger::get_logger("main");
+    log.set_level(DEBUG);
     Console console("nestest.nes");
     CPU c = console.get_cpu();
     c.reset();
+    c.debug_set_pc(0xc000); // needed to start the test in autorun
     int counter = 0;
-    CPUStateData benchmark_state, cpu_state, prev_cpu_state;
+    CPUStateData benchmark_state, prev_cpu_state;
     std::string s;
     std::ifstream in("benchmark.txt");
     while (std::getline(in, s)) {
@@ -20,7 +22,7 @@ int test_CPU() {
             continue;
         std::istringstream iss(s);
         iss >> std::hex >> benchmark_state;
-        cpu_state << c;
+        CPUStateData cpu_state = c.dump_state();
         if (!(benchmark_state == cpu_state)) {
             log.debug() << "INSTRUCTION n=" << counter << "\n";
             log.debug() << std::setw(12) << "Should be: " << benchmark_state << "\n";
