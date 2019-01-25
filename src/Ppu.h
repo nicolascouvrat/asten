@@ -1,6 +1,8 @@
 #ifndef GUARD_PPU_H
 #define GUARD_PPU_H
 
+#include <cstdint>
+#include <vector>
 #include "Memory.h"
 
 class PPU;
@@ -18,7 +20,6 @@ class PPUCTRL: public Register {
         uint8_t read();
         void write(uint8_t);
         PPUCTRL(PPU&);
-    private:
         int nametable_flag; // on two bits
         bool increment_flag;
         bool background_table_flag, sprite_table_flag;
@@ -63,6 +64,7 @@ class OAMDATA: public Register {
         uint8_t read();
         void write(uint8_t);
         OAMDATA(PPU&);
+        void upload(const std::vector<uint8_t>&);
     private:
         uint8_t data[256];
 };
@@ -103,9 +105,27 @@ class PPU {
         PPU(Console& console);
         void reset();
         void step();
-        friend class Register;
+        bool get_nmi_occured();
+        void set_nmi_status(bool, bool);
+        int get_latch_value();
+        void set_write_toggle(bool);
+        bool get_write_toggle();
+        void set_current_vram(uint16_t);
+        uint16_t get_current_vram();
+        void set_temporary_vram(uint16_t);
+        uint16_t get_temporary_vram();
+        void set_fine_scroll(uint8_t);
+        uint8_t get_oam_address();
+        void increment_oam_address();
+        bool get_increment_flag();
+        PPUMemory& get_memory();
+        void upload_to_oamdata(uint16_t, uint16_t);
+        void make_cpu_wait(int);
+        long get_clock();
     private:
+        void nmi_change();
         PPUMemory mem;
+        Console& console;
         // TODO: check
         int latch_value;
         
@@ -124,7 +144,7 @@ class PPU {
         PPUDATA ppudata;
         OAMDMA oamdma;
 
-        uint8_t current_vram, temporary_vram;
+        uint16_t current_vram, temporary_vram;
         uint8_t fine_scroll;
         bool write_toggle;
         

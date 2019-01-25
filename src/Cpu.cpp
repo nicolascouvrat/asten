@@ -63,6 +63,7 @@ CPU::CPU(Console& console): instruction_table{
     O = false;  // Overflow
     N = false;  // Negative
     clock = 0;
+    cycles_to_wait = 0;
     latest_instruction = 0x04; // NOP
     log.set_level(DEBUG);
 }
@@ -87,7 +88,9 @@ CPUMemory& CPU::get_memory() {
 
 void CPU::debug_set_pc(uint16_t address) { pc = address; }
 
-void CPU::wait_for(long cycles) { clock += cycles; } // this simulates waiting for the PPU
+void CPU::wait_for(int cycles) { cycles_to_wait += cycles; } 
+
+void CPU::fast_forward_clock(long ticks) { clock += ticks; }
 
 long CPU::step() {
     // read instruction
