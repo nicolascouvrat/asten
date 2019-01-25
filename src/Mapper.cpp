@@ -3,6 +3,7 @@
 #include <cstring>
 #include <iostream>
 
+
 std::runtime_error invalid_nes_file_error(std::string file_name) {
     return std::runtime_error(file_name + ": " + std::strerror(errno));
 }
@@ -37,6 +38,7 @@ Mapper::Mapper(NESHeader header, const std::vector<uint8_t>& raw_data):
     prg_rom(new uint8_t[header.prg_rom_size * PRG_ROM_UNIT]),
     prg_ram(new uint8_t[header.prg_ram_size * PRG_RAM_UNIT]),
     chr_rom(new uint8_t[header.chr_rom_size * CHR_ROM_UNIT]),
+    mirror(PPUMirror::from_id(header.mirror_id)),
     log(Logger::get_logger("Mapper"))
 {
     log.set_level(DEBUG);
@@ -48,13 +50,19 @@ Mapper::Mapper(NESHeader header, const std::vector<uint8_t>& raw_data):
         chr_rom[i] = raw_data[j++];
 }
 
+uint16_t Mapper::mirror_address(uint16_t address) {
+    int table_number, pointer;
+    table_number = (address - PPUMirror::OFFSET) / PPUMirror::TABLE_SIZE;
+    pointer = (address - PPUMirror::OFFSET) % PPUMirror::TABLE_SIZE;
+    pointer += PPUMirror::OFFSET + mirror.get_table(table_number) * PPUMirror::TABLE_SIZE;
+    return pointer;
+}
 
 NROMMapper::NROMMapper(NESHeader h, const std::vector<uint8_t>& d):
     Mapper(h, d),
     // NROM-128 have 16kB of PRG_ROM, NROM-256 have 32kB
     is_nrom_128((h.prg_rom_size > 1) ? false : true)
-{
-}
+{}
 
 uint8_t NROMMapper::read_prg(uint16_t address) {
     if (address < 0x8000)
@@ -76,4 +84,19 @@ uint8_t NROMMapper::read_chr(uint16_t address) {
 
 void NROMMapper::write_chr(uint16_t address, uint8_t value) {
     chr_rom[address] = value;
+}
+
+PPUMirror PPUMirror::from_id(int id) {
+    switch(id) {
+        case 0:
+            return HorizontalMirror();
+        case 1:
+            return VerticalMirror();
+        default:
+            return PPUMirror();
+    }
+}
+
+int PPUMirror::get_table(int num) {
+    return mirror_pattern[num];
 }

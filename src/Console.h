@@ -12,6 +12,7 @@ class Console {
         Console(std::string);
         Mapper *get_mapper();
         CPU& get_cpu();
+        void step();
     private:
         CPU cpu;
         Mapper *mapper;

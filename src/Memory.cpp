@@ -24,18 +24,40 @@
  * $C000
  *     PRG ROM (upper)
  * $10000
- * */
+ *
+ * PPU MEMORY ORGANIZATION
+ * $0000
+ *     Pattern table (256 * 8 * 2) * 2 (In cartridge)
+ * $2000
+ *     (Name table (30 * 32) + Attribut table (64)) * 4
+ * $3000
+ *     Empty
+ * $3F00
+ *     Image Palette
+ * $3F10
+ *     Sprite Palette
+ * $3F20
+ *     Empty
+ * $4000
+ **/
 
 
-CPUMemory::CPUMemory(Console& c):
-    console(c), log(Logger::get_logger("CPUMemory"))
+Memory::Memory(Console& c, Logger l):
+    console(c), log(l)
 {
     log.set_level(DEBUG);
 }
 
+CPUMemory::CPUMemory(Console& c):
+    Memory(c, Logger::get_logger("CPUMemory"))
+{}
+
+PPUMemory::PPUMemory(Console& c):
+    Memory(c, Logger::get_logger("PPUMemory"))
+{}
+
 /* DEBUG FUNCTIONS */
-void CPUMemory::debug_dump(uint16_t offset, uint16_t range, uint16_t per_line) {
-    uint8_t *it = ram + offset;
+void Memory::debug_dump(uint16_t offset, uint16_t range, uint16_t per_line) {
     log.debug() << "Memory from " <<  hex(offset) << " to " << hex((uint16_t)(offset + range));
     log.toggle_header();
     for (int i = 0; i < range; i++) {
@@ -73,4 +95,37 @@ void CPUMemory::write(uint16_t address, uint8_t value) {
     }
     else
         console.get_mapper()->write_prg(address, value);
+}
+
+uint8_t PPUMemory::read(uint16_t address) {
+    if (address < 0x2000)
+        return console.get_mapper()->read_chr(address);
+    if (address < 0x3000)
+        return name_table[console.get_mapper()->mirror_address(address) - 0x2000];
+    if (0x3f00 <= address < 0x4000) {
+        uint16_t pointer =  address % 32;
+        if (pointer >= 16 && (pointer % 4) == 0)
+            pointer -= 16;
+        return palette[pointer];
+    }
+    else {
+        log.error() << "UNEXPECTED READ AT " << hex(address) << "\n";
+        return 0;
+    }
+}
+
+void PPUMemory::write(uint16_t address, uint8_t value) {
+    if (address < 0x2000)
+        console.get_mapper()->write_chr(address, value);
+    else if (address < 0x3000)
+        name_table[console.get_mapper()->mirror_address(address) - 0x2000] = value;
+    else if (0x3f00 <= address < 0x4000) {
+        uint16_t pointer =  address % 32;
+        if (pointer >= 16 && (pointer % 4) == 0)
+            pointer -= 16;
+        palette[pointer] = value;
+    }
+    else {
+        log.error() << "UNEXPECTED WRITE AT " << hex(address) << "\n";
+    }
 }

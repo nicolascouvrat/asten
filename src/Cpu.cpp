@@ -87,7 +87,9 @@ CPUMemory& CPU::get_memory() {
 
 void CPU::debug_set_pc(uint16_t address) { pc = address; }
 
-void CPU::step() {
+void CPU::wait_for(long cycles) { clock += cycles; } // this simulates waiting for the PPU
+
+long CPU::step() {
     // read instruction
     uint8_t opcode = next_byte();
     AddressingMode mode = static_cast<AddressingMode>(CPU::instruction_modes[opcode]);
@@ -95,7 +97,7 @@ void CPU::step() {
     uint16_t address = 0x0000;
     uint16_t temp16, wrapped_increment;
     uint8_t temp8;
-    step_cycles = 0;
+    long start_clock = clock;
     bool page_changed =  false;
     switch (mode) {
         case ABSOLUTE_MODE:
@@ -173,12 +175,12 @@ void CPU::step() {
     latest_instruction = opcode;
     (this->*instruction_table[opcode])(info);
     // increment clock
-    step_cycles += instruction_cycles[opcode];
+    clock += instruction_cycles[opcode];
     if (page_changed)
-        step_cycles += instruction_cycles_extra[opcode];
+        clock += instruction_cycles_extra[opcode];
         
     // TODO: change that when PPU is there 
-    clock += 3 * step_cycles;
+    return clock - start_clock;
 }
 
 void CPU::reset() {
@@ -265,9 +267,9 @@ void CPU::set_flags(uint8_t flags) {
 
 void CPU::branch(uint16_t new_address) {
     // branches to new address, handles extra cycles as well
-    step_cycles++;
+    clock++;
     if (pages_differ(pc, new_address))
-        step_cycles++;
+        clock++;
     pc = new_address;
 }
 

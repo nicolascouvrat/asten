@@ -9,7 +9,7 @@ int test_CPU() {
     Logger log = Logger::get_logger("main");
     log.set_level(DEBUG);
     Console console("nestest.nes");
-    CPU c = console.get_cpu();
+    CPU& c = console.get_cpu();
     c.reset();
     c.debug_set_pc(0xc000); // needed to start the test in autorun
     int counter = 0;
@@ -31,7 +31,7 @@ int test_CPU() {
             break;
         }
         prev_cpu_state = cpu_state;
-        c.step();
+        console.step();
         counter++;
     }
     log.info() << "Ran " << counter << " instructions succesfully.\n";

@@ -16,7 +16,8 @@ class CPU {
 public:
     CPU(Console&);
     CPUMemory& get_memory();
-    void step();
+    long step();
+    void wait_for(long);
     void reset();
     // used to force the pc value for tests
     void debug_set_pc(uint16_t);
@@ -30,7 +31,6 @@ private:
     bool C, Z, I, D, B, U, O, N;    // processor flags
     // TODO: store only the % 341 version?
     long clock;                     // internal CPU clock (total number of cycles)
-    int step_cycles;                // cycles for one step
     // debug
     uint8_t latest_instruction;
     enum InterruptType: uint8_t {
