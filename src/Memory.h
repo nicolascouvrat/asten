@@ -16,8 +16,9 @@ public:
     void debug_dump(uint16_t, uint16_t, uint16_t per_line = 8);
     uint8_t read(uint16_t);
     void write(uint16_t, uint8_t);
-    CPUMemory(Console& c): console(c) {}
+    CPUMemory(Console&); 
 private:
+    Logger log;
     static const int RAM_SIZE = 0x800;
     uint8_t ram[RAM_SIZE];
     Console& console;

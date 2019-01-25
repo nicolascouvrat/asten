@@ -1,27 +1,24 @@
 #include "Logger.h"
 
 
-using std::string;
+std::map<std::string, Logger> Logger::logger_map = std::map<std::string, Logger>();
 
-
-std::map<string, Logger> Logger::logger_map = std::map<string, Logger>();
-
-Logger Logger::get_logger(string name) {
-    std::map<string, Logger>::iterator it = logger_map.find(name);
+Logger Logger::get_logger(std::string name) {
+    std::map<std::string, Logger>::iterator it = logger_map.find(name);
     if (it != logger_map.end())
         return it->second;
     else
-        return Logger(name);
+        return (logger_map.emplace(std::make_pair(name, Logger(name))).first)->second;
 }
 
-Logger::Logger(string _name):
+Logger::Logger(std::string _name):
     name(_name),
     out(std::cout),
     level(INFO)
 {}
 
 void Logger::output_header(LogLevel l) {
-    string label;
+    std::string label;
     switch(l) {
         case DEBUG: label = "DEBUG"; break;
         case INFO: label = "INFO"; break;

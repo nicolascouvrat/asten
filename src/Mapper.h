@@ -39,7 +39,6 @@ inline std::ostream& operator<< (std::ostream& out, const NESHeader& h) {
 }
 
 class Mapper {
-    // TODO: make const private
     public:
         virtual uint8_t read_prg(uint16_t) = 0;
         virtual void write_prg(uint16_t, uint8_t) = 0;
@@ -47,6 +46,7 @@ class Mapper {
         virtual void write_chr(uint16_t, uint8_t) = 0;
         static Mapper *from_nes_file(std::string file_name);
     protected:
+        Logger log;
         Mapper(NESHeader, const std::vector<uint8_t>&);
         static const int PRG_ROM_UNIT = 0x4000;
         static const int CHR_ROM_UNIT = 0x2000;

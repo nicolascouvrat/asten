@@ -1,39 +1,50 @@
 #include "Mapper.h"
+#include <cerrno>
+#include <cstring>
+#include <iostream>
 
-
-namespace {
-    Logger log = Logger::get_logger("Mapper").set_level(DEBUG);
+std::runtime_error invalid_nes_file_error(std::string file_name) {
+    return std::runtime_error(file_name + ": " + std::strerror(errno));
 }
-
 
 Mapper *Mapper::from_nes_file(std::string file_name) {
     uint8_t raw_header[NESHeader::SIZE];
-    std::vector<uint8_t> raw_data;
 
     std::ifstream in(file_name, std::ios::binary);
-    std::istreambuf_iterator<char> it(in);
-    for (int i = 0; i < NESHeader::SIZE; i++)
-        raw_header[i] = *it++;
-    std::copy(
-        it,
-        std::istreambuf_iterator<char>(),
-        std::back_inserter(raw_data)
-    );
+    if (!in) throw invalid_nes_file_error(file_name);
+
+    auto beginning = in.tellg();
+    in.seekg(0, std::ios::end);
+    auto size = std::size_t(in.tellg() - beginning);
+    // populate header
+    in.seekg(0, std::ios::beg);
+    if (size < NESHeader::SIZE) throw invalid_nes_file_error(file_name);
+
+    if (!in.read((char*)raw_header, NESHeader::SIZE))
+        throw invalid_nes_file_error(file_name);
+
+    // populate data
+    in.seekg(NESHeader::SIZE, std::ios::beg);
+    std::vector<uint8_t> raw_data(size - NESHeader::SIZE);
+    if (!in.read((char*)raw_data.data(), raw_data.size()))
+        throw invalid_nes_file_error(file_name);
 
     NESHeader header = parse_header(raw_header);
-    log.debug() << header << "\n";
     return new NROMMapper(header, raw_data);
 }
 
-Mapper::Mapper(NESHeader h, const std::vector<uint8_t>& raw_data):
-    prg_rom(new uint8_t[(h.prg_rom_size * PRG_ROM_UNIT) * sizeof(uint8_t)]),
-    prg_ram(new uint8_t[h.prg_ram_size * PRG_RAM_UNIT]),
-    chr_rom(new uint8_t[h.chr_rom_size * CHR_ROM_UNIT])
+Mapper::Mapper(NESHeader header, const std::vector<uint8_t>& raw_data):
+    prg_rom(new uint8_t[header.prg_rom_size * PRG_ROM_UNIT]),
+    prg_ram(new uint8_t[header.prg_ram_size * PRG_RAM_UNIT]),
+    chr_rom(new uint8_t[header.chr_rom_size * CHR_ROM_UNIT]),
+    log(Logger::get_logger("Mapper"))
 {
+    log.set_level(DEBUG);
+    log.debug() << header << "\n";
     int j = 0;
-    for (int i = 0; i < h.prg_rom_size * PRG_ROM_UNIT; i++)
+    for (int i = 0; i < header.prg_rom_size * PRG_ROM_UNIT; i++)
          prg_rom[i] = raw_data[j++];
-    for (int i = 0; i < h.chr_rom_size * CHR_ROM_UNIT; i++)
+    for (int i = 0; i < header.chr_rom_size * CHR_ROM_UNIT; i++)
         chr_rom[i] = raw_data[j++];
 }
 

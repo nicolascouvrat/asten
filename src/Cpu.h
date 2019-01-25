@@ -8,6 +8,7 @@
 
 #include "Memory.h"
 #include "Utilities.h"
+#include "Logger.h"
 
 
 class Console;
@@ -22,7 +23,7 @@ public:
     void debug_dump();
     friend CPUStateData& operator<< (CPUStateData&, const CPU&);
 private:
-    Console& console;
+    Logger log;
     CPUMemory mem;
     uint8_t A, X, Y;                // registers
     uint8_t sp;                     // stack pointer

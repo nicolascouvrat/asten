@@ -27,8 +27,10 @@
  * */
 
 
-namespace {
-    Logger log = Logger::get_logger("NESMemory").set_level(DEBUG);
+CPUMemory::CPUMemory(Console& c):
+    console(c), log(Logger::get_logger("CPUMemory"))
+{
+    log.set_level(DEBUG);
 }
 
 /* DEBUG FUNCTIONS */

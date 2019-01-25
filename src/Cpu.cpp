@@ -1,11 +1,7 @@
 #include "Cpu.h"
-#include "Logger.h"
 // TODO: add warning quand la stack boucle
 // QT/GTK/
 
-namespace {
-    Logger log = Logger::get_logger("NESCpu").set_level(DEBUG);
-}
 
 constexpr uint8_t CPU::instruction_modes[];
 constexpr uint8_t CPU::instruction_cycles[];
@@ -46,7 +42,7 @@ CPU::CPU(Console& console): instruction_table{
     &CPU::inx, &CPU::sbc, &CPU::nop, &CPU::sbc, &CPU::cpx, &CPU::sbc, &CPU::inc, &CPU::isb,
     &CPU::beq, &CPU::sbc, &CPU::kil, &CPU::isb, &CPU::nop, &CPU::sbc, &CPU::inc, &CPU::isb,
     &CPU::sed, &CPU::sbc, &CPU::nop, &CPU::isb, &CPU::nop, &CPU::sbc, &CPU::inc, &CPU::isb,
-}, console(console), mem(console)
+}, mem(console), log(Logger::get_logger("CPU"))
 {
     // set initial state
     A = 0;
@@ -64,6 +60,7 @@ CPU::CPU(Console& console): instruction_table{
     N = false;  // Negative
     clock = 0;
     latest_instruction = 0x04; // NOP
+    log.set_level(DEBUG);
 }
 
 /* PUBLIC FUNCTIONS */

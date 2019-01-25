@@ -5,11 +5,8 @@
 #include <fstream>
 
 
-namespace {
-    Logger log = Logger::get_logger("main").set_level(DEBUG);
-}
-
 int test_CPU() {
+    Logger log = Logger::get_logger("main");
     Console console("nestest.nes");
     CPU c = console.get_cpu();
     c.reset();
