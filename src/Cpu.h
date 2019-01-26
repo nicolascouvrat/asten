@@ -20,6 +20,8 @@ public:
     void wait_for(int);
     void fast_forward_clock(long);
     void reset();
+    void trigger_nmi();
+    void trigger_irq();
     // used to force the pc value for tests
     void debug_set_pc(uint16_t);
     CPUStateData dump_state();

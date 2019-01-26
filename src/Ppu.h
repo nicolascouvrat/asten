@@ -20,6 +20,8 @@ class PPUCTRL: public Register {
         uint8_t read();
         void write(uint8_t);
         PPUCTRL(PPU&);
+        friend class PPU;
+    private:
         int nametable_flag; // on two bits
         bool increment_flag;
         bool background_table_flag, sprite_table_flag;
@@ -32,6 +34,7 @@ class PPUMASK: public Register {
         uint8_t read();
         void write(uint8_t);
         PPUMASK(PPU&);
+        friend class PPU;
     private:
         bool greyscale_flag;
         bool left_background_flag, left_sprites_flag;
@@ -102,7 +105,13 @@ class OAMDMA: public Register {
 class Console;
 class PPU {
     public:
+        const static int CLOCK_CYCLE = 341;
+        const static int VISIBLE_CLOCK_CYLE = 256;
+        const static int PRE_RENDER_SCAN_LINE = 261;
+        const static int POST_RENDER_SCAN_LINE = 240;
         PPU(Console& console);
+        uint8_t read_register(uint16_t);
+        void write_register(uint16_t, uint8_t);
         void reset();
         void step();
         bool get_nmi_occured();
@@ -123,7 +132,23 @@ class PPU {
         void make_cpu_wait(int);
         long get_clock();
     private:
+        void tick();
         void nmi_change();
+        void fetch_higher_tile_byte();
+        void fetch_lower_tile_byte();
+        void fetch_attribute_table_byte();
+        void fetch_nametable_byte();
+        uint8_t get_background_pixel();
+        void load_background_data();
+        uint8_t fetch_sprite_graphics(int, int);
+        void load_sprite_data();
+        void copy_horizontal_scroll();
+        void copy_vertical_scroll();
+        void increment_horizontal_scroll();
+        void increment_vertical_scroll();
+        void vertical_blank();
+
+
         PPUMemory mem;
         Console& console;
         // TODO: check

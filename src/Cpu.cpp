@@ -93,6 +93,11 @@ void CPU::wait_for(int cycles) { cycles_to_wait += cycles; }
 void CPU::fast_forward_clock(long ticks) { clock += ticks; }
 
 long CPU::step() {
+    if (cycles_to_wait > 0) {
+        // simulates CPU doing copy op to PPU memory
+        cycles_to_wait--;
+        return 1;
+    }
     // read instruction
     uint8_t opcode = next_byte();
     AddressingMode mode = static_cast<AddressingMode>(CPU::instruction_modes[opcode]);
@@ -192,6 +197,14 @@ void CPU::reset() {
     set_flags(0b100100);
 }
 
+void CPU::trigger_nmi() {
+    interrupt(NMI);
+}
+
+void CPU::trigger_irq() {
+    if (I) interrupt(IRQ);
+}
+
 /* PRIVATE FUNCTIONS */
 void CPU::interrupt(InterruptType interrupt) {
     if (interrupt != RESET) {
@@ -210,6 +223,7 @@ void CPU::interrupt(InterruptType interrupt) {
     switch(interrupt) {
         case NMI:
             pc = mem.read(0xfffa) | (mem.read(0xfffb) << 8);
+            cycles_to_wait += 7;
             break;
         case RESET:
             pc = mem.read(0xfffc) | (mem.read(0xfffd) << 8);
@@ -217,6 +231,7 @@ void CPU::interrupt(InterruptType interrupt) {
         case BRK:
         case IRQ:
             pc = mem.read(0xfffe) | (mem.read(0xffff) << 8);
+            cycles_to_wait += 7;
             break;
     }
 }

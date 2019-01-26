@@ -301,4 +301,105 @@ void PPU::nmi_change() {
     nmi_previous = nmi;
 }
 
+void PPU::tick() {
+    if (nmi_delay > 0) {
+        nmi_delay--;
+        if (nmi_delay == 0 && ppuctrl.nmi_flag && nmi_occured)
+            console.get_cpu().trigger_nmi();
+    }
+    if (ppumask.sprites_flag || ppumask.background_flag
+        && !is_even_screen && scan_line == 261 && clock == 339) {
+        clock = 0;
+        scan_line = 0;
+        is_even_screen = !is_even_screen;
+        frame_count++;
+        return;
+    }
 
+    clock++;
+    if (clock == PPU::CLOCK_CYCLE) {
+        clock = 0;
+        scan_line++;
+        if (scan_line > PPU::PRE_RENDER_SCAN_LINE) {
+            scan_line = 0;
+            frame_count++;
+            is_even_screen = !is_even_screen;
+        }
+    }
+}
+
+void PPU::vertical_blank() {
+    nmi_occured = true;
+    nmi_change();
+}
+
+void PPU::increment_horizontal_scroll() {
+    if ((current_vram & 0x1f) == 31) {
+        // set coarse x to 0, switch horizontal nametable
+        current_vram &= 0xffe0;
+        current_vram ^= 0x400;
+    }
+    else current_vram += 1; // increment coarse x
+}
+
+void PPU::increment_vertical_scroll() {
+    if ((current_vram & 0x7000) != 0x7000)
+        current_vram += 0x1000;
+    else {
+        current_vram &= 0x8fff;
+        int coarse_y = (current_vram & 0x3e0) >> 5;
+        if (coarse_y == 29) {
+            coarse_y = 0;
+            current_vram ^= 0x800;
+        }
+        else if (coarse_y == 31)
+            coarse_y = 0;
+        else
+            coarse_y++;
+        current_vram = (current_vram & 0xfc1f) | (coarse_y << 5);
+    }
+}
+
+void PPU::copy_horizontal_scroll() {
+    current_vram = (current_vram & 0xfbe0) | (temporary_vram & 0x041f);
+}
+
+void PPU::copy_vertical_scroll() {
+    current_vram = (current_vram & 0x841f) | (temporary_vram & 0x7be0);
+}
+
+uint8_t PPU::fetch_sprite_graphics(int i, int row) {
+    return 0;
+}
+
+void PPU::load_sprite_data() {
+}
+
+uint8_t PPU::get_background_pixel() {
+    return 0;
+}
+
+void PPU::load_background_data() {
+}
+
+void PPU::fetch_nametable_byte() {
+}
+
+void PPU::fetch_attribute_table_byte() {
+}
+
+void PPU::fetch_lower_tile_byte() {
+}
+
+void PPU::fetch_higher_tile_byte() {
+}
+
+void PPU::step() {
+}
+
+uint8_t PPU::read_register(uint16_t address) {
+    return 0;
+}
+
+void PPU::write_register(uint16_t address, uint8_t value) {
+}
