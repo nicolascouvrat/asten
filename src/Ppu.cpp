@@ -77,8 +77,9 @@ uint8_t PPUSTATUS::read() {
     value |= vertical_blank_started_flag << 7;
     value |= sprite_zero_flag << 6;
     value |= sprite_overflow_flag << 5;
-    if (ppu.get_nmi_occured())
+    if (ppu.get_nmi_occured()) {
         value |= 1 << 7;
+    }
     ppu.set_nmi_status(false, false);
     value |= ppu.get_latch_value() & 0x1f;
 
@@ -246,14 +247,16 @@ PPU::PPU(Console& _console):
 
 /* PUBLIC FUNCTIONS */
 void PPU::reset() {
-    clock = 0;
-    scan_line = 0;
+    clock = 340;
+    scan_line = 240;
     ppuctrl.write(0);
     ppumask.write(0);
     oamaddr.write(0);
 }
 
-bool PPU::get_nmi_occured() { return nmi_occured; }
+bool PPU::get_nmi_occured() { 
+    return nmi_occured;
+}
 
 int PPU::get_latch_value() { return latch_value; }
 
@@ -298,13 +301,15 @@ void PPU::make_cpu_wait(int cycles) {
 long PPU::get_clock() { return clock; }
     
 uint8_t PPU::read_register(uint16_t address) {
+    uint8_t value;
     switch(address) {
         case 0x2000:
             return ppuctrl.read();
         case 0x2001:
             return ppumask.read();
         case 0x2002:
-            return ppustatus.read();
+            value = ppustatus.read();
+            return value;
         case 0x2003:
             return oamaddr.read();
         case 0x2004:
@@ -323,6 +328,7 @@ uint8_t PPU::read_register(uint16_t address) {
 }
 
 void PPU::write_register(uint16_t address, uint8_t value) {
+    latch_value = value;
     switch(address) {
         case 0x2000:
              ppuctrl.write(value);
@@ -346,6 +352,7 @@ void PPU::write_register(uint16_t address, uint8_t value) {
              ppuaddr.write(value);
              break;
         case 0x2007:
+             log.debug() << "vram=" << hex(current_vram) << " value=" << hex(value) << "\n";
              ppudata.write(value);
              break;
         case 0x4014:
@@ -390,8 +397,12 @@ void PPU::tick() {
         }
     }
 }
+void PPU::clear_vertical_blank() {
+    nmi_occured = false;
+    nmi_change();
+}
 
-void PPU::vertical_blank() {
+void PPU::set_vertical_blank() {
     nmi_occured = true;
     nmi_change();
 }
@@ -583,8 +594,7 @@ void PPU::step() {
     bool rendering_enabled = ppumask.background_flag || ppumask.sprites_flag;
     bool is_visible_clock = (clock >= 1) && (clock <= 256);
     bool is_visible_line = scan_line < PPU::POST_RENDER_SCAN_LINE;
-    bool is_prerender_line = scan_line == PPU::POST_RENDER_SCAN_LINE;
-    // TODO: check
+    bool is_prerender_line = scan_line == PPU::PRE_RENDER_SCAN_LINE;
     bool is_postrender_line = scan_line == PPU::POST_RENDER_SCAN_LINE;
     bool is_fetch_line = is_visible_line && is_prerender_line;
     bool is_fetch_clock = is_visible_clock && ((clock <= 336) && (clock >= 321));
@@ -627,12 +637,12 @@ void PPU::step() {
             copy_vertical_scroll();
     }
     if (is_prerender_line && (clock == 1)) {
-        vertical_blank();
+        clear_vertical_blank();
         ppustatus.sprite_overflow_flag = false;
         ppustatus.sprite_zero_flag = false;
     }
 
-    if (is_postrender_line && (clock == 1)) vertical_blank();
+    if (is_postrender_line && (clock == 1)) set_vertical_blank();
 }
 
 SpritePixel PPU::get_sprite_pixel() {

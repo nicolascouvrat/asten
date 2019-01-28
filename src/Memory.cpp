@@ -125,8 +125,14 @@ uint8_t PPUMemory::read(uint16_t address) {
 void PPUMemory::write(uint16_t address, uint8_t value) {
     if (address < 0x2000)
         console.get_mapper()->write_chr(address, value);
-    else if (address < 0x3000)
-        name_table[console.get_mapper()->mirror_address(address) - 0x2000] = value;
+    else if (address < 0x3000) {
+        if (address == 0x2db8)
+            log.debug() << "got here" << "\n";
+        uint16_t add =console.get_mapper()->mirror_address(address) - 0x2000; 
+        if (address == 0x2db8)
+            log.debug() << "got there" << hex(add) << "\n";
+        name_table[add] = value;
+    }
     else if (0x3f00 <= address < 0x4000) {
         uint16_t pointer =  address % 32;
         if (pointer >= 16 && (pointer % 4) == 0)

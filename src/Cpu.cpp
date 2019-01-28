@@ -90,7 +90,10 @@ void CPU::debug_set_pc(uint16_t address) { pc = address; }
 
 void CPU::wait_for(int cycles) { cycles_to_wait += cycles; } 
 
-void CPU::fast_forward_clock(long ticks) { clock += ticks; }
+void CPU::fast_forward_clock(long ticks) { 
+    clock += ticks;
+    clock = clock % 341;
+}
 
 long CPU::step() {
     if (cycles_to_wait > 0) {
@@ -187,7 +190,6 @@ long CPU::step() {
     if (page_changed)
         clock += instruction_cycles_extra[opcode];
         
-    // TODO: change that when PPU is there 
     return clock - start_clock;
 }
 

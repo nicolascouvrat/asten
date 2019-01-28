@@ -154,7 +154,8 @@ class PPU {
         void copy_vertical_scroll();
         void increment_horizontal_scroll();
         void increment_vertical_scroll();
-        void vertical_blank();
+        void clear_vertical_blank();
+        void set_vertical_blank();
         void render_pixel();
         SpritePixel get_sprite_pixel();
 
