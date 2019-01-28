@@ -4,6 +4,12 @@
 #include <cstdint>
 #include <vector>
 #include "Memory.h"
+#include "Utilities.h"
+
+struct SpritePixel {
+    int num;
+    uint8_t color;
+};
 
 class PPU;
 class Register {
@@ -47,6 +53,7 @@ class PPUSTATUS: public Register {
         uint8_t read();
         void write(uint8_t);
         PPUSTATUS(PPU&);
+        friend class PPU;
     private:
         bool sprite_overflow_flag;
         bool sprite_zero_flag;
@@ -68,6 +75,7 @@ class OAMDATA: public Register {
         void write(uint8_t);
         OAMDATA(PPU&);
         void upload(const std::vector<uint8_t>&);
+        uint8_t read_index(uint8_t);
     private:
         uint8_t data[256];
 };
@@ -140,15 +148,17 @@ class PPU {
         void fetch_nametable_byte();
         uint8_t get_background_pixel();
         void load_background_data();
-        uint8_t fetch_sprite_graphics(int, int);
+        int fetch_sprite_graphics(int, int);
         void load_sprite_data();
         void copy_horizontal_scroll();
         void copy_vertical_scroll();
         void increment_horizontal_scroll();
         void increment_vertical_scroll();
         void vertical_blank();
+        void render_pixel();
+        SpritePixel get_sprite_pixel();
 
-
+        Logger log;
         PPUMemory mem;
         Console& console;
         // TODO: check
@@ -181,7 +191,7 @@ class PPU {
         // Background temp vars
         uint8_t name_table_byte, attribute_table_byte;
         uint8_t lower_tile_byte, higher_tile_byte;
-        int background_data; // 64 bits
+        long background_data; // 64 bits
 
         // Sprite temp vars
         int sprite_count;

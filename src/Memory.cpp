@@ -76,6 +76,10 @@ void Memory::debug_dump(uint16_t offset, uint16_t range, uint16_t per_line) {
 uint8_t CPUMemory::read(uint16_t address) {
     if (address < 0x2000)
         return ram[address % CPUMemory::RAM_SIZE];
+    else if (address < 0x4000)
+        return console.get_ppu().read_register(0x2000 + address % 8);
+    else if (address == 0x4014)
+        return console.get_ppu().read_register(address);
     if (address < 0x6000) {
         // TODO: implement PPU
         log.error() << "UNIMPLEMENTED READ AT " << hex(address) << "\n";
@@ -89,8 +93,12 @@ uint8_t CPUMemory::read(uint16_t address) {
 void CPUMemory::write(uint16_t address, uint8_t value) {
     if (address < 0x2000)
         ram[address % CPUMemory::RAM_SIZE] = value;
+    else if (address < 0x4000)
+        console.get_ppu().write_register(0x2000 + address % 8, value);
+    else if (address == 0x4014)
+        console.get_ppu().write_register(address, value);
     else if (address < 0x6000) {
-        // TODO: implement PPU
+        // TODO: implement APU
         log.error() << "UNIMPLEMENTED WRITE AT " << hex(address) << "\n";
     }
     else

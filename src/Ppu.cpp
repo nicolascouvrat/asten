@@ -114,6 +114,8 @@ void OAMDATA::upload(const std::vector<uint8_t>& page) {
     std::copy(page.begin(), page.end(), data);
 }
 
+uint8_t OAMDATA::read_index(uint8_t index) { return data[index]; }
+
 PPUSCROLL::PPUSCROLL(PPU& _ppu): Register(_ppu) {}
 
 void PPUSCROLL::write(uint8_t value) {
@@ -199,12 +201,13 @@ void OAMDMA::write(uint8_t value) {
 }
 
 uint8_t OAMDMA::read() {
-    return 0;
+    throw invalid_register_op("OAMDMA", "read");
 }
 
 PPU::PPU(Console& _console):
     mem(_console),
     console(_console),
+    log(Logger::get_logger("PPU")),
     ppuctrl(PPUCTRL(*this)),
     ppumask(PPUMASK(*this)),
     ppustatus(PPUSTATUS(*this)),
@@ -237,6 +240,7 @@ PPU::PPU(Console& _console):
     background_data = 0; // 64 bits
 
     sprite_count = 0;
+    log.set_level(DEBUG);
 
 }
 
@@ -293,6 +297,65 @@ void PPU::make_cpu_wait(int cycles) {
 
 long PPU::get_clock() { return clock; }
     
+uint8_t PPU::read_register(uint16_t address) {
+    switch(address) {
+        case 0x2000:
+            return ppuctrl.read();
+        case 0x2001:
+            return ppumask.read();
+        case 0x2002:
+            return ppustatus.read();
+        case 0x2003:
+            return oamaddr.read();
+        case 0x2004:
+            return oamdata.read();
+        case 0x2005:
+            return ppuscroll.read();
+        case 0x2006:
+            return ppuaddr.read();
+        case 0x2007:
+            return ppudata.read();
+        case 0x4014:
+            return oamdma.read();
+        default:
+            throw std::runtime_error("Invalid PPU read address=" + address);
+    }
+}
+
+void PPU::write_register(uint16_t address, uint8_t value) {
+    switch(address) {
+        case 0x2000:
+             ppuctrl.write(value);
+             break;
+        case 0x2001:
+             ppumask.write(value);
+             break;
+        case 0x2002:
+             ppustatus.write(value);
+             break;
+        case 0x2003:
+             oamaddr.write(value);
+             break;
+        case 0x2004:
+             oamdata.write(value);
+             break;
+        case 0x2005:
+             ppuscroll.write(value);
+             break;
+        case 0x2006:
+             ppuaddr.write(value);
+             break;
+        case 0x2007:
+             ppudata.write(value);
+             break;
+        case 0x4014:
+             oamdma.write(value);
+             break;
+        default:
+            throw std::runtime_error("Invalid PPU write address=" + address);
+    }
+}
+
 /* PRIVATE FUNCTIONS */
 void PPU::nmi_change() {
     bool nmi = ppuctrl.nmi_flag && nmi_occured;
@@ -368,38 +431,242 @@ void PPU::copy_vertical_scroll() {
     current_vram = (current_vram & 0x841f) | (temporary_vram & 0x7be0);
 }
 
-uint8_t PPU::fetch_sprite_graphics(int i, int row) {
-    return 0;
+int PPU::fetch_sprite_graphics(int num, int row) {
+    /* Fetches the pixel data for sprite num, 
+     * where row is the row WITHIN the sprite (0 = top) 
+     * */
+    uint8_t tile_index = oamdata.read_index(num * 4 + 1);
+    uint8_t attributes = oamdata.read_index(num * 4 + 2);
+    bool vertical_flip = (attributes & 0x80) == 0x80;
+    bool horizontal_flip = (attributes & 0x40) == 0x40;
+    bool table;
+    if (!ppuctrl.sprite_size_flag) {
+        if (vertical_flip) row = 7 - row;
+        table = ppuctrl.sprite_table_flag;
+    }
+    else {
+        if (vertical_flip) row = 15 - row;
+        table = tile_index & 1;
+        tile_index &= 0xfe;
+        if (row > 7) {
+            tile_index++;
+            row -= 8;
+        }
+    }
+    uint16_t address = 0x1000 * table + 0x10 * tile_index + row;
+    uint8_t low_tile_byte = mem.read(address);
+    uint8_t high_tile_byte = mem.read(address + 8);
+    // combine the data for 8 pixels
+    uint8_t a, b, c;
+    int _sprite_graphics = 0;
+    a = (attributes & 0b11) << 2;
+    for (int i = 0; i < 8; i++) {
+        if (horizontal_flip) {
+            b = (high_tile_byte & 1) << 1;
+            c = (high_tile_byte & 1) << 0;
+            low_tile_byte >>= 1;
+            high_tile_byte >>= 1;
+        }
+        else {
+            b = (high_tile_byte & 0x80) >> 6;
+            c = (low_tile_byte & 0x80) >> 7;
+            low_tile_byte <<= 1;
+            high_tile_byte <<= 1;
+        }
+        _sprite_graphics <<= 4;
+        _sprite_graphics |= (a | b | c);
+    }
+    return _sprite_graphics;
 }
 
 void PPU::load_sprite_data() {
+    // gets all sprite data for current scan line
+    int height = ppuctrl.sprite_size_flag ? 16 : 8;
+    int _sprite_count = 0;
+    uint8_t x, y, attribute_data, top, bottom;
+    for (int i = 0; i < 64; i++) {
+        x = oamdata.read_index(i * 4 + 3);
+        attribute_data = oamdata.read_index(i * 4 + 2);
+        y = oamdata.read_index(i * 4);
+        top = y;
+        bottom = y + height;
+        if ((scan_line < top) || (scan_line > bottom)) continue;
+        _sprite_count++;
+        if (_sprite_count <= 8) {
+            sprite_graphics[_sprite_count - 1] = fetch_sprite_graphics(i, scan_line - top);
+            sprite_positions[_sprite_count - 1] = x;
+            sprite_priorities[_sprite_count - 1] = (attribute_data >> 5) & 1;
+            sprite_indexes[_sprite_count - 1] = i;
+        }
+    }
+    if (_sprite_count > 8) {
+        // no rendering if we hit more than 8 sprites, but set overflow flag
+        _sprite_count = 8;
+        ppustatus.sprite_overflow_flag = true;
+    }
+    sprite_count = _sprite_count;
 }
 
 uint8_t PPU::get_background_pixel() {
-    return 0;
+    /* Gets pixel to render from the pre-loaded 64 bits of background data
+     * The progressive shift is done in the main loop.
+     * */
+    if (!ppumask.background_flag) return 0;
+    int cycle_data = background_data >> 32;
+    uint8_t pixel_data = (cycle_data >> (7 - fine_scroll) * 4) & 0xf; 
+    return pixel_data;
 }
 
 void PPU::load_background_data() {
+    /* Due to the fact that get_background_pixel() consumes data,
+     * we need to refill it (or rather pre fill it in the previous cycle). 
+     * One pixel needs 4 bits of info, total of 32 bits/cycle.
+     * */
+    int data = 0;
+    uint8_t a, b, c;
+    a = attribute_table_byte;
+    for (int i = 0; i < 8; i ++) {
+        b = (higher_tile_byte & 0x80) >> 6;
+        c = (lower_tile_byte & 0x80) >> 7;
+        data <<= 4;
+        higher_tile_byte <<= 1;
+        lower_tile_byte <<= 1;
+        data |= (a | b | c);
+    }
+    background_data |= data;
 }
 
 void PPU::fetch_nametable_byte() {
+    /* Given by 12 lowests bits of VRAM + $2000 offset */
+    name_table_byte = mem.read(0x2000 + (current_vram & 0xfff));
 }
 
 void PPU::fetch_attribute_table_byte() {
+    /* To get the attribute table byte, we need to combine:
+     *     - the 2 bits selecting the name table,
+     *     - the three highest bits of the coarse Y scroll,
+     *     - the three highest bits of the coarse X scroll
+     * With a #23C0 offset.
+     * */
+    uint16_t address = 0x23c0;
+    address |= current_vram & 0xc00;
+    address |= (current_vram & 0x380) >> 4;
+    address |= (current_vram & 0x1c) >> 2;
+    attribute_table_byte = mem.read(address);
 }
 
 void PPU::fetch_lower_tile_byte() {
+    /*
+     * To fetch a tile byte, combine:
+     *  - table index(stored in PPUCTRL) * $1000
+     *  - tile index (in the name table byte) * $10
+     *  - fine Y scroll (3 highest bits of VRAM address)
+     * */
+    uint8_t fine_y = (current_vram >> 12) & 0x7;
+    uint8_t table_index = ppuctrl.background_table_flag;
+    uint8_t tile_index = name_table_byte;
+    uint16_t address = 0x1000 * table_index + 0x10 * tile_index + fine_y;
+    lower_tile_byte = mem.read(address);
 }
 
 void PPU::fetch_higher_tile_byte() {
+    /* Read one byte above the lower tile byte */
+    uint8_t fine_y = (current_vram >> 12) & 0x7;
+    uint8_t table_index = ppuctrl.background_table_flag;
+    uint8_t tile_index = name_table_byte;
+    uint16_t address = 0x1000 * table_index + 0x10 * tile_index + fine_y;
+    higher_tile_byte = mem.read(address + 8);
 }
 
 void PPU::step() {
+    tick();
+    bool rendering_enabled = ppumask.background_flag || ppumask.sprites_flag;
+    bool is_visible_clock = (clock >= 1) && (clock <= 256);
+    bool is_visible_line = scan_line < PPU::POST_RENDER_SCAN_LINE;
+    bool is_prerender_line = scan_line == PPU::POST_RENDER_SCAN_LINE;
+    // TODO: check
+    bool is_postrender_line = scan_line == PPU::POST_RENDER_SCAN_LINE;
+    bool is_fetch_line = is_visible_line && is_prerender_line;
+    bool is_fetch_clock = is_visible_clock && ((clock <= 336) && (clock >= 321));
+    if (rendering_enabled) {
+        if (is_visible_line && is_visible_clock) render_pixel();
+        if (is_fetch_line) {
+            if (is_fetch_clock) {
+                int _switch = clock % 8;
+                // make sure we have 8 new bits every 2 ticks
+                background_data <<= 4;
+                switch (_switch) {
+                    case 0:
+                        increment_horizontal_scroll();
+                        load_background_data();
+                        break;
+                    case 1:
+                        fetch_nametable_byte();
+                        break;
+                    case 3:
+                        fetch_attribute_table_byte();
+                        break;
+                    case 5:
+                        fetch_lower_tile_byte();
+                        break;
+                    case 7:
+                        fetch_higher_tile_byte();
+                        break;
+                    default:
+                        break;
+                }
+
+                if (clock == 256) increment_vertical_scroll();
+
+                if (clock == 257) copy_horizontal_scroll();
+
+                if (clock == 257) load_sprite_data();
+            }
+        }
+        if (is_prerender_line && (clock >= 280) && (clock <= 304))
+            copy_vertical_scroll();
+    }
+    if (is_prerender_line && (clock == 1)) {
+        vertical_blank();
+        ppustatus.sprite_overflow_flag = false;
+        ppustatus.sprite_zero_flag = false;
+    }
+
+    if (is_postrender_line && (clock == 1)) vertical_blank();
 }
 
-uint8_t PPU::read_register(uint16_t address) {
-    return 0;
+SpritePixel PPU::get_sprite_pixel() {
+    if (!ppumask.sprites_flag) return {0, 0};
+    for (int i; i < sprite_count; i++) {
+        int offset = (clock - 1) - sprite_positions[i];
+        if ((offset < 0) || (offset > 7)) continue;
+        uint8_t color = (sprite_graphics[i] >> (7 - offset) * 4) & 0xf;
+        if (color % 4 == 0) continue; // sprite is transparent
+        return {i, color};
+    }
+    return {0, 0};
 }
-
-void PPU::write_register(uint16_t address, uint8_t value) {
+void PPU::render_pixel() {
+    int x = clock - 1;
+    int y = scan_line;
+    uint8_t background = get_background_pixel();
+    int color;
+    SpritePixel sprite_pix = get_sprite_pixel();
+    if ((x < 8) && !ppumask.left_background_flag) background = 0;
+    if ((x < 8) && !ppumask.left_sprites_flag) sprite_pix.color = 0;
+    bool b_opaque = background % 4 != 0;
+    bool s_opaque = sprite_pix.color % 4 != 0;
+    if (!s_opaque && !b_opaque) color = 0;
+    else if (!b_opaque && s_opaque) color = sprite_pix.color | 0x10;
+    else if (!s_opaque && b_opaque) color = background;
+    else {
+        if ((sprite_indexes[sprite_pix.num] == 0) && (x < 255))
+            ppustatus.sprite_zero_flag = true;
+        if (sprite_priorities[sprite_pix.num] == 0)
+            color = sprite_pix.color | 0x10;
+        else
+            color =  background;
+    }
+    // TODO: PALETTE
+    log.debug() << "PIXEL COLOR TO RENDER: " << hex(color) << "\n";
 }

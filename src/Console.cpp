@@ -15,6 +15,8 @@ Console::Console(std::string name):
 void Console::step() {
     long cpu_steps = cpu.step();
     cpu.fast_forward_clock(2 * cpu_steps);
+    for (int i = 0; i < 3 * cpu_steps; i++)
+        ppu.step();
 }
     
 
