@@ -2,6 +2,8 @@
 #include <string>
 #include "Console.h"
 #include "Cpu.h"
+// TODO: remove
+#include <iostream>
 
 
 std::runtime_error invalid_register_op(std::string register_name, std::string op) {
@@ -165,13 +167,24 @@ PPUDATA::PPUDATA(PPU& _ppu): Register(_ppu) {
 }
 
 void PPUDATA::write(uint8_t value) {
-    uint16_t current_vram = ppu.get_current_vram();
-    ppu.get_memory().write(current_vram & 0x3fff, value);
+    std::cout << "write to " << hex(ppu.current_vram) << "\n";
+    std::cout << hex(ppu.current_vram & 0x3fff) << "\n";
+    ppu.get_memory().write(ppu.current_vram & 0x3fff, value);
+    // uint16_t current_vram = ppu.get_current_vram();
+    // std::cout << hex(current_vram) << " " << hex(ppu.current_vram) << "\n";
+    // uint16_t add = current_vram & 0x3fff;
+    // PPUMemory& mem = ppu.get_memory();
+    // mem.write(add, value);
     if (ppu.get_increment_flag())
-        ppu.set_current_vram(current_vram + 32);
-    else
-        ppu.set_current_vram(current_vram + 1);
+        ppu.current_vram += 32;
+        // ppu.set_current_vram(current_vram + 32);
+    else {
+        ppu.current_vram += 1;
+        // ppu.set_current_vram(current_vram + 1);
+        std::cout << "became" << hex(ppu.current_vram) << "\n";
+    }
 }
+
 
 uint8_t PPUDATA::read() {
     uint8_t temp = buffered_value;
@@ -258,7 +271,10 @@ bool PPU::get_nmi_occured() {
     return nmi_occured;
 }
 
-int PPU::get_latch_value() { return latch_value; }
+int PPU::get_latch_value() { 
+    log.debug() << "latch " << hex(latch_value) << "\n";
+    return latch_value; 
+}
 
 void PPU::set_nmi_status(bool occured, bool previous) {
     nmi_occured = occured;
@@ -275,7 +291,10 @@ void PPU::increment_oam_address() { oamaddr.write(oamaddr.read() + 1); }
 
 void PPU::set_current_vram(uint16_t val){ current_vram = val; }
 
-uint16_t PPU::get_current_vram() { return current_vram; }
+uint16_t PPU::get_current_vram() { 
+     log.debug() << "curr" << hex(current_vram);
+    return current_vram;
+}
 
 void PPU::set_temporary_vram(uint16_t val){ temporary_vram = val; }
 
@@ -329,6 +348,7 @@ uint8_t PPU::read_register(uint16_t address) {
 
 void PPU::write_register(uint16_t address, uint8_t value) {
     latch_value = value;
+    log.debug() << "set_latch" << hex(value) << "\n";
     switch(address) {
         case 0x2000:
              ppuctrl.write(value);

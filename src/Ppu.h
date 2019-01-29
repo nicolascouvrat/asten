@@ -139,6 +139,7 @@ class PPU {
         void upload_to_oamdata(uint16_t, uint16_t);
         void make_cpu_wait(int);
         long get_clock();
+        friend class PPUDATA;
     private:
         void tick();
         void nmi_change();

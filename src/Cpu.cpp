@@ -99,6 +99,7 @@ long CPU::step() {
     if (cycles_to_wait > 0) {
         // simulates CPU doing copy op to PPU memory
         cycles_to_wait--;
+        clock++;
         return 1;
     }
     // read instruction

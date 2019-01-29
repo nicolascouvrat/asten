@@ -59,6 +59,7 @@ int test_PPU() {
             log.debug() << std::setw(12) << "Should be: " << benchmark_state << "\n";
             log.debug() << std::setw(12) << "Got: " << cpu_state << "\n";
             log.debug() << std::setw(12) << "Prev: " << prev_cpu_state << "\n";
+            cpu.get_memory().debug_dump(0x8170, 0x10, 0x10);
             break;
         }
         prev_cpu_state = cpu_state;
@@ -68,6 +69,20 @@ int test_PPU() {
     }
     return 0;
     
+}
+
+int dummy_PPU() {
+    Logger log = Logger::get_logger("main");
+    log.set_level(DEBUG);
+    Console console("color_test.nes");
+    int max_cycles = 37000;
+    int counter =  0;
+    while (true) {
+        console.step();
+        counter ++;
+        log.debug() << counter << "\n";
+    }
+    return 0;
 }
 
 int main(void) {

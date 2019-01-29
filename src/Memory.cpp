@@ -2,12 +2,14 @@
 #include "Console.h"
 #include "Mapper.h"
 
+// TODO: remove
+#include <iostream>
+
 /* 
  * CPU MEMORY ORGANIZATION (NES's 6502)
  * $0000
  *     2kb RAM, mirrored 4 times
- * $2000
- *     Access to PPU I/O registers (8 of them, mirrored all accross)
+ * $2000 *     Access to PPU I/O registers (8 of them, mirrored all accross)
  * $4000
  *     $4000 - $4013: APU register
  *     $4014 ppu OAMDMA register
@@ -83,7 +85,7 @@ uint8_t CPUMemory::read(uint16_t address) {
     if (address < 0x6000) {
         // TODO: implement PPU
         log.error() << "UNIMPLEMENTED READ AT " << hex(address) << "\n";
-        return -1;
+        return 0;
     }
     else
         return console.get_mapper()->read_prg(address); 
@@ -110,7 +112,7 @@ uint8_t PPUMemory::read(uint16_t address) {
         return console.get_mapper()->read_chr(address);
     if (address < 0x3000)
         return name_table[console.get_mapper()->mirror_address(address) - 0x2000];
-    if (0x3f00 <= address < 0x4000) {
+    if ((0x3f00 <= address) && (address < 0x4000)) {
         uint16_t pointer =  address % 32;
         if (pointer >= 16 && (pointer % 4) == 0)
             pointer -= 16;
@@ -123,17 +125,14 @@ uint8_t PPUMemory::read(uint16_t address) {
 }
 
 void PPUMemory::write(uint16_t address, uint8_t value) {
+    log.debug() << "enter" << "\n";
     if (address < 0x2000)
         console.get_mapper()->write_chr(address, value);
     else if (address < 0x3000) {
-        if (address == 0x2db8)
-            log.debug() << "got here" << "\n";
-        uint16_t add =console.get_mapper()->mirror_address(address) - 0x2000; 
-        if (address == 0x2db8)
-            log.debug() << "got there" << hex(add) << "\n";
+        uint16_t add = console.get_mapper()->mirror_address(address) - 0x2000; 
         name_table[add] = value;
     }
-    else if (0x3f00 <= address < 0x4000) {
+    else if ((0x3f00 <= address) && (address < 0x4000)) {
         uint16_t pointer =  address % 32;
         if (pointer >= 16 && (pointer % 4) == 0)
             pointer -= 16;

@@ -53,8 +53,9 @@ Mapper::Mapper(NESHeader header, const std::vector<uint8_t>& raw_data):
 uint16_t Mapper::mirror_address(uint16_t address) {
     int table_number, pointer;
     table_number = (address - PPUMirror::OFFSET) / PPUMirror::TABLE_SIZE;
+    log.debug() << table_number << "\n";
     pointer = (address - PPUMirror::OFFSET) % PPUMirror::TABLE_SIZE;
-    pointer += PPUMirror::OFFSET + mirror.get_table(table_number) * PPUMirror::TABLE_SIZE;
+    pointer += PPUMirror::OFFSET + mirror->get_table(table_number) * PPUMirror::TABLE_SIZE;
     return pointer;
 }
 
@@ -86,17 +87,27 @@ void NROMMapper::write_chr(uint16_t address, uint8_t value) {
     chr_rom[address] = value;
 }
 
-PPUMirror PPUMirror::from_id(int id) {
-    switch(id) {
-        case 0:
-            return HorizontalMirror();
-        case 1:
-            return VerticalMirror();
-        default:
-            return PPUMirror();
+PPUMirror* PPUMirror::from_id(int id) {
+    if (id == 0) {
+        return new HorizontalMirror();
     }
+    if (id == 1) {
+        return new VerticalMirror();
+    }
+    return new NoMirror();
 }
 
-int PPUMirror::get_table(int num) {
+int NoMirror::get_table(int num) {
+    int mirror_pattern[4] = {1, 2, 3, 4};
+    return mirror_pattern[num];
+}
+
+int VerticalMirror::get_table(int num) {
+    int mirror_pattern[4] = {0, 1, 0, 1};
+    return mirror_pattern[num];
+}
+
+int HorizontalMirror::get_table(int num) {
+    int mirror_pattern[4] = {0, 0, 2, 2};
     return mirror_pattern[num];
 }
