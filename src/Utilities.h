@@ -23,6 +23,35 @@ inline std::ostream& operator<< (std::ostream& o, const HexInt<T> &hi) {
 template<class T>
 inline HexInt<T> hex(T i) { return HexInt<T>(i); } 
 
+struct PPUStateData {
+    long clock, frame_count;
+    int scan_line, latch_value;
+};
+
+inline std::istream& operator>> (std::istream& in, PPUStateData& d) {
+    in >> d.clock;
+    in >> d.frame_count;
+    in >> d.scan_line;
+    in >> d.latch_value;
+    return in;
+}
+
+inline std::ostream& operator<< (std::ostream& o, const PPUStateData& d) {
+    return o
+        << std::left
+        << d.frame_count << " "
+        << "LV: " << hex((uint8_t)d.latch_value)
+        << "SL: " << d.scan_line << " "
+        << "CYC: " << d.clock;
+}
+
+inline bool operator== (const PPUStateData& a, const PPUStateData& b) {
+    return a.clock == b.clock
+        && a.frame_count == b.frame_count
+        && a.scan_line == b.scan_line
+        && a.latch_value == b.latch_value;
+}
+
 struct CPUStateData {
     /* Used to view the inside of the CPU */
     int A, X, Y, sp, pc, flags;

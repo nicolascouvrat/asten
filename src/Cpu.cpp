@@ -215,8 +215,8 @@ void CPU::interrupt(InterruptType interrupt) {
         if (interrupt == BRK)
             current_flags = current_flags & 0x10; // set B on the copy
         // push lower then higher PC byte on stack
-        push_stack(pc);
         push_stack(pc >> 8);
+        push_stack(pc);
         // save flags
         push_stack(current_flags);
         // disable interrupts

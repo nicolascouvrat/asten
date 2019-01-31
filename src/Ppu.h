@@ -118,6 +118,7 @@ class PPU {
         const static int PRE_RENDER_SCAN_LINE = 261;
         const static int POST_RENDER_SCAN_LINE = 240;
         PPU(Console& console);
+        PPUStateData dump_state();
         uint8_t read_register(uint16_t);
         void write_register(uint16_t, uint8_t);
         void reset();

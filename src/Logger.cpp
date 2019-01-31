@@ -3,19 +3,43 @@
 
 std::map<std::string, Logger> Logger::logger_map = std::map<std::string, Logger>();
 
-Logger Logger::get_logger(std::string name) {
+Logger Logger::get_logger(std::string name, std::string file_name) {
     std::map<std::string, Logger>::iterator it = logger_map.find(name);
     if (it != logger_map.end())
         return it->second;
     else
-        return (logger_map.emplace(std::make_pair(name, Logger(name))).first)->second;
+        return (logger_map.emplace(std::make_pair(name, Logger(name, file_name))).first)->second;
 }
 
-Logger::Logger(std::string _name):
+Logger::Logger(const Logger& log):
+    name(log.name),
+    level(log.level),
+    out(buf),
+    output_file_name(log.output_file_name)
+{
+    if (output_file_name != "") {
+        of.open(output_file_name);
+        buf = of.rdbuf();
+    }
+    else
+        buf = std::cout.rdbuf();
+    out.rdbuf(buf);
+}
+
+Logger::Logger(std::string _name, std::string file_name):
     name(_name),
-    out(std::cout),
-    level(INFO)
-{}
+    level(INFO),
+    out(buf),
+    output_file_name(file_name)
+{
+    if (output_file_name != "") {
+        of.open(output_file_name);
+        buf = of.rdbuf();
+    }
+    else
+        buf = std::cout.rdbuf();
+    out.rdbuf(buf);
+}
 
 void Logger::output_header(LogLevel l) {
     std::string label;

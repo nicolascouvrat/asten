@@ -72,12 +72,12 @@ int test_PPU() {
 }
 
 int dummy_PPU() {
-    Logger log = Logger::get_logger("main");
+    Logger log = Logger::get_logger("main", "test.log");
     log.set_level(DEBUG);
     Console console("color_test.nes");
     int max_cycles = 37000;
     int counter =  0;
-    while (true) {
+    while (counter < max_cycles) {
         console.step();
         counter ++;
         log.debug() << counter << "\n";

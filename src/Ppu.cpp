@@ -218,10 +218,19 @@ uint8_t OAMDMA::read() {
     throw invalid_register_op("OAMDMA", "read");
 }
 
+PPUStateData PPU::dump_state() {
+    PPUStateData d;
+    d.clock = clock;
+    d.frame_count = frame_count;
+    d.scan_line = scan_line;
+    d.latch_value = latch_value;
+    return d;
+}
+
 PPU::PPU(Console& _console):
     mem(_console),
     console(_console),
-    log(Logger::get_logger("PPU")),
+    log(Logger::get_logger("PPU", "ppu.log")),
     ppuctrl(PPUCTRL(*this)),
     ppumask(PPUMASK(*this)),
     ppustatus(PPUSTATUS(*this)),
@@ -272,7 +281,6 @@ bool PPU::get_nmi_occured() {
 }
 
 int PPU::get_latch_value() { 
-    log.debug() << "latch " << hex(latch_value) << "\n";
     return latch_value; 
 }
 
@@ -292,7 +300,6 @@ void PPU::increment_oam_address() { oamaddr.write(oamaddr.read() + 1); }
 void PPU::set_current_vram(uint16_t val){ current_vram = val; }
 
 uint16_t PPU::get_current_vram() { 
-     log.debug() << "curr" << hex(current_vram);
     return current_vram;
 }
 
@@ -348,7 +355,6 @@ uint8_t PPU::read_register(uint16_t address) {
 
 void PPU::write_register(uint16_t address, uint8_t value) {
     latch_value = value;
-    log.debug() << "set_latch" << hex(value) << "\n";
     switch(address) {
         case 0x2000:
              ppuctrl.write(value);
@@ -372,7 +378,6 @@ void PPU::write_register(uint16_t address, uint8_t value) {
              ppuaddr.write(value);
              break;
         case 0x2007:
-             log.debug() << "vram=" << hex(current_vram) << " value=" << hex(value) << "\n";
              ppudata.write(value);
              break;
         case 0x4014:
@@ -397,7 +402,7 @@ void PPU::tick() {
         if (nmi_delay == 0 && ppuctrl.nmi_flag && nmi_occured)
             console.get_cpu().trigger_nmi();
     }
-    if (ppumask.sprites_flag || ppumask.background_flag
+    if ((ppumask.sprites_flag || ppumask.background_flag)
         && !is_even_screen && scan_line == 261 && clock == 339) {
         clock = 0;
         scan_line = 0;
@@ -514,7 +519,7 @@ void PPU::load_sprite_data() {
     // gets all sprite data for current scan line
     int height = ppuctrl.sprite_size_flag ? 16 : 8;
     int _sprite_count = 0;
-    uint8_t x, y, attribute_data, top, bottom;
+    int x, y, attribute_data, top, bottom;
     for (int i = 0; i < 64; i++) {
         x = oamdata.read_index(i * 4 + 3);
         attribute_data = oamdata.read_index(i * 4 + 2);
@@ -616,7 +621,7 @@ void PPU::step() {
     bool is_visible_line = scan_line < PPU::POST_RENDER_SCAN_LINE;
     bool is_prerender_line = scan_line == PPU::PRE_RENDER_SCAN_LINE;
     bool is_postrender_line = scan_line == PPU::POST_RENDER_SCAN_LINE;
-    bool is_fetch_line = is_visible_line && is_prerender_line;
+    bool is_fetch_line = is_visible_line || is_prerender_line;
     bool is_fetch_clock = is_visible_clock && ((clock <= 336) && (clock >= 321));
     if (rendering_enabled) {
         if (is_visible_line && is_visible_clock) render_pixel();
@@ -646,12 +651,12 @@ void PPU::step() {
                         break;
                 }
 
-                if (clock == 256) increment_vertical_scroll();
-
-                if (clock == 257) copy_horizontal_scroll();
-
-                if (clock == 257) load_sprite_data();
             }
+            if (clock == 256) increment_vertical_scroll();
+
+            if (clock == 257) copy_horizontal_scroll();
+
+            if (clock == 257) load_sprite_data();
         }
         if (is_prerender_line && (clock >= 280) && (clock <= 304))
             copy_vertical_scroll();
@@ -663,11 +668,12 @@ void PPU::step() {
     }
 
     if (is_postrender_line && (clock == 1)) set_vertical_blank();
+
 }
 
 SpritePixel PPU::get_sprite_pixel() {
     if (!ppumask.sprites_flag) return {0, 0};
-    for (int i; i < sprite_count; i++) {
+    for (int i = 0; i < sprite_count; i++) {
         int offset = (clock - 1) - sprite_positions[i];
         if ((offset < 0) || (offset > 7)) continue;
         uint8_t color = (sprite_graphics[i] >> (7 - offset) * 4) & 0xf;
@@ -697,6 +703,6 @@ void PPU::render_pixel() {
         else
             color =  background;
     }
+    log.debug() << "COLOR=" << color << "\n";
     // TODO: PALETTE
-    log.debug() << "PIXEL COLOR TO RENDER: " << hex(color) << "\n";
 }
