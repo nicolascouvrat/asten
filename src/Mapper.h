@@ -40,23 +40,26 @@ inline std::ostream& operator<< (std::ostream& out, const NESHeader& h) {
 
 class PPUMirror {
     public:
-        int get_table(int);
-        static PPUMirror from_id(int);
+        virtual int get_table(int) = 0;
+        static PPUMirror* from_id(int);
         static const int OFFSET = 0x2000;
         static const int TABLE_SIZE = 0x400;
-    private:
-        const int mirror_pattern[4] = {1, 2, 3, 4};
 };
 
 class VerticalMirror: public PPUMirror {
-    private:
-        const int mirror_pattern[4] = {0, 1, 0, 1};
+    public:
+        int get_table(int);
 
 };
 
+class NoMirror: public PPUMirror {
+    public:
+        int get_table(int);
+};
+
 class HorizontalMirror: public PPUMirror {
-    private:
-        const int mirror_pattern[4] = {0, 0, 2, 2};
+    public:
+        int get_table(int);
 };
 
 class Mapper {
@@ -69,7 +72,7 @@ class Mapper {
         uint16_t mirror_address(uint16_t);
     protected:
         Logger log;
-        PPUMirror mirror;
+        PPUMirror* mirror;
         Mapper(NESHeader, const std::vector<uint8_t>&);
         static const int PRG_ROM_UNIT = 0x4000;
         static const int CHR_ROM_UNIT = 0x2000;

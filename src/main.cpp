@@ -38,6 +38,54 @@ int test_CPU() {
     return 0;
 }
 
+int test_PPU() {
+    Logger log = Logger::get_logger("main");
+    log.set_level(DEBUG);
+    Console console("color_test.nes");
+    CPU& cpu =  console.get_cpu();
+    int max_cycles = 37000;
+    int counter =  0;
+    // TODO: remove
+    CPUStateData benchmark_state, prev_cpu_state;
+    std::string s;
+    std::ifstream in("cpu_ops.txt");
+    // while (true) {
+    while (std::getline(in, s)) {
+        std::istringstream iss(s);
+        iss >> std::hex >> benchmark_state;
+        CPUStateData cpu_state = cpu.dump_state();
+        if (!(benchmark_state == cpu_state)) {
+            log.debug() << "INSTRUCTION n=" << counter << "\n";
+            log.debug() << std::setw(12) << "Should be: " << benchmark_state << "\n";
+            log.debug() << std::setw(12) << "Got: " << cpu_state << "\n";
+            log.debug() << std::setw(12) << "Prev: " << prev_cpu_state << "\n";
+            cpu.get_memory().debug_dump(0x8170, 0x10, 0x10);
+            break;
+        }
+        prev_cpu_state = cpu_state;
+        console.step();
+        counter ++;
+        log.debug() << counter << "\n";
+    }
+    return 0;
+    
+}
+
+int dummy_PPU() {
+    Logger log = Logger::get_logger("main", "test.log");
+    log.set_level(DEBUG);
+    Console console("color_test.nes");
+    int max_cycles = 37000;
+    int counter =  0;
+    while (counter < max_cycles) {
+        console.step();
+        counter ++;
+        log.debug() << counter << "\n";
+    }
+    return 0;
+}
+
 int main(void) {
-    return test_CPU();
+    // return test_CPU();
+    return test_PPU();
 }

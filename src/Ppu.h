@@ -1,7 +1,15 @@
 #ifndef GUARD_PPU_H
 #define GUARD_PPU_H
 
+#include <cstdint>
+#include <vector>
 #include "Memory.h"
+#include "Utilities.h"
+
+struct SpritePixel {
+    int num;
+    uint8_t color;
+};
 
 class PPU;
 class Register {
@@ -18,6 +26,7 @@ class PPUCTRL: public Register {
         uint8_t read();
         void write(uint8_t);
         PPUCTRL(PPU&);
+        friend class PPU;
     private:
         int nametable_flag; // on two bits
         bool increment_flag;
@@ -31,6 +40,7 @@ class PPUMASK: public Register {
         uint8_t read();
         void write(uint8_t);
         PPUMASK(PPU&);
+        friend class PPU;
     private:
         bool greyscale_flag;
         bool left_background_flag, left_sprites_flag;
@@ -43,6 +53,7 @@ class PPUSTATUS: public Register {
         uint8_t read();
         void write(uint8_t);
         PPUSTATUS(PPU&);
+        friend class PPU;
     private:
         bool sprite_overflow_flag;
         bool sprite_zero_flag;
@@ -63,6 +74,8 @@ class OAMDATA: public Register {
         uint8_t read();
         void write(uint8_t);
         OAMDATA(PPU&);
+        void upload(const std::vector<uint8_t>&);
+        uint8_t read_index(uint8_t);
     private:
         uint8_t data[256];
 };
@@ -100,12 +113,57 @@ class OAMDMA: public Register {
 class Console;
 class PPU {
     public:
+        const static int CLOCK_CYCLE = 341;
+        const static int VISIBLE_CLOCK_CYLE = 256;
+        const static int PRE_RENDER_SCAN_LINE = 261;
+        const static int POST_RENDER_SCAN_LINE = 240;
         PPU(Console& console);
+        PPUStateData dump_state();
+        uint8_t read_register(uint16_t);
+        void write_register(uint16_t, uint8_t);
         void reset();
         void step();
-        friend class Register;
+        bool get_nmi_occured();
+        void set_nmi_status(bool, bool);
+        int get_latch_value();
+        void set_write_toggle(bool);
+        bool get_write_toggle();
+        void set_current_vram(uint16_t);
+        uint16_t get_current_vram();
+        void set_temporary_vram(uint16_t);
+        uint16_t get_temporary_vram();
+        void set_fine_scroll(uint8_t);
+        uint8_t get_oam_address();
+        void increment_oam_address();
+        bool get_increment_flag();
+        PPUMemory& get_memory();
+        void upload_to_oamdata(uint16_t, uint16_t);
+        void make_cpu_wait(int);
+        long get_clock();
+        friend class PPUDATA;
     private:
+        void tick();
+        void nmi_change();
+        void fetch_higher_tile_byte();
+        void fetch_lower_tile_byte();
+        void fetch_attribute_table_byte();
+        void fetch_nametable_byte();
+        uint8_t get_background_pixel();
+        void load_background_data();
+        int fetch_sprite_graphics(int, int);
+        void load_sprite_data();
+        void copy_horizontal_scroll();
+        void copy_vertical_scroll();
+        void increment_horizontal_scroll();
+        void increment_vertical_scroll();
+        void clear_vertical_blank();
+        void set_vertical_blank();
+        void render_pixel();
+        SpritePixel get_sprite_pixel();
+
+        Logger log;
         PPUMemory mem;
+        Console& console;
         // TODO: check
         int latch_value;
         
@@ -124,7 +182,7 @@ class PPU {
         PPUDATA ppudata;
         OAMDMA oamdma;
 
-        uint8_t current_vram, temporary_vram;
+        uint16_t current_vram, temporary_vram;
         uint8_t fine_scroll;
         bool write_toggle;
         
@@ -136,7 +194,7 @@ class PPU {
         // Background temp vars
         uint8_t name_table_byte, attribute_table_byte;
         uint8_t lower_tile_byte, higher_tile_byte;
-        int background_data; // 64 bits
+        long background_data; // 64 bits
 
         // Sprite temp vars
         int sprite_count;

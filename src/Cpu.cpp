@@ -63,6 +63,7 @@ CPU::CPU(Console& console): instruction_table{
     O = false;  // Overflow
     N = false;  // Negative
     clock = 0;
+    cycles_to_wait = 0;
     latest_instruction = 0x04; // NOP
     log.set_level(DEBUG);
 }
@@ -87,9 +88,20 @@ CPUMemory& CPU::get_memory() {
 
 void CPU::debug_set_pc(uint16_t address) { pc = address; }
 
-void CPU::wait_for(long cycles) { clock += cycles; } // this simulates waiting for the PPU
+void CPU::wait_for(int cycles) { cycles_to_wait += cycles; } 
+
+void CPU::fast_forward_clock(long ticks) { 
+    clock += ticks;
+    clock = clock % 341;
+}
 
 long CPU::step() {
+    if (cycles_to_wait > 0) {
+        // simulates CPU doing copy op to PPU memory
+        cycles_to_wait--;
+        clock++;
+        return 1;
+    }
     // read instruction
     uint8_t opcode = next_byte();
     AddressingMode mode = static_cast<AddressingMode>(CPU::instruction_modes[opcode]);
@@ -179,7 +191,6 @@ long CPU::step() {
     if (page_changed)
         clock += instruction_cycles_extra[opcode];
         
-    // TODO: change that when PPU is there 
     return clock - start_clock;
 }
 
@@ -189,6 +200,14 @@ void CPU::reset() {
     set_flags(0b100100);
 }
 
+void CPU::trigger_nmi() {
+    interrupt(NMI);
+}
+
+void CPU::trigger_irq() {
+    if (I) interrupt(IRQ);
+}
+
 /* PRIVATE FUNCTIONS */
 void CPU::interrupt(InterruptType interrupt) {
     if (interrupt != RESET) {
@@ -196,8 +215,8 @@ void CPU::interrupt(InterruptType interrupt) {
         if (interrupt == BRK)
             current_flags = current_flags & 0x10; // set B on the copy
         // push lower then higher PC byte on stack
-        push_stack(pc);
         push_stack(pc >> 8);
+        push_stack(pc);
         // save flags
         push_stack(current_flags);
         // disable interrupts
@@ -207,6 +226,7 @@ void CPU::interrupt(InterruptType interrupt) {
     switch(interrupt) {
         case NMI:
             pc = mem.read(0xfffa) | (mem.read(0xfffb) << 8);
+            cycles_to_wait += 7;
             break;
         case RESET:
             pc = mem.read(0xfffc) | (mem.read(0xfffd) << 8);
@@ -214,6 +234,7 @@ void CPU::interrupt(InterruptType interrupt) {
         case BRK:
         case IRQ:
             pc = mem.read(0xfffe) | (mem.read(0xffff) << 8);
+            cycles_to_wait += 7;
             break;
     }
 }

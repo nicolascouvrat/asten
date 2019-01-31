@@ -5,6 +5,7 @@
 #include <string>
 #include "Cpu.h"
 #include "Ppu.h"
+#include "Logger.h"
 
 
 class Mapper;
@@ -16,6 +17,7 @@ class Console {
         PPU& get_ppu();
         void step();
     private:
+        Logger log;
         CPU cpu;
         PPU ppu;
         Mapper *mapper;
