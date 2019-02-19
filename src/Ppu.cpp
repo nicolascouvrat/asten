@@ -703,6 +703,7 @@ void PPU::render_pixel() {
         else
             color =  background;
     }
+    uint8_t palette_info = mem.read(0x3f00 + color % 64);
     log.debug() << "COLOR=" << color << "\n";
     // TODO: PALETTE
 }

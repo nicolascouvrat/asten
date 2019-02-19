@@ -1,5 +1,6 @@
 #include "Console.h"
 #include "Logger.h"
+#include "nes_engine.h"
 
 #include <string>
 #include <fstream>
@@ -71,6 +72,14 @@ int test_PPU() {
     
 }
 
+int test_engine() {
+  NesEngine engine;
+  while (engine.isRunning()) {
+    engine.render();
+  }
+  return 0;
+}
+
 int dummy_PPU() {
     Logger log = Logger::get_logger("main", "test.log");
     log.set_level(DEBUG);
@@ -86,6 +95,6 @@ int dummy_PPU() {
 }
 
 int main(void) {
-    // return test_CPU();
-    return test_PPU();
+    // return test_PPU();
+    return test_engine();
 }
