@@ -195,7 +195,7 @@ class PPU {
         // Background temp vars
         uint8_t name_table_byte, attribute_table_byte;
         uint8_t lower_tile_byte, higher_tile_byte;
-        long background_data; // 64 bits
+        uint64_t background_data; // 64 bits
 
         // Sprite temp vars
         int sprite_count;

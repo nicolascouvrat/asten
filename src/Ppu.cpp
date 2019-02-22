@@ -548,7 +548,8 @@ uint8_t PPU::get_background_pixel() {
      * The progressive shift is done in the main loop.
      * */
     if (!ppumask.background_flag) return 0;
-    int cycle_data = background_data >> 32;
+    uint32_t cycle_data = background_data >> 32;
+    // log.debug() << hex(background_data) << "cycle: " << hex(cycle_data) << "\n";
     uint8_t pixel_data = (cycle_data >> (7 - fine_scroll) * 4) & 0xf; 
     return pixel_data;
 }
@@ -558,9 +559,10 @@ void PPU::load_background_data() {
      * we need to refill it (or rather pre fill it in the previous cycle). 
      * One pixel needs 4 bits of info, total of 32 bits/cycle.
      * */
-    int data = 0;
+    uint32_t data = 0;
     uint8_t a, b, c;
-    a = attribute_table_byte;
+    a = (attribute_table_byte & 0b11) << 2;
+    // log.debug() << hex(higher_tile_byte) << hex(lower_tile_byte) << " attr:" << hex(attribute_table_byte) << "\n";
     for (int i = 0; i < 8; i ++) {
         b = (higher_tile_byte & 0x80) >> 6;
         c = (lower_tile_byte & 0x80) >> 7;
@@ -569,6 +571,7 @@ void PPU::load_background_data() {
         lower_tile_byte <<= 1;
         data |= (a | b | c);
     }
+    //log.debug() << "old_back " << hex(background_data) << " data " << hex(data) << "\n";
     background_data |= data;
 }
 
@@ -704,5 +707,6 @@ void PPU::render_pixel() {
             color =  background;
     }
     uint8_t palette_info = mem.read(0x3f00 + color % 64);
+    // log.debug() << "(" << x << "," << y << ")" << ": " << hex(palette_info) << "\n";
     console.get_engine().colorPixel(x, y, palette_info);
 }

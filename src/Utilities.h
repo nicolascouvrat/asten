@@ -17,7 +17,7 @@ struct HexInt {
 template<class T>
 inline std::ostream& operator<< (std::ostream& o, const HexInt<T> &hi) {
     int size = sizeof(hi.i) * 2 + 2; // number of digits plus two spaces
-    return o << std::hex << std::setw(size) << (int)hi.i << std::dec;
+    return o << std::hex << std::setw(size) << (long)hi.i << std::dec;
 }
 
 template<class T>
