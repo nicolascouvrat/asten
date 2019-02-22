@@ -53,7 +53,6 @@ Mapper::Mapper(NESHeader header, const std::vector<uint8_t>& raw_data):
 uint16_t Mapper::mirror_address(uint16_t address) {
     int table_number, pointer;
     table_number = (address - PPUMirror::OFFSET) / PPUMirror::TABLE_SIZE;
-    log.debug() << table_number << "\n";
     pointer = (address - PPUMirror::OFFSET) % PPUMirror::TABLE_SIZE;
     pointer += PPUMirror::OFFSET + mirror->get_table(table_number) * PPUMirror::TABLE_SIZE;
     return pointer;

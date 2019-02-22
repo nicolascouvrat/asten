@@ -2,7 +2,6 @@
 #include <string>
 #include "Console.h"
 #include "Cpu.h"
-// TODO: remove
 #include <iostream>
 
 
@@ -167,8 +166,6 @@ PPUDATA::PPUDATA(PPU& _ppu): Register(_ppu) {
 }
 
 void PPUDATA::write(uint8_t value) {
-    std::cout << "write to " << hex(ppu.current_vram) << "\n";
-    std::cout << hex(ppu.current_vram & 0x3fff) << "\n";
     ppu.get_memory().write(ppu.current_vram & 0x3fff, value);
     // uint16_t current_vram = ppu.get_current_vram();
     // std::cout << hex(current_vram) << " " << hex(ppu.current_vram) << "\n";
@@ -181,7 +178,6 @@ void PPUDATA::write(uint8_t value) {
     else {
         ppu.current_vram += 1;
         // ppu.set_current_vram(current_vram + 1);
-        std::cout << "became" << hex(ppu.current_vram) << "\n";
     }
 }
 
@@ -396,6 +392,12 @@ void PPU::nmi_change() {
     nmi_previous = nmi;
 }
 
+void PPU::next_screen() {
+  is_even_screen = !is_even_screen;
+  frame_count++;
+  console.get_engine().render();
+}
+
 void PPU::tick() {
     if (nmi_delay > 0) {
         nmi_delay--;
@@ -406,8 +408,7 @@ void PPU::tick() {
         && !is_even_screen && scan_line == 261 && clock == 339) {
         clock = 0;
         scan_line = 0;
-        is_even_screen = !is_even_screen;
-        frame_count++;
+        next_screen();
         return;
     }
 
@@ -417,8 +418,7 @@ void PPU::tick() {
         scan_line++;
         if (scan_line > PPU::PRE_RENDER_SCAN_LINE) {
             scan_line = 0;
-            frame_count++;
-            is_even_screen = !is_even_screen;
+            next_screen();
         }
     }
 }
@@ -622,7 +622,7 @@ void PPU::step() {
     bool is_prerender_line = scan_line == PPU::PRE_RENDER_SCAN_LINE;
     bool is_postrender_line = scan_line == PPU::POST_RENDER_SCAN_LINE;
     bool is_fetch_line = is_visible_line || is_prerender_line;
-    bool is_fetch_clock = is_visible_clock && ((clock <= 336) && (clock >= 321));
+    bool is_fetch_clock = is_visible_clock || ((clock <= 336) && (clock >= 321));
     if (rendering_enabled) {
         if (is_visible_line && is_visible_clock) render_pixel();
         if (is_fetch_line) {
@@ -704,6 +704,5 @@ void PPU::render_pixel() {
             color =  background;
     }
     uint8_t palette_info = mem.read(0x3f00 + color % 64);
-    log.debug() << "COLOR=" << color << "\n";
-    // TODO: PALETTE
+    console.get_engine().colorPixel(x, y, palette_info);
 }

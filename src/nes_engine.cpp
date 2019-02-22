@@ -1,4 +1,6 @@
 #include "nes_engine.h"
+#include <iostream>
+#include "Controller.h"
 
 
 constexpr Color NesEngine::palette[64];
@@ -12,13 +14,16 @@ NesEngine::NesEngine(): quad{
     adapt_width(ZOOM_FACTOR), 0.0f, // top right
     0.0f, -adapt_height(ZOOM_FACTOR), // bottom left
     adapt_width(ZOOM_FACTOR), -adapt_height(ZOOM_FACTOR) // bottom right
-}
+}, timeStamp(std::chrono::high_resolution_clock::now()),
+log(Logger::get_logger("NesEngine"))
 {
   initWindow();
   initShaderProgram();
   initGrid();
   initColor();
   initVAO();
+  log.set_level(DEBUG);
+  frameCounter = 0;
 }
 
 NesEngine::~NesEngine() {
@@ -68,6 +73,16 @@ void NesEngine::initShaderProgram() {
 
 bool NesEngine::isRunning() { return window != NULL && !glfwWindowShouldClose(window); }
 
+void NesEngine::calculateFPS() {
+  auto now = std::chrono::high_resolution_clock::now();
+  frameCounter++;
+  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - timeStamp);
+  if (duration.count() > 1000) {
+    log.debug() << "FPS: " << frameCounter << "\n";
+    frameCounter = 0;
+    timeStamp = now;
+  }
+}
 // Handles rendering logic, namely:
 //  1. Clear up the screen
 //  2. Load new color data (as only this can be changed)
@@ -85,6 +100,7 @@ void NesEngine::render() {
   glBindVertexArray(VAO);
   glDrawArraysInstanced(GL_TRIANGLES, 0, 6, NATIVE_NES_WIDTH * NATIVE_NES_HEIGHT);
   glBindVertexArray(0);
+  calculateFPS();
 
   processInput();
   glfwSwapBuffers(window);
@@ -95,6 +111,20 @@ void NesEngine::processInput() {
   // exit window on escape
   if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     glfwSetWindowShouldClose(window, true);
+}
+
+// Fills up the buttons
+std::array<bool, 8> NesEngine::getButtons() {
+  std::array<bool, 8> buttons = {0};
+  buttons[Controller::Buttons::A] = glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
+  buttons[Controller::Buttons::B] = glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS;
+  buttons[Controller::Buttons::SELECT] = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
+  buttons[Controller::Buttons::START] = glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
+  buttons[Controller::Buttons::UP] = glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS;
+  buttons[Controller::Buttons::DOWN] = glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS;
+  buttons[Controller::Buttons::LEFT] = glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS;
+  buttons[Controller::Buttons::RIGHT] = glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS;
+  return buttons;
 }
 
 // Creates the offsets that will be used to render the NES tiles (basically

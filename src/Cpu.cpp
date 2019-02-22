@@ -1,6 +1,4 @@
 #include "Cpu.h"
-// TODO: add warning quand la stack boucle
-// QT/GTK/
 
 
 constexpr uint8_t CPU::instruction_modes[];

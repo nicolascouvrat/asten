@@ -82,8 +82,17 @@ uint8_t CPUMemory::read(uint16_t address) {
         return console.get_ppu().read_register(0x2000 + address % 8);
     else if (address == 0x4014)
         return console.get_ppu().read_register(address);
+    else if (address == 0x4015) {
+        // TODO: APU
+        log.error() << "UNIMPLEMENTED READ AT " << hex(address) << "\n";
+        return 0;
+    }
+    else if (address == 0x4016)
+      return console.get_left_controller().read();
+    else if (address == 0x4017)
+      return console.get_right_controller().read();
     if (address < 0x6000) {
-        // TODO: implement PPU
+        // TODO: expansion modules and other stuff
         log.error() << "UNIMPLEMENTED READ AT " << hex(address) << "\n";
         return 0;
     }
@@ -99,8 +108,16 @@ void CPUMemory::write(uint16_t address, uint8_t value) {
         console.get_ppu().write_register(0x2000 + address % 8, value);
     else if (address == 0x4014)
         console.get_ppu().write_register(address, value);
+    else if (address == 0x4015) {
+        // TODO: APU
+        log.error() << "UNIMPLEMENTED WRITE AT " << hex(address) << "\n";
+    }
+    else if (address == 0x4016)
+      console.get_left_controller().write(value);
+    else if (address == 0x4017)
+      console.get_right_controller().write(value);
     else if (address < 0x6000) {
-        // TODO: implement APU
+        // TODO: implement expansion modules
         log.error() << "UNIMPLEMENTED WRITE AT " << hex(address) << "\n";
     }
     else
@@ -119,13 +136,12 @@ uint8_t PPUMemory::read(uint16_t address) {
         return palette[pointer];
     }
     else {
-        log.error() << "UNEXPECTED READ AT " << hex(address) << "\n";
+        // log.error() << "UNEXPECTED READ AT " << hex(address) << "\n";
         return 0;
     }
 }
 
 void PPUMemory::write(uint16_t address, uint8_t value) {
-    log.debug() << "enter" << "\n";
     if (address < 0x2000)
         console.get_mapper()->write_chr(address, value);
     else if (address < 0x3000) {
@@ -139,6 +155,6 @@ void PPUMemory::write(uint16_t address, uint8_t value) {
         palette[pointer] = value;
     }
     else {
-        log.error() << "UNEXPECTED WRITE AT " << hex(address) << "\n";
+        // log.error() << "UNEXPECTED WRITE AT " << hex(address) << "\n";
     }
 }

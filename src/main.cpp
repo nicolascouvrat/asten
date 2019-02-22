@@ -72,6 +72,14 @@ int test_PPU() {
     
 }
 
+int integration_test() {
+  Console console("dk.nes");
+  while (console.isRunning()) {
+    console.step();
+  }
+  return 0;
+}
+
 int test_engine() {
   NesEngine engine;
   while (engine.isRunning()) {
@@ -96,5 +104,5 @@ int dummy_PPU() {
 
 int main(void) {
     // return test_PPU();
-    return test_engine();
+    return integration_test();
 }

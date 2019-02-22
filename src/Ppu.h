@@ -159,6 +159,7 @@ class PPU {
         void clear_vertical_blank();
         void set_vertical_blank();
         void render_pixel();
+        void next_screen();
         SpritePixel get_sprite_pixel();
 
         Logger log;

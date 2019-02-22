@@ -4,8 +4,11 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stdexcept>
+#include <chrono>
+#include <array>
 #include "resource_manager.h"
 #include "shader_program.h"
+#include "Logger.h"
 
 struct Color {
   float r, g, b;
@@ -32,6 +35,7 @@ class NesEngine {
     // the NES palette. Coordinates are left to right, top to bottom ((0,0)
     // being in the top left).
     void colorPixel(int, int, int);
+    std::array<bool, 8> getButtons();
   private:
     static constexpr Color palette[64] = {
       Color(0x666666), Color(0x002A88), Color(0x1412A7), Color(0x3B00A4), Color(0x5C007E), Color(0x6E0040), Color(0x6C0600), Color(0x561D00),
@@ -44,11 +48,12 @@ class NesEngine {
       Color(0xE4E594), Color(0xCFEF96), Color(0xBDF4AB), Color(0xB3F3CC), Color(0xB5EBF2), Color(0xB8B8B8), Color(0x000000), Color(0x000000),
     };
     static constexpr char *WINDOW_NAME = "Nes Emulator :-)";
-    static const int NATIVE_NES_WIDTH = 10;
-    static const int NATIVE_NES_HEIGHT = 5;
-    static const int ZOOM_FACTOR = 100;
+    static const int NATIVE_NES_WIDTH = 256;
+    static const int NATIVE_NES_HEIGHT = 240;
+    static const int ZOOM_FACTOR = 3;
     static float adapt_width(int);
     static float adapt_height(int);
+    Logger log;
     GLFWwindow *window;
     ShaderProgram shaderProgram;
     void processInput();
@@ -57,9 +62,12 @@ class NesEngine {
     void initGrid();
     void initColor();
     void initVAO();
+    void calculateFPS();
     float *offsets;
     float *colors;
     float quad[12];
+    int frameCounter;
+    std::chrono::time_point<std::chrono::high_resolution_clock> timeStamp;
     unsigned int quadVBO, colorVBO, offsetVBO, VAO;
 };
 
