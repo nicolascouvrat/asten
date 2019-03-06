@@ -259,7 +259,7 @@ PPU::PPU(Console& _console):
     background_data = 0; // 64 bits
 
     sprite_count = 0;
-    log.set_level(DEBUG);
+    // log.set_level(DEBUG);
 
 }
 
@@ -549,7 +549,7 @@ uint8_t PPU::get_background_pixel() {
      * */
     if (!ppumask.background_flag) return 0;
     uint32_t cycle_data = background_data >> 32;
-    // log.debug() << hex(background_data) << "cycle: " << hex(cycle_data) << "\n";
+    log.debug() << hex(background_data) << "cycle: " << hex(cycle_data) << "\n";
     uint8_t pixel_data = (cycle_data >> (7 - fine_scroll) * 4) & 0xf; 
     return pixel_data;
 }
@@ -561,8 +561,10 @@ void PPU::load_background_data() {
      * */
     uint32_t data = 0;
     uint8_t a, b, c;
+    // attribute_table_byte in fact contains the information twice (as there are
+    // only 4 palettes, hence 4 bytes needed). Trim and pass to higher bits.
     a = (attribute_table_byte & 0b11) << 2;
-    // log.debug() << hex(higher_tile_byte) << hex(lower_tile_byte) << " attr:" << hex(attribute_table_byte) << "\n";
+    log.debug() << hex(higher_tile_byte) << hex(lower_tile_byte) << " attr:" << hex(attribute_table_byte) << "\n";
     for (int i = 0; i < 8; i ++) {
         b = (higher_tile_byte & 0x80) >> 6;
         c = (lower_tile_byte & 0x80) >> 7;
@@ -571,7 +573,7 @@ void PPU::load_background_data() {
         lower_tile_byte <<= 1;
         data |= (a | b | c);
     }
-    //log.debug() << "old_back " << hex(background_data) << " data " << hex(data) << "\n";
+    log.debug() << "old_back " << hex(background_data) << " data " << hex(data) << "\n";
     background_data |= data;
 }
 
@@ -707,6 +709,6 @@ void PPU::render_pixel() {
             color =  background;
     }
     uint8_t palette_info = mem.read(0x3f00 + color % 64);
-    // log.debug() << "(" << x << "," << y << ")" << ": " << hex(palette_info) << "\n";
+    log.debug() << "(" << x << "," << y << ")" << ": " << hex(palette_info) << "\n";
     console.get_engine().colorPixel(x, y, palette_info);
 }

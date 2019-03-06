@@ -3,3 +3,6 @@ build/
 
 # vim
 *.swp
+
+# logs
+*.log
