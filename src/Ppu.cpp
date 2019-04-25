@@ -2,7 +2,6 @@
 #include <string>
 #include "Console.h"
 #include "Cpu.h"
-#include "Utilities.h"
 #include <iostream>
 
 
@@ -313,7 +312,6 @@ PPUMemory& PPU::get_memory() { return mem; }
 
 void PPU::upload_to_oamdata(uint16_t begin, uint16_t end) {
     std::vector<uint8_t> buffer(end - begin);
-    log.info() << "begin: " << hex(begin) << "end: " << hex(end) << "\n";
     for (int i = 0; i < end - begin; i++)
         buffer[i] = console.get_cpu().get_memory().read(begin + i);
     oamdata.upload(buffer); 

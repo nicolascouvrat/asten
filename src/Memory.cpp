@@ -81,7 +81,6 @@ uint8_t CPUMemory::read(uint16_t address) {
     else if (address < 0x4000)
         return console.get_ppu().read_register(0x2000 + address % 8);
     else if (address == 0x4014) {
-        log.warn() << "READ AT 0x4014\n";
         return console.get_ppu().read_register(address);
     }
     else if (address == 0x4015) {
