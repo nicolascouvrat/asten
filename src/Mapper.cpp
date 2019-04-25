@@ -35,11 +35,11 @@ Mapper *Mapper::from_nes_file(std::string file_name) {
 }
 
 Mapper::Mapper(NESHeader header, const std::vector<uint8_t>& raw_data):
+    log(Logger::get_logger("Mapper")),
+    mirror(PPUMirror::from_id(header.mirror_id)),
     prg_rom(new uint8_t[header.prg_rom_size * PRG_ROM_UNIT]),
     prg_ram(new uint8_t[header.prg_ram_size * PRG_RAM_UNIT]),
-    chr_rom(new uint8_t[header.chr_rom_size * CHR_ROM_UNIT]),
-    mirror(PPUMirror::from_id(header.mirror_id)),
-    log(Logger::get_logger("Mapper"))
+    chr_rom(new uint8_t[header.chr_rom_size * CHR_ROM_UNIT])
 {
     log.set_level(DEBUG);
     log.debug() << header << "\n";

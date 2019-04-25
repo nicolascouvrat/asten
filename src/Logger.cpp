@@ -13,9 +13,9 @@ Logger Logger::get_logger(std::string name, std::string file_name) {
 
 Logger::Logger(const Logger& log):
     name(log.name),
+    output_file_name(log.output_file_name),
     level(log.level),
-    out(buf),
-    output_file_name(log.output_file_name)
+    out(buf)
 {
     if (output_file_name != "") {
         of.open(output_file_name);
@@ -28,9 +28,9 @@ Logger::Logger(const Logger& log):
 
 Logger::Logger(std::string _name, std::string file_name):
     name(_name),
+    output_file_name(file_name),
     level(INFO),
-    out(buf),
-    output_file_name(file_name)
+    out(buf)
 {
     if (output_file_name != "") {
         of.open(output_file_name);

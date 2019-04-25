@@ -202,7 +202,8 @@ OAMDMA::OAMDMA(PPU& _ppu): Register(_ppu) {
 
 void OAMDMA::write(uint8_t value) {
     uint16_t address_begin = value << 8;
-    uint16_t address_end = address_begin | 0xFF + 1;
+    // we want to copy from 0xvalue00 to 0xvalueFF included, so add 1
+    uint16_t address_end = (address_begin | 0xFF) + 1;
     ppu.upload_to_oamdata(address_begin, address_end);
     if ((ppu.get_clock() % 2) == 0)
         ppu.make_cpu_wait(513);
@@ -224,9 +225,9 @@ PPUStateData PPU::dump_state() {
 }
 
 PPU::PPU(Console& _console):
+    log(Logger::get_logger("PPU", "ppu.log")),
     mem(_console),
     console(_console),
-    log(Logger::get_logger("PPU", "ppu.log")),
     ppuctrl(PPUCTRL(*this)),
     ppumask(PPUMASK(*this)),
     ppustatus(PPUSTATUS(*this)),

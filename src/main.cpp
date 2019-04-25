@@ -44,7 +44,6 @@ int test_PPU() {
     log.set_level(DEBUG);
     Console console("color_test.nes");
     CPU& cpu =  console.get_cpu();
-    int max_cycles = 37000;
     int counter =  0;
     // TODO: remove
     CPUStateData benchmark_state, prev_cpu_state;

@@ -11,7 +11,10 @@ bool pages_differ(uint16_t a, uint16_t b) {
 
 /* CONSTRUCTOR */
 
-CPU::CPU(Console& console): instruction_table{
+CPU::CPU(Console& console):
+  log(Logger::get_logger("CPU")),
+  mem(console), 
+  instruction_table{
     &CPU::brk, &CPU::ora, &CPU::kil, &CPU::slo, &CPU::nop, &CPU::ora, &CPU::asl, &CPU::slo,
     &CPU::php, &CPU::ora, &CPU::asl, &CPU::anc, &CPU::nop, &CPU::ora, &CPU::asl, &CPU::slo,
     &CPU::bpl, &CPU::ora, &CPU::kil, &CPU::slo, &CPU::nop, &CPU::ora, &CPU::asl, &CPU::slo,
@@ -44,7 +47,7 @@ CPU::CPU(Console& console): instruction_table{
     &CPU::inx, &CPU::sbc, &CPU::nop, &CPU::sbc, &CPU::cpx, &CPU::sbc, &CPU::inc, &CPU::isb,
     &CPU::beq, &CPU::sbc, &CPU::kil, &CPU::isb, &CPU::nop, &CPU::sbc, &CPU::inc, &CPU::isb,
     &CPU::sed, &CPU::sbc, &CPU::nop, &CPU::isb, &CPU::nop, &CPU::sbc, &CPU::inc, &CPU::isb,
-}, mem(console), log(Logger::get_logger("CPU"))
+  }
 {
     // set initial state
     A = 0;
@@ -110,6 +113,9 @@ long CPU::step() {
     long start_clock = clock;
     bool page_changed =  false;
     switch (mode) {
+        case _:
+            // this should not exist
+            throw std::runtime_error("Invalid CPU mode");
         case ABSOLUTE_MODE:
             // full memory location is being use as argument
             address = next_two_bytes();

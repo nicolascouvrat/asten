@@ -8,9 +8,11 @@ FLAGS = `pkg-config --libs glfw3` -lGL -lX11 -lXxf86vm -lXrandr -lpthread -lXi -
 SOURCES=$(shell find $(SRC_FOLDER) -type f -name *.cpp)
 OBJECTS=$(patsubst $(SRC_FOLDER)/%.cpp, $(BUILD_FOLDER)/%.o, $(SOURCES))
 
-main: $(OBJECTS) build_folder
-	$(GPP) $(GPP_FLAGS) glad.c -o $(BUILD_FOLDER)/$(ENTRY) $(OBJECTS) $(FLAGS)
+main: build
 	./$(BUILD_FOLDER)/$(ENTRY)
+
+build: $(OBJECTS) build_folder
+	$(GPP) $(GPP_FLAGS) glad.c -o $(BUILD_FOLDER)/$(ENTRY) $(OBJECTS) $(FLAGS)
 
 $(BUILD_FOLDER)/%.o: $(SRC_FOLDER)/%.cpp build_folder
 	$(GPP) $(GPP_FLAGS) -o $@ -c $<

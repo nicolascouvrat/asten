@@ -19,6 +19,8 @@ struct Color {
   {}
 };
 
+const char* const WINDOW_NAME = "NES Emulator OwO";
+
 class NesEngine {
   public:
     class Error: public std::runtime_error {
@@ -47,7 +49,6 @@ class NesEngine {
       Color(0xFFFEFF), Color(0xC0DFFF), Color(0xD3D2FF), Color(0xE8C8FF), Color(0xFBC2FF), Color(0xFEC4EA), Color(0xFECCC5), Color(0xF7D8A5),
       Color(0xE4E594), Color(0xCFEF96), Color(0xBDF4AB), Color(0xB3F3CC), Color(0xB5EBF2), Color(0xB8B8B8), Color(0x000000), Color(0x000000),
     };
-    static constexpr char *WINDOW_NAME = "Nes Emulator :-)";
     static const int NATIVE_NES_WIDTH = 256;
     static const int NATIVE_NES_HEIGHT = 240;
     static const int ZOOM_FACTOR = 3;

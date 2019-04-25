@@ -45,7 +45,7 @@
 
 
 Memory::Memory(Console& c, Logger l):
-    console(c), log(l)
+    log(l), console(c)
 {
     log.set_level(DEBUG);
 }
@@ -80,8 +80,9 @@ uint8_t CPUMemory::read(uint16_t address) {
         return ram[address % CPUMemory::RAM_SIZE];
     else if (address < 0x4000)
         return console.get_ppu().read_register(0x2000 + address % 8);
-    else if (address == 0x4014)
+    else if (address == 0x4014) {
         return console.get_ppu().read_register(address);
+    }
     else if (address == 0x4015) {
         // TODO: APU
         log.error() << "UNIMPLEMENTED READ AT " << hex(address) << "\n";
@@ -136,7 +137,7 @@ uint8_t PPUMemory::read(uint16_t address) {
         return palette[pointer];
     }
     else {
-        // log.error() << "UNEXPECTED READ AT " << hex(address) << "\n";
+        log.error() << "UNEXPECTED READ AT " << hex(address) << "\n";
         return 0;
     }
 }
@@ -155,6 +156,6 @@ void PPUMemory::write(uint16_t address, uint8_t value) {
         palette[pointer] = value;
     }
     else {
-        // log.error() << "UNEXPECTED WRITE AT " << hex(address) << "\n";
+        log.error() << "UNEXPECTED WRITE AT " << hex(address) << "\n";
     }
 }
