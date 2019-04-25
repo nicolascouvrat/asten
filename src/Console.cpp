@@ -15,8 +15,9 @@ Controller& Console::get_left_controller() { return left_controller; }
 Controller& Console::get_right_controller() { return right_controller; }
 
 Console::Console(std::string name): 
-    cpu(*this), mapper(Mapper::from_nes_file(name)), ppu(*this),
-    log(Logger::get_logger("Console"))
+    log(Logger::get_logger("Console")),
+    cpu(*this), ppu(*this),
+    mapper(Mapper::from_nes_file(name))
 {
     log.set_level(DEBUG);
     cpu.reset();

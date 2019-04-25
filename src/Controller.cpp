@@ -3,7 +3,8 @@
 #include "Utilities.h"
 
 Controller::Controller(): 
-  buttons{0}, log(Logger::get_logger("Controller"))
+  log(Logger::get_logger("Controller")),
+  buttons{0}
 {
   log.set_level(DEBUG);
   strobe = 0;

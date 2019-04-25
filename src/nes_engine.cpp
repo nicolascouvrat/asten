@@ -6,7 +6,9 @@
 constexpr Color NesEngine::palette[64];
 
 
-NesEngine::NesEngine(): quad{
+NesEngine::NesEngine():
+  log(Logger::get_logger("NesEngine")),
+  quad{
     0.0f, 0.0f, // top left
     adapt_width(ZOOM_FACTOR), 0.0f, // top right
     0.0f, -adapt_height(ZOOM_FACTOR), // bottom left
@@ -14,8 +16,8 @@ NesEngine::NesEngine(): quad{
     adapt_width(ZOOM_FACTOR), 0.0f, // top right
     0.0f, -adapt_height(ZOOM_FACTOR), // bottom left
     adapt_width(ZOOM_FACTOR), -adapt_height(ZOOM_FACTOR) // bottom right
-}, timeStamp(std::chrono::high_resolution_clock::now()),
-log(Logger::get_logger("NesEngine"))
+  },
+  timeStamp(std::chrono::high_resolution_clock::now())
 {
   initWindow();
   initShaderProgram();
