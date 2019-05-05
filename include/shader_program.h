@@ -4,6 +4,7 @@
 
 #include <stdexcept>
 #include <glad/glad.h>
+#include <string>
 
 
 class ShaderProgram {

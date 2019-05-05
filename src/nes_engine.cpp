@@ -55,6 +55,10 @@ void NesEngine::initWindow() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+#ifdef __APPLE__
+  // this is necessary to compile on OSX
+  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
   // Initialize window
   int height = NATIVE_NES_HEIGHT * ZOOM_FACTOR;
   int width = NATIVE_NES_WIDTH * ZOOM_FACTOR;
@@ -70,7 +74,7 @@ void NesEngine::initWindow() {
 
 void NesEngine::initShaderProgram() {
   shaderProgram = ResourceManager::createShaderProgram(
-      "nes_shader_program", "src/nes_vertex_shader.vs", "src/nes_fragment_shader.fs");
+      "nes_shader_program", "shaders/nes_vertex_shader.vs", "shaders/nes_fragment_shader.fs");
 }
 
 bool NesEngine::isRunning() { return window != NULL && !glfwWindowShouldClose(window); }
