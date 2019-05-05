@@ -1,9 +1,10 @@
-#include "Memory.h"
-#include "Console.h"
-#include "Mapper.h"
+#include "memory.h"
 
 // TODO: remove
 #include <iostream>
+
+#include "console.h"
+#include "mapper.h"
 
 /* 
  * CPU MEMORY ORGANIZATION (NES's 6502)
@@ -45,117 +46,117 @@
 
 
 Memory::Memory(Console& c, Logger l):
-    log(l), console(c)
+  log(l), console(c)
 {
-    log.set_level(DEBUG);
+  log.setLevel(DEBUG);
 }
 
 CPUMemory::CPUMemory(Console& c):
-    Memory(c, Logger::get_logger("CPUMemory"))
+  Memory(c, Logger::getLogger("CPUMemory"))
 {}
 
 PPUMemory::PPUMemory(Console& c):
-    Memory(c, Logger::get_logger("PPUMemory"))
+  Memory(c, Logger::getLogger("PPUMemory"))
 {}
 
 /* DEBUG FUNCTIONS */
-void Memory::debug_dump(uint16_t offset, uint16_t range, uint16_t per_line) {
-    log.debug() << "Memory from " <<  hex(offset) << " to " << hex((uint16_t)(offset + range));
-    log.toggle_header();
-    for (int i = 0; i < range; i++) {
-        if (i % per_line == 0) {
-            log.debug() << "\n";
-            if (i < range - 1)
-                log.debug() << std::right << hex((uint16_t)(offset + i)) << ": ";
-        }
-        log.debug() << hex(read(offset + i));
+void Memory::debugDump(uint16_t offset, uint16_t range, uint16_t perLine) {
+  log.debug() << "Memory from " <<  hex(offset) << " to " << hex((uint16_t)(offset + range));
+  log.toggleHeader();
+  for (int i = 0; i < range; i++) {
+    if (i % perLine == 0) {
+      log.debug() << "\n";
+      if (i < range - 1)
+        log.debug() << std::right << hex((uint16_t)(offset + i)) << ": ";
     }
-    log.debug() << "\n";
-    log.toggle_header();
+    log.debug() << hex(read(offset + i));
+  }
+  log.debug() << "\n";
+  log.toggleHeader();
 }
 
 /* PUBLIC FUNCTIONS */
 uint8_t CPUMemory::read(uint16_t address) {
-    if (address < 0x2000)
-        return ram[address % CPUMemory::RAM_SIZE];
-    else if (address < 0x4000)
-        return console.get_ppu().read_register(0x2000 + address % 8);
-    else if (address == 0x4014) {
-        return console.get_ppu().read_register(address);
-    }
-    else if (address == 0x4015) {
-        // TODO: APU
-        log.error() << "UNIMPLEMENTED READ AT " << hex(address) << "\n";
-        return 0;
-    }
-    else if (address == 0x4016)
-      return console.get_left_controller().read();
-    else if (address == 0x4017)
-      return console.get_right_controller().read();
-    if (address < 0x6000) {
-        // TODO: expansion modules and other stuff
-        log.error() << "UNIMPLEMENTED READ AT " << hex(address) << "\n";
-        return 0;
-    }
-    else
-        return console.get_mapper()->read_prg(address); 
+  if (address < 0x2000)
+    return ram[address % CPUMemory::RAM_SIZE];
+  else if (address < 0x4000)
+    return console.getPpu().readRegister(0x2000 + address % 8);
+  else if (address == 0x4014) {
+    return console.getPpu().readRegister(address);
+  }
+  else if (address == 0x4015) {
+    // TODO: APU
+    log.error() << "UNIMPLEMENTED READ AT " << hex(address) << "\n";
+    return 0;
+  }
+  else if (address == 0x4016)
+    return console.getLeftController().read();
+  else if (address == 0x4017)
+    return console.getRightController().read();
+  if (address < 0x6000) {
+    // TODO: expansion modules and other stuff
+    log.error() << "UNIMPLEMENTED READ AT " << hex(address) << "\n";
+    return 0;
+  }
+  else
+    return console.getMapper()->readPrg(address); 
 }
 
 
 void CPUMemory::write(uint16_t address, uint8_t value) {
-    if (address < 0x2000)
-        ram[address % CPUMemory::RAM_SIZE] = value;
-    else if (address < 0x4000)
-        console.get_ppu().write_register(0x2000 + address % 8, value);
-    else if (address == 0x4014)
-        console.get_ppu().write_register(address, value);
-    else if (address == 0x4015) {
-        // TODO: APU
-        log.error() << "UNIMPLEMENTED WRITE AT " << hex(address) << "\n";
-    }
-    else if (address == 0x4016)
-      console.get_left_controller().write(value);
-    else if (address == 0x4017)
-      console.get_right_controller().write(value);
-    else if (address < 0x6000) {
-        // TODO: implement expansion modules
-        log.error() << "UNIMPLEMENTED WRITE AT " << hex(address) << "\n";
-    }
-    else
-        console.get_mapper()->write_prg(address, value);
+  if (address < 0x2000)
+    ram[address % CPUMemory::RAM_SIZE] = value;
+  else if (address < 0x4000)
+    console.getPpu().writeRegister(0x2000 + address % 8, value);
+  else if (address == 0x4014)
+    console.getPpu().writeRegister(address, value);
+  else if (address == 0x4015) {
+    // TODO: APU
+    log.error() << "UNIMPLEMENTED WRITE AT " << hex(address) << "\n";
+  }
+  else if (address == 0x4016)
+    console.getLeftController().write(value);
+  else if (address == 0x4017)
+    console.getRightController().write(value);
+  else if (address < 0x6000) {
+    // TODO: implement expansion modules
+    log.error() << "UNIMPLEMENTED WRITE AT " << hex(address) << "\n";
+  }
+  else
+    console.getMapper()->writePrg(address, value);
 }
 
 uint8_t PPUMemory::read(uint16_t address) {
-    if (address < 0x2000)
-        return console.get_mapper()->read_chr(address);
-    if (address < 0x3000)
-        return name_table[console.get_mapper()->mirror_address(address) - 0x2000];
-    if ((0x3f00 <= address) && (address < 0x4000)) {
-        uint16_t pointer =  address % 32;
-        if (pointer >= 16 && (pointer % 4) == 0)
-            pointer -= 16;
-        return palette[pointer];
-    }
-    else {
-        log.error() << "UNEXPECTED READ AT " << hex(address) << "\n";
-        return 0;
-    }
+  if (address < 0x2000)
+    return console.getMapper()->readChr(address);
+  if (address < 0x3000)
+    return nameTable[console.getMapper()->mirrorAddress(address) - 0x2000];
+  if ((0x3f00 <= address) && (address < 0x4000)) {
+    uint16_t pointer =  address % 32;
+    if (pointer >= 16 && (pointer % 4) == 0)
+      pointer -= 16;
+    return palette[pointer];
+  }
+  else {
+    log.error() << "UNEXPECTED READ AT " << hex(address) << "\n";
+    return 0;
+  }
 }
 
 void PPUMemory::write(uint16_t address, uint8_t value) {
-    if (address < 0x2000)
-        console.get_mapper()->write_chr(address, value);
-    else if (address < 0x3000) {
-        uint16_t add = console.get_mapper()->mirror_address(address) - 0x2000; 
-        name_table[add] = value;
-    }
-    else if ((0x3f00 <= address) && (address < 0x4000)) {
-        uint16_t pointer =  address % 32;
-        if (pointer >= 16 && (pointer % 4) == 0)
-            pointer -= 16;
-        palette[pointer] = value;
-    }
-    else {
-        log.error() << "UNEXPECTED WRITE AT " << hex(address) << "\n";
-    }
+  if (address < 0x2000)
+    console.getMapper()->writeChr(address, value);
+  else if (address < 0x3000) {
+    uint16_t add = console.getMapper()->mirrorAddress(address) - 0x2000; 
+    nameTable[add] = value;
+  }
+  else if ((0x3f00 <= address) && (address < 0x4000)) {
+    uint16_t pointer =  address % 32;
+    if (pointer >= 16 && (pointer % 4) == 0)
+      pointer -= 16;
+    palette[pointer] = value;
+  }
+  else {
+    log.error() << "UNEXPECTED WRITE AT " << hex(address) << "\n";
+  }
 }

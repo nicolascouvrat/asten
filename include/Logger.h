@@ -8,43 +8,43 @@
 
 
 enum LogLevel {
-    DEBUG,
-    INFO,
-    WARN,
-    ERROR
+  DEBUG,
+  INFO,
+  WARN,
+  ERROR
 };
 
 
 class Logger {
-    public:
-        Logger& debug();
-        Logger& info();
-        Logger& warn();
-        Logger& error();
-        Logger(const Logger&);
-        static Logger get_logger(std::string, std::string output_file = "");
-        Logger& set_level(LogLevel);
-        Logger& toggle_header();
-        // operator
-        template<class T>
-        Logger& operator<< (const T& msg) {
-            if (output_enabled)
-                out << msg;
-            return *this;
-        }
-    private:
-        Logger(std::string, std::string);
-        std::string name;
-        std::string output_file_name;
-        LogLevel level;
-        std::streambuf *buf;
-        std::ofstream of;
-        std::ostream out;
-        bool output_enabled = true;
-        bool header_enabled = true;
-        static std::map<std::string, Logger> logger_map;
-        void output_header(LogLevel);
-        Logger& log(LogLevel);
+  public:
+    Logger& debug();
+    Logger& info();
+    Logger& warn();
+    Logger& error();
+    Logger(const Logger&);
+    static Logger getLogger(std::string, std::string outputFile = "");
+    Logger& setLevel(LogLevel);
+    Logger& toggleHeader();
+    // operator
+    template<class T>
+    Logger& operator<< (const T& msg) {
+      if (outputEnabled)
+        out << msg;
+      return *this;
+    }
+  private:
+    Logger(std::string, std::string);
+    std::string name;
+    std::string outputFileName;
+    LogLevel level;
+    std::streambuf *buf;
+    std::ofstream of;
+    std::ostream out;
+    bool outputEnabled = true;
+    bool headerEnabled = true;
+    static std::map<std::string, Logger> loggerMap;
+    void outputHeader(LogLevel);
+    Logger& log(LogLevel);
 };
 
 #endif

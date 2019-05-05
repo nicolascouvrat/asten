@@ -1,21 +1,23 @@
 #include "nes_engine.h"
+
 #include <iostream>
-#include "Controller.h"
+
+#include "controller.h"
 
 
 constexpr Color NesEngine::palette[64];
 
 
 NesEngine::NesEngine():
-  log(Logger::get_logger("NesEngine")),
+  log(Logger::getLogger("NesEngine")),
   quad{
     0.0f, 0.0f, // top left
-    adapt_width(ZOOM_FACTOR), 0.0f, // top right
-    0.0f, -adapt_height(ZOOM_FACTOR), // bottom left
+    adaptWidth(ZOOM_FACTOR), 0.0f, // top right
+    0.0f, -adaptHeight(ZOOM_FACTOR), // bottom left
 
-    adapt_width(ZOOM_FACTOR), 0.0f, // top right
-    0.0f, -adapt_height(ZOOM_FACTOR), // bottom left
-    adapt_width(ZOOM_FACTOR), -adapt_height(ZOOM_FACTOR) // bottom right
+    adaptWidth(ZOOM_FACTOR), 0.0f, // top right
+    0.0f, -adaptHeight(ZOOM_FACTOR), // bottom left
+    adaptWidth(ZOOM_FACTOR), -adaptHeight(ZOOM_FACTOR) // bottom right
   },
   timeStamp(std::chrono::high_resolution_clock::now())
 {
@@ -24,7 +26,7 @@ NesEngine::NesEngine():
   initGrid();
   initColor();
   initVAO();
-  log.set_level(DEBUG);
+  log.setLevel(DEBUG);
   frameCounter = 0;
 }
 
@@ -37,12 +39,12 @@ NesEngine::~NesEngine() {
 // Normalizes the [0, ZOOM_FACTOR * WIDTH] on the [0, 2] scale (which means that
 // it will return correct size for the screen. However, the position requires a
 // -1 to correct it).
-float NesEngine::adapt_width(int value) {
+float NesEngine::adaptWidth(int value) {
   float divisor = (float) 2 / (NATIVE_NES_WIDTH * ZOOM_FACTOR);
   return (float) value * divisor;
 }
 
-float NesEngine::adapt_height(int value) {
+float NesEngine::adaptHeight(int value) {
   float divisor = (float) 2 / (NATIVE_NES_HEIGHT * ZOOM_FACTOR);
   return (float) value * divisor;
 }
@@ -143,8 +145,8 @@ void NesEngine::initGrid() {
   for (int y = 0; y < NATIVE_NES_HEIGHT * ZOOM_FACTOR; y += ZOOM_FACTOR) {
     for (int x = 0; x < NATIVE_NES_WIDTH * ZOOM_FACTOR; x += ZOOM_FACTOR) {
       // we fill it up line per line
-      xOffset = adapt_width(x) - 1;
-      yOffset = -(adapt_height(y) - 1);
+      xOffset = adaptWidth(x) - 1;
+      yOffset = -(adaptHeight(y) - 1);
       offsets[i++] = xOffset;
       offsets[i++] = yOffset;
     }
@@ -154,23 +156,22 @@ void NesEngine::initGrid() {
 // The color array has to be adjusted with the offset array!
 void NesEngine::initColor() {
   colors = new float[NATIVE_NES_WIDTH * NATIVE_NES_HEIGHT * 3];
-  bool is_even = false;
+  bool isEven = false;
   float color = 0.0;
-  float increment_c = (float) 1 / (NATIVE_NES_WIDTH * NATIVE_NES_HEIGHT);
+  float incrementC = (float) 1 / (NATIVE_NES_WIDTH * NATIVE_NES_HEIGHT);
   for (int i = 0; i < NATIVE_NES_WIDTH * NATIVE_NES_HEIGHT * 3; i += 3) {
-    // color = (is_even) ? 1.0 : 0.0;
     colors[i] = color;
     colors[i + 1] = color;
     colors[i + 2] = color;
-    is_even = !is_even;
-    color += increment_c;
+    isEven = !isEven;
+    color += incrementC;
   }
 }
 
 // X goes left to right, Y top to bottom
-void NesEngine::colorPixel(int x, int y, int palette_index) {
+void NesEngine::colorPixel(int x, int y, int paletteIndex) {
   int index = (y * NATIVE_NES_WIDTH + x) * 3;
-  Color color = palette[palette_index];
+  Color color = palette[paletteIndex];
   colors[index] = color.r; // red
   colors[index + 1] = color.g; // green
   colors[index + 2] = color.b; // blue

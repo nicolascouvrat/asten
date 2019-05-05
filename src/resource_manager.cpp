@@ -1,4 +1,5 @@
 #include "resource_manager.h"
+
 #include <sstream>
 #include <fstream>
 #include <iostream>
@@ -6,10 +7,10 @@
 std::map<std::string, ShaderProgram> ResourceManager::shaderPrograms;
 
 ShaderProgram ResourceManager::createShaderProgram(
-    std::string name, const GLchar* vShaderFile, const GLchar* fShaderFile
-) {
+    std::string name, const GLchar* vShaderFile, const GLchar* fShaderFile) {
   auto it = shaderPrograms.emplace(std::make_pair( 
-      name, loadShaderProgramFromFile(vShaderFile, fShaderFile)));
+    name, loadShaderProgramFromFile(vShaderFile, fShaderFile))
+  );
   return (it.first)->second;
 }
 

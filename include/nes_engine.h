@@ -1,14 +1,16 @@
 #ifndef GUARD_NES_ENGINE_H
 #define GUARD_NES_ENGINE_H
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include <stdexcept>
 #include <chrono>
 #include <array>
+
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
 #include "resource_manager.h"
 #include "shader_program.h"
-#include "Logger.h"
+#include "logger.h"
 
 struct Color {
   float r, g, b;
@@ -52,8 +54,8 @@ class NesEngine {
     static const int NATIVE_NES_WIDTH = 256;
     static const int NATIVE_NES_HEIGHT = 240;
     static const int ZOOM_FACTOR = 3;
-    static float adapt_width(int);
-    static float adapt_height(int);
+    static float adaptWidth(int);
+    static float adaptHeight(int);
     Logger log;
     GLFWwindow *window;
     ShaderProgram shaderProgram;

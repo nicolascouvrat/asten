@@ -7,6 +7,8 @@ project(nes-cpp)
 set(EXT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external")
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
+set(ROM_DIR "${CMAKE_CURRENT_SOURCE_DIR}/roms")
+
 # add sources
 file(GLOB SOURCES
   "${SRC_DIR}/*.cpp"
@@ -23,6 +25,12 @@ add_custom_command(
   TARGET ${PROJECT_NAME} POST_BUILD # do it only if build succeeds
   COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${SRC_DIR}/shaders ${CMAKE_CURRENT_BINARY_DIR}/shaders
+)
+# copy game
+add_custom_command(
+  TARGET ${PROJECT_NAME} POST_BUILD # do it only if build succeeds
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${ROM_DIR} ${CMAKE_CURRENT_BINARY_DIR}/roms
 )
 
 ### RULES FOR EXTERNAL LIBRAIRIES ###

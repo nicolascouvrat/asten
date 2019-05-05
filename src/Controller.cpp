@@ -1,12 +1,12 @@
-#include "Controller.h"
+#include "controller.h"
 // TODO: remove
-#include "Utilities.h"
+#include "utilities.h"
 
 Controller::Controller(): 
-  log(Logger::get_logger("Controller")),
+  log(Logger::getLogger("Controller")),
   buttons{0}
 {
-  log.set_level(DEBUG);
+  log.setLevel(DEBUG);
   strobe = 0;
   index = 0;
 }

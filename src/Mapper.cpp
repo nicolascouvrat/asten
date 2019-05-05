@@ -1,112 +1,113 @@
-#include "Mapper.h"
+#include "mapper.h"
+
 #include <cerrno>
 #include <cstring>
 #include <iostream>
 
 
-std::runtime_error invalid_nes_file_error(std::string file_name) {
-    return std::runtime_error(file_name + ": " + std::strerror(errno));
+std::runtime_error invalidNesFileError(std::string fileName) {
+  return std::runtime_error(fileName + ": " + std::strerror(errno));
 }
 
-Mapper *Mapper::from_nes_file(std::string file_name) {
-    uint8_t raw_header[NESHeader::SIZE];
+Mapper *Mapper::fromNesFile(std::string fileName) {
+  uint8_t rawHeader[NESHeader::SIZE];
 
-    std::ifstream in(file_name, std::ios::binary);
-    if (!in) throw invalid_nes_file_error(file_name);
+  std::ifstream in(fileName, std::ios::binary);
+  if (!in) throw invalidNesFileError(fileName);
 
-    auto beginning = in.tellg();
-    in.seekg(0, std::ios::end);
-    auto size = std::size_t(in.tellg() - beginning);
-    // populate header
-    in.seekg(0, std::ios::beg);
-    if (size < NESHeader::SIZE) throw invalid_nes_file_error(file_name);
+  auto beginning = in.tellg();
+  in.seekg(0, std::ios::end);
+  auto size = std::size_t(in.tellg() - beginning);
+  // populate header
+  in.seekg(0, std::ios::beg);
+  if (size < NESHeader::SIZE) throw invalidNesFileError(fileName);
 
-    if (!in.read((char*)raw_header, NESHeader::SIZE))
-        throw invalid_nes_file_error(file_name);
+  if (!in.read((char*)rawHeader, NESHeader::SIZE))
+    throw invalidNesFileError(fileName);
 
-    // populate data
-    in.seekg(NESHeader::SIZE, std::ios::beg);
-    std::vector<uint8_t> raw_data(size - NESHeader::SIZE);
-    if (!in.read((char*)raw_data.data(), raw_data.size()))
-        throw invalid_nes_file_error(file_name);
+  // populate data
+  in.seekg(NESHeader::SIZE, std::ios::beg);
+  std::vector<uint8_t> rawData(size - NESHeader::SIZE);
+  if (!in.read((char*)rawData.data(), rawData.size()))
+    throw invalidNesFileError(fileName);
 
-    NESHeader header = parse_header(raw_header);
-    return new NROMMapper(header, raw_data);
+  NESHeader header = parseHeader(rawHeader);
+  return new NROMMapper(header, rawData);
 }
 
-Mapper::Mapper(NESHeader header, const std::vector<uint8_t>& raw_data):
-    log(Logger::get_logger("Mapper")),
-    mirror(PPUMirror::from_id(header.mirror_id)),
-    prg_rom(new uint8_t[header.prg_rom_size * PRG_ROM_UNIT]),
-    prg_ram(new uint8_t[header.prg_ram_size * PRG_RAM_UNIT]),
-    chr_rom(new uint8_t[header.chr_rom_size * CHR_ROM_UNIT])
+Mapper::Mapper(NESHeader header, const std::vector<uint8_t>& rawData):
+  log(Logger::getLogger("Mapper")),
+  mirror(PPUMirror::fromId(header.mirrorId)),
+  prgRom(new uint8_t[header.prgRomSize * PRG_ROM_UNIT]),
+  prgRam(new uint8_t[header.prgRamSize * PRG_RAM_UNIT]),
+  chrRom(new uint8_t[header.chrRomSize * CHR_ROM_UNIT])
 {
-    log.set_level(DEBUG);
-    log.debug() << header << "\n";
-    int j = 0;
-    for (int i = 0; i < header.prg_rom_size * PRG_ROM_UNIT; i++)
-         prg_rom[i] = raw_data[j++];
-    for (int i = 0; i < header.chr_rom_size * CHR_ROM_UNIT; i++)
-        chr_rom[i] = raw_data[j++];
+  log.setLevel(DEBUG);
+  log.debug() << header << "\n";
+  int j = 0;
+  for (int i = 0; i < header.prgRomSize * PRG_ROM_UNIT; i++)
+    prgRom[i] = rawData[j++];
+  for (int i = 0; i < header.chrRomSize * CHR_ROM_UNIT; i++)
+    chrRom[i] = rawData[j++];
 }
 
-uint16_t Mapper::mirror_address(uint16_t address) {
-    int table_number, pointer;
-    table_number = (address - PPUMirror::OFFSET) / PPUMirror::TABLE_SIZE;
-    pointer = (address - PPUMirror::OFFSET) % PPUMirror::TABLE_SIZE;
-    pointer += PPUMirror::OFFSET + mirror->get_table(table_number) * PPUMirror::TABLE_SIZE;
-    return pointer;
+uint16_t Mapper::mirrorAddress(uint16_t address) {
+  int tableNumber, pointer;
+  tableNumber = (address - PPUMirror::OFFSET) / PPUMirror::TABLE_SIZE;
+  pointer = (address - PPUMirror::OFFSET) % PPUMirror::TABLE_SIZE;
+  pointer += PPUMirror::OFFSET + mirror->getTable(tableNumber) * PPUMirror::TABLE_SIZE;
+  return pointer;
 }
 
 NROMMapper::NROMMapper(NESHeader h, const std::vector<uint8_t>& d):
-    Mapper(h, d),
-    // NROM-128 have 16kB of PRG_ROM, NROM-256 have 32kB
-    is_nrom_128((h.prg_rom_size > 1) ? false : true)
+  Mapper(h, d),
+  // NROM-128 have 16kB of PRG_ROM, NROM-256 have 32kB
+  isNrom_128((h.prgRomSize > 1) ? false : true)
 {}
 
-uint8_t NROMMapper::read_prg(uint16_t address) {
-    if (address < 0x8000)
-        return prg_ram[address - 0x6000];
-    else
-        return is_nrom_128 ? prg_rom[(address - 0x8000) % 0x4000] : prg_rom[address - 0x8000];
+uint8_t NROMMapper::readPrg(uint16_t address) {
+  if (address < 0x8000)
+    return prgRam[address - 0x6000];
+  else
+    return isNrom_128 ? prgRom[(address - 0x8000) % 0x4000] : prgRom[address - 0x8000];
 }
 
-void NROMMapper::write_prg(uint16_t address, uint8_t value) {
-    if (address < 0x8000)
-        prg_ram[address - 0x6000] = value;
-    else
-        log.error() << "Trying to write prg at " << hex(address) << "\n";
+void NROMMapper::writePrg(uint16_t address, uint8_t value) {
+  if (address < 0x8000)
+    prgRam[address - 0x6000] = value;
+  else
+    log.error() << "Trying to write prg at " << hex(address) << "\n";
 }
 
-uint8_t NROMMapper::read_chr(uint16_t address) {
-    return chr_rom[address];
+uint8_t NROMMapper::readChr(uint16_t address) {
+  return chrRom[address];
 }
 
-void NROMMapper::write_chr(uint16_t address, uint8_t value) {
-    chr_rom[address] = value;
+void NROMMapper::writeChr(uint16_t address, uint8_t value) {
+  chrRom[address] = value;
 }
 
-PPUMirror* PPUMirror::from_id(int id) {
-    if (id == 0) {
-        return new HorizontalMirror();
-    }
-    if (id == 1) {
-        return new VerticalMirror();
-    }
-    return new NoMirror();
+PPUMirror* PPUMirror::fromId(int id) {
+  if (id == 0) {
+    return new HorizontalMirror();
+  }
+  if (id == 1) {
+    return new VerticalMirror();
+  }
+  return new NoMirror();
 }
 
-int NoMirror::get_table(int num) {
-    int mirror_pattern[4] = {1, 2, 3, 4};
-    return mirror_pattern[num];
+int NoMirror::getTable(int num) {
+  int mirrorPattern[4] = {1, 2, 3, 4};
+  return mirrorPattern[num];
 }
 
-int VerticalMirror::get_table(int num) {
-    int mirror_pattern[4] = {0, 1, 0, 1};
-    return mirror_pattern[num];
+int VerticalMirror::getTable(int num) {
+  int mirrorPattern[4] = {0, 1, 0, 1};
+  return mirrorPattern[num];
 }
 
-int HorizontalMirror::get_table(int num) {
-    int mirror_pattern[4] = {0, 0, 2, 2};
-    return mirror_pattern[num];
+int HorizontalMirror::getTable(int num) {
+  int mirrorPattern[4] = {0, 0, 2, 2};
+  return mirrorPattern[num];
 }

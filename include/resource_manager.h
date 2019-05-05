@@ -5,7 +5,9 @@
 #include <map>
 #include <string>
 #include <stdexcept>
+
 #include <glad/glad.h>
+
 #include "shader_program.h"
 
 

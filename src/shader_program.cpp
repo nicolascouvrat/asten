@@ -30,8 +30,8 @@ void ShaderProgram::compileAndLink(const GLchar* vShaderSource, const GLchar* fS
   char infoLog[512];
   glGetProgramiv(ID, GL_LINK_STATUS, &success);
   if (!success) {
-      glGetProgramInfoLog(ID, 512, NULL, infoLog);
-      throw LinkingError(infoLog);
+    glGetProgramInfoLog(ID, 512, NULL, infoLog);
+    throw LinkingError(infoLog);
   }
   glDeleteShader(vertexShader);
   glDeleteShader(fragmentShader);

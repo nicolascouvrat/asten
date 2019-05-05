@@ -3,7 +3,8 @@
 
 #include <cstdint>
 #include <array>
-#include "Logger.h"
+
+#include "logger.h"
 
 class Controller {
   public:

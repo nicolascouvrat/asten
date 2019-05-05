@@ -1,715 +1,717 @@
-#include "Ppu.h"
+#include "ppu.h"
+
 #include <string>
-#include "Console.h"
-#include "Cpu.h"
 #include <iostream>
 
+#include "console.h"
+#include "cpu.h"
 
-std::runtime_error invalid_register_op(std::string register_name, std::string op) {
-    std::string err_str = "Invalid operation on register " + register_name + ": " + op;
-    return std::runtime_error(err_str);
+
+std::runtime_error invalidRegisterOp(std::string registerName, std::string op) {
+  std::string errStr = "Invalid operation on register " + registerName + ": " + op;
+  return std::runtime_error(errStr);
 }
 
 Register::Register(PPU& _ppu): ppu(_ppu) {}
 
 PPUCTRL::PPUCTRL(PPU& _ppu): Register(_ppu) {
-    nametable_flag = 0; // on two bits
-    increment_flag = false;
-    sprite_table_flag = false;
-    background_table_flag = false;
-    sprite_size_flag = false;
-    master_slave_flag = false;
-    nmi_flag = false;
+  nametableFlag = 0; // on two bits
+  incrementFlag = false;
+  spriteTableFlag = false;
+  backgroundTableFlag = false;
+  spriteSizeFlag = false;
+  masterSlaveFlag = false;
+  nmiFlag = false;
 }
 
 void PPUCTRL::write(uint8_t value) {
-    nametable_flag          = (value & 0b00000011) >> 0;
-    increment_flag          = (value & 0b00000100) >> 2;
-    sprite_table_flag       = (value & 0b00001000) >> 3;
-    background_table_flag   = (value & 0b00010000) >> 4;
-    sprite_size_flag        = (value & 0b00100000) >> 5;
-    master_slave_flag       = (value & 0b01000000) >> 6;
-    nmi_flag                = (value & 0b10000000) >> 7;
+  nametableFlag          = (value & 0b00000011) >> 0;
+  incrementFlag          = (value & 0b00000100) >> 2;
+  spriteTableFlag       = (value & 0b00001000) >> 3;
+  backgroundTableFlag   = (value & 0b00010000) >> 4;
+  spriteSizeFlag        = (value & 0b00100000) >> 5;
+  masterSlaveFlag       = (value & 0b01000000) >> 6;
+  nmiFlag                = (value & 0b10000000) >> 7;
 }
 
 uint8_t PPUCTRL::read() {
-    throw invalid_register_op("PPUCTRL", "read");
+  throw invalidRegisterOp("PPUCTRL", "read");
 }
 
 PPUMASK::PPUMASK(PPU& _ppu): Register(_ppu) {
-    greyscale_flag = false;
-    left_background_flag = false;
-    left_sprites_flag = false;
-    background_flag = false;
-    sprites_flag = false;
-    red_emphasis_flag = false;
-    green_emphasis_flag = false;
-    blue_emphasis_flag = false;
+  greyscaleFlag = false;
+  leftBackgroundFlag = false;
+  leftSpritesFlag = false;
+  backgroundFlag = false;
+  spritesFlag = false;
+  redEmphasisFlag = false;
+  greenEmphasisFlag = false;
+  blueEmphasisFlag = false;
 }
 
 void PPUMASK::write(uint8_t value) {
-    greyscale_flag          = (value & 0b00000001) >> 0;
-    left_background_flag    = (value & 0b00000010) >> 1;
-    left_sprites_flag       = (value & 0b00000100) >> 2;
-    background_flag         = (value & 0b00001000) >> 3;
-    sprites_flag            = (value & 0b00010000) >> 4;
-    red_emphasis_flag       = (value & 0b00100000) >> 5;
-    green_emphasis_flag     = (value & 0b01000000) >> 6;
-    blue_emphasis_flag      = (value & 0b10000000) >> 7;
+  greyscaleFlag          = (value & 0b00000001) >> 0;
+  leftBackgroundFlag    = (value & 0b00000010) >> 1;
+  leftSpritesFlag       = (value & 0b00000100) >> 2;
+  backgroundFlag         = (value & 0b00001000) >> 3;
+  spritesFlag            = (value & 0b00010000) >> 4;
+  redEmphasisFlag       = (value & 0b00100000) >> 5;
+  greenEmphasisFlag     = (value & 0b01000000) >> 6;
+  blueEmphasisFlag      = (value & 0b10000000) >> 7;
     
 }
 
 uint8_t PPUMASK::read() {
-    throw invalid_register_op("PPUMASK", "read");
+  throw invalidRegisterOp("PPUMASK", "read");
 }
 
 PPUSTATUS::PPUSTATUS(PPU& _ppu): Register(_ppu) {
-    sprite_overflow_flag = false;
-    sprite_zero_flag = false;
-    vertical_blank_started_flag = false;
+  spriteOverflowFlag = false;
+  spriteZeroFlag = false;
+  verticalBlankStartedFlag = false;
 }
 
 void PPUSTATUS::write(uint8_t value) {
-    throw invalid_register_op("PPUSTATUS", "write");
+  throw invalidRegisterOp("PPUSTATUS", "write");
 }
 
 uint8_t PPUSTATUS::read() {
-    uint8_t value = 0x00;
-    value |= vertical_blank_started_flag << 7;
-    value |= sprite_zero_flag << 6;
-    value |= sprite_overflow_flag << 5;
-    if (ppu.get_nmi_occured()) {
-        value |= 1 << 7;
-    }
-    ppu.set_nmi_status(false, false);
-    value |= ppu.get_latch_value() & 0x1f;
+  uint8_t value = 0x00;
+  value |= verticalBlankStartedFlag << 7;
+  value |= spriteZeroFlag << 6;
+  value |= spriteOverflowFlag << 5;
+  if (ppu.getNmiOccured()) {
+    value |= 1 << 7;
+  }
+  ppu.setNmiStatus(false, false);
+  value |= ppu.getLatchValue() & 0x1f;
 
-    vertical_blank_started_flag = false;
-    ppu.set_write_toggle(false);
-    return value;
+  verticalBlankStartedFlag = false;
+  ppu.setWriteToggle(false);
+  return value;
 }
 
 OAMADDR::OAMADDR(PPU& _ppu): Register(_ppu) {
-    address = 0x00;
+  address = 0x00;
 }
 
 void OAMADDR::write(uint8_t value) {
-    address = address;
+  address = address;
 }
 
 uint8_t OAMADDR::read() {
-    return address;
+  return address;
 }
 
 OAMDATA::OAMDATA(PPU& _ppu): Register(_ppu) {}
 
 void OAMDATA::write(uint8_t value) {
-    data[ppu.get_oam_address()] = value;
-    ppu.increment_oam_address();
+  data[ppu.getOamAddress()] = value;
+  ppu.incrementOamAddress();
 }
 
-uint8_t OAMDATA::read() { return data[ppu.get_oam_address()]; }
+uint8_t OAMDATA::read() { return data[ppu.getOamAddress()]; }
 
 void OAMDATA::upload(const std::vector<uint8_t>& page) {
-    if (page.size() != 256)
-        throw invalid_register_op("OAMDATA", "upload_page");
-    std::copy(page.begin(), page.end(), data);
+  if (page.size() != 256)
+    throw invalidRegisterOp("OAMDATA", "uploadPage");
+  std::copy(page.begin(), page.end(), data);
 }
 
-uint8_t OAMDATA::read_index(uint8_t index) { return data[index]; }
+uint8_t OAMDATA::readIndex(uint8_t index) { return data[index]; }
 
 PPUSCROLL::PPUSCROLL(PPU& _ppu): Register(_ppu) {}
 
 void PPUSCROLL::write(uint8_t value) {
-    if (ppu.get_write_toggle()) {
-        ppu.set_temporary_vram(
-            (ppu.get_temporary_vram() & 0x0c1f) | ((value & 0x7) << 12) | ((value & 0xf8) << 2)
-        );
-        ppu.set_write_toggle(false);
-    }
-    else {
-        ppu.set_temporary_vram(
-            (ppu.get_temporary_vram() & 0x7fe0) | (value >> 3)
-        );
-        ppu.set_fine_scroll(value & 0x7);
-        ppu.set_write_toggle(true);
-    }
+  if (ppu.getWriteToggle()) {
+    ppu.setTemporaryVram(
+      (ppu.getTemporaryVram() & 0x0c1f) | ((value & 0x7) << 12) | ((value & 0xf8) << 2)
+    );
+    ppu.setWriteToggle(false);
+  }
+  else {
+    ppu.setTemporaryVram(
+      (ppu.getTemporaryVram() & 0x7fe0) | (value >> 3)
+    );
+    ppu.setFineScroll(value & 0x7);
+    ppu.setWriteToggle(true);
+  }
 }
 
 uint8_t PPUSCROLL::read() {
-    throw invalid_register_op("PPUSCROLL", "read");
+  throw invalidRegisterOp("PPUSCROLL", "read");
 }
 
 PPUADDR::PPUADDR(PPU& _ppu): Register(_ppu) {}
 
 void PPUADDR::write(uint8_t value) {
-    if (ppu.get_write_toggle()) {
-        uint16_t new_vram = (ppu.get_temporary_vram() & 0x7f00) | value;
-        ppu.set_temporary_vram(new_vram);
-        ppu.set_current_vram(new_vram);
-        ppu.set_write_toggle(false);
-    }
-    else {
-        ppu.set_temporary_vram(
-            (ppu.get_temporary_vram() & 0x00ff) | ((value & 0x3f) << 8)
-        );
-        ppu.set_write_toggle(true);
-    }
+  if (ppu.getWriteToggle()) {
+    uint16_t newVram = (ppu.getTemporaryVram() & 0x7f00) | value;
+    ppu.setTemporaryVram(newVram);
+    ppu.setCurrentVram(newVram);
+    ppu.setWriteToggle(false);
+  }
+  else {
+    ppu.setTemporaryVram(
+      (ppu.getTemporaryVram() & 0x00ff) | ((value & 0x3f) << 8)
+    );
+    ppu.setWriteToggle(true);
+  }
 }
 
 uint8_t PPUADDR::read() {
-    throw invalid_register_op("PPUADDR", "read");
+  throw invalidRegisterOp("PPUADDR", "read");
 }
 
 PPUDATA::PPUDATA(PPU& _ppu): Register(_ppu) {
-    buffered_value = 0x00;
+  bufferedValue = 0x00;
 }
 
 void PPUDATA::write(uint8_t value) {
-    ppu.get_memory().write(ppu.current_vram & 0x3fff, value);
-    // uint16_t current_vram = ppu.get_current_vram();
-    // std::cout << hex(current_vram) << " " << hex(ppu.current_vram) << "\n";
-    // uint16_t add = current_vram & 0x3fff;
-    // PPUMemory& mem = ppu.get_memory();
-    // mem.write(add, value);
-    if (ppu.get_increment_flag())
-        ppu.current_vram += 32;
-        // ppu.set_current_vram(current_vram + 32);
-    else {
-        ppu.current_vram += 1;
-        // ppu.set_current_vram(current_vram + 1);
-    }
+  ppu.getMemory().write(ppu.currentVram & 0x3fff, value);
+  // uint16_t currentVram = ppu.getCurrentVram();
+  // std::cout << hex(currentVram) << " " << hex(ppu.currentVram) << "\n";
+  // uint16_t add = currentVram & 0x3fff;
+  // PPUMemory& mem = ppu.getMemory();
+  // mem.write(add, value);
+  if (ppu.getIncrementFlag())
+    ppu.currentVram += 32;
+    // ppu.setCurrentVram(currentVram + 32);
+  else {
+    ppu.currentVram += 1;
+    // ppu.setCurrentVram(currentVram + 1);
+  }
 }
 
 
 uint8_t PPUDATA::read() {
-    uint8_t temp = buffered_value;
-    uint16_t current_vram = ppu.get_current_vram();
-    buffered_value = ppu.get_memory().read(current_vram & 0x3fff);
+  uint8_t temp = bufferedValue;
+  uint16_t currentVram = ppu.getCurrentVram();
+  bufferedValue = ppu.getMemory().read(currentVram & 0x3fff);
 
-    if (ppu.get_increment_flag())
-        ppu.set_current_vram(current_vram + 32);
-    else
-        ppu.set_current_vram(current_vram + 1);
+  if (ppu.getIncrementFlag())
+    ppu.setCurrentVram(currentVram + 32);
+  else
+    ppu.setCurrentVram(currentVram + 1);
 
-    if ((current_vram & 0x3f00) == 0x3f00)
-        return buffered_value; // this is a palette, return directly
-    return temp;
+  if ((currentVram & 0x3f00) == 0x3f00)
+    return bufferedValue; // this is a palette, return directly
+  return temp;
 }
 
 OAMDMA::OAMDMA(PPU& _ppu): Register(_ppu) {
 }
 
 void OAMDMA::write(uint8_t value) {
-    uint16_t address_begin = value << 8;
-    // we want to copy from 0xvalue00 to 0xvalueFF included, so add 1
-    uint16_t address_end = (address_begin | 0xFF) + 1;
-    ppu.upload_to_oamdata(address_begin, address_end);
-    if ((ppu.get_clock() % 2) == 0)
-        ppu.make_cpu_wait(513);
-    else
-        ppu.make_cpu_wait(514);
+  uint16_t addressBegin = value << 8;
+  // we want to copy from 0xvalue00 to 0xvalueFF included, so add 1
+  uint16_t addressEnd = (addressBegin | 0xFF) + 1;
+  ppu.uploadToOamdata(addressBegin, addressEnd);
+  if ((ppu.getClock() % 2) == 0)
+    ppu.makeCpuWait(513);
+  else
+    ppu.makeCpuWait(514);
 }
 
 uint8_t OAMDMA::read() {
-    throw invalid_register_op("OAMDMA", "read");
+  throw invalidRegisterOp("OAMDMA", "read");
 }
 
-PPUStateData PPU::dump_state() {
-    PPUStateData d;
-    d.clock = clock;
-    d.frame_count = frame_count;
-    d.scan_line = scan_line;
-    d.latch_value = latch_value;
-    return d;
+PPUStateData PPU::dumpState() {
+  PPUStateData d;
+  d.clock = clock;
+  d.frameCount = frameCount;
+  d.scanLine = scanLine;
+  d.latchValue = latchValue;
+  return d;
 }
 
 PPU::PPU(Console& _console):
-    log(Logger::get_logger("PPU", "ppu.log")),
-    mem(_console),
-    console(_console),
-    ppuctrl(PPUCTRL(*this)),
-    ppumask(PPUMASK(*this)),
-    ppustatus(PPUSTATUS(*this)),
-    oamaddr(OAMADDR(*this)),
-    oamdata(OAMDATA(*this)),
-    ppuscroll(PPUSCROLL(*this)),
-    ppuaddr(PPUADDR(*this)),
-    ppudata(PPUDATA(*this)),
-    oamdma(OAMDMA(*this))
+  log(Logger::getLogger("PPU", "ppu.log")),
+  mem(_console),
+  console(_console),
+  ppuctrl(PPUCTRL(*this)),
+  ppumask(PPUMASK(*this)),
+  ppustatus(PPUSTATUS(*this)),
+  oamaddr(OAMADDR(*this)),
+  oamdata(OAMDATA(*this)),
+  ppuscroll(PPUSCROLL(*this)),
+  ppuaddr(PPUADDR(*this)),
+  ppudata(PPUDATA(*this)),
+  oamdma(OAMDMA(*this))
 {
-    latch_value = 0;
-    nmi_occured = false;
-    nmi_previous = false;
-    nmi_delay = 0;
+  latchValue = 0;
+  nmiOccured = false;
+  nmiPrevious = false;
+  nmiDelay = 0;
 
-    current_vram = 0;
-    temporary_vram = 0;
-    fine_scroll = 0;
-    write_toggle = false;
-    
-    clock = 0;
-    scan_line = 0;
-    is_even_screen = true;
-    frame_count = 0;
+  currentVram = 0;
+  temporaryVram = 0;
+  fineScroll = 0;
+  writeToggle = false;
+  
+  clock = 0;
+  scanLine = 0;
+  isEvenScreen = true;
+  frameCount = 0;
 
-    name_table_byte = 0;
-    attribute_table_byte = 0;
-    lower_tile_byte = 0;
-    higher_tile_byte = 0;
-    background_data = 0; // 64 bits
+  nameTableByte = 0;
+  attributeTableByte = 0;
+  lowerTileByte = 0;
+  higherTileByte = 0;
+  backgroundData = 0; // 64 bits
 
-    sprite_count = 0;
-    // log.set_level(DEBUG);
+  spriteCount = 0;
+  // log.setLevel(DEBUG);
 
 }
 
 /* PUBLIC FUNCTIONS */
 void PPU::reset() {
-    clock = 340;
-    scan_line = 240;
-    ppuctrl.write(0);
-    ppumask.write(0);
-    oamaddr.write(0);
+  clock = 340;
+  scanLine = 240;
+  ppuctrl.write(0);
+  ppumask.write(0);
+  oamaddr.write(0);
 }
 
-bool PPU::get_nmi_occured() { 
-    return nmi_occured;
+bool PPU::getNmiOccured() { 
+  return nmiOccured;
 }
 
-int PPU::get_latch_value() { 
-    return latch_value; 
+int PPU::getLatchValue() { 
+  return latchValue; 
 }
 
-void PPU::set_nmi_status(bool occured, bool previous) {
-    nmi_occured = occured;
-    nmi_previous = previous;
+void PPU::setNmiStatus(bool occured, bool previous) {
+  nmiOccured = occured;
+  nmiPrevious = previous;
 }
 
-void PPU::set_write_toggle(bool status) { write_toggle = status; }
+void PPU::setWriteToggle(bool status) { writeToggle = status; }
 
-bool PPU::get_write_toggle() { return write_toggle; }
+bool PPU::getWriteToggle() { return writeToggle; }
 
-uint8_t PPU::get_oam_address() { return oamaddr.read(); }
+uint8_t PPU::getOamAddress() { return oamaddr.read(); }
 
-void PPU::increment_oam_address() { oamaddr.write(oamaddr.read() + 1); }
+void PPU::incrementOamAddress() { oamaddr.write(oamaddr.read() + 1); }
 
-void PPU::set_current_vram(uint16_t val){ current_vram = val; }
+void PPU::setCurrentVram(uint16_t val){ currentVram = val; }
 
-uint16_t PPU::get_current_vram() { 
-    return current_vram;
+uint16_t PPU::getCurrentVram() { 
+  return currentVram;
 }
 
-void PPU::set_temporary_vram(uint16_t val){ temporary_vram = val; }
+void PPU::setTemporaryVram(uint16_t val){ temporaryVram = val; }
 
-uint16_t PPU::get_temporary_vram() { return temporary_vram; }
+uint16_t PPU::getTemporaryVram() { return temporaryVram; }
 
-void PPU::set_fine_scroll(uint8_t val){ fine_scroll = val; }
+void PPU::setFineScroll(uint8_t val){ fineScroll = val; }
 
-bool PPU::get_increment_flag() { return ppuctrl.increment_flag; }
+bool PPU::getIncrementFlag() { return ppuctrl.incrementFlag; }
 
-PPUMemory& PPU::get_memory() { return mem; }
+PPUMemory& PPU::getMemory() { return mem; }
 
-void PPU::upload_to_oamdata(uint16_t begin, uint16_t end) {
-    std::vector<uint8_t> buffer(end - begin);
-    for (int i = 0; i < end - begin; i++)
-        buffer[i] = console.get_cpu().get_memory().read(begin + i);
-    oamdata.upload(buffer); 
+void PPU::uploadToOamdata(uint16_t begin, uint16_t end) {
+  std::vector<uint8_t> buffer(end - begin);
+  for (int i = 0; i < end - begin; i++)
+    buffer[i] = console.getCpu().getMemory().read(begin + i);
+  oamdata.upload(buffer); 
 }
 
-void PPU::make_cpu_wait(int cycles) {
-    console.get_cpu().wait_for(cycles);
+void PPU::makeCpuWait(int cycles) {
+  console.getCpu().waitFor(cycles);
 }
 
-long PPU::get_clock() { return clock; }
+long PPU::getClock() { return clock; }
     
-uint8_t PPU::read_register(uint16_t address) {
-    uint8_t value;
-    switch(address) {
-        case 0x2000:
-            return ppuctrl.read();
-        case 0x2001:
-            return ppumask.read();
-        case 0x2002:
-            value = ppustatus.read();
-            return value;
-        case 0x2003:
-            return oamaddr.read();
-        case 0x2004:
-            return oamdata.read();
-        case 0x2005:
-            return ppuscroll.read();
-        case 0x2006:
-            return ppuaddr.read();
-        case 0x2007:
-            return ppudata.read();
-        case 0x4014:
-            return oamdma.read();
-        default:
-            throw std::runtime_error("Invalid PPU read address=" + address);
-    }
+uint8_t PPU::readRegister(uint16_t address) {
+  uint8_t value;
+  switch(address) {
+    case 0x2000:
+      return ppuctrl.read();
+    case 0x2001:
+      return ppumask.read();
+    case 0x2002:
+      value = ppustatus.read();
+      return value;
+    case 0x2003:
+      return oamaddr.read();
+    case 0x2004:
+      return oamdata.read();
+    case 0x2005:
+      return ppuscroll.read();
+    case 0x2006:
+      return ppuaddr.read();
+    case 0x2007:
+      return ppudata.read();
+    case 0x4014:
+      return oamdma.read();
+    default:
+      throw std::runtime_error("Invalid PPU read address=" + address);
+  }
 }
 
-void PPU::write_register(uint16_t address, uint8_t value) {
-    latch_value = value;
-    switch(address) {
-        case 0x2000:
-             ppuctrl.write(value);
-             break;
-        case 0x2001:
-             ppumask.write(value);
-             break;
-        case 0x2002:
-             ppustatus.write(value);
-             break;
-        case 0x2003:
-             oamaddr.write(value);
-             break;
-        case 0x2004:
-             oamdata.write(value);
-             break;
-        case 0x2005:
-             ppuscroll.write(value);
-             break;
-        case 0x2006:
-             ppuaddr.write(value);
-             break;
-        case 0x2007:
-             ppudata.write(value);
-             break;
-        case 0x4014:
-             oamdma.write(value);
-             break;
-        default:
-            throw std::runtime_error("Invalid PPU write address=" + address);
-    }
+void PPU::writeRegister(uint16_t address, uint8_t value) {
+  latchValue = value;
+  switch(address) {
+    case 0x2000:
+       ppuctrl.write(value);
+       break;
+    case 0x2001:
+       ppumask.write(value);
+       break;
+    case 0x2002:
+       ppustatus.write(value);
+       break;
+    case 0x2003:
+       oamaddr.write(value);
+       break;
+    case 0x2004:
+       oamdata.write(value);
+       break;
+    case 0x2005:
+       ppuscroll.write(value);
+       break;
+    case 0x2006:
+       ppuaddr.write(value);
+       break;
+    case 0x2007:
+       ppudata.write(value);
+       break;
+    case 0x4014:
+       oamdma.write(value);
+       break;
+    default:
+      throw std::runtime_error("Invalid PPU write address=" + address);
+  }
 }
 
 /* PRIVATE FUNCTIONS */
-void PPU::nmi_change() {
-    bool nmi = ppuctrl.nmi_flag && nmi_occured;
-    if (nmi && !nmi_previous)
-        nmi_delay = 15;
-    nmi_previous = nmi;
+void PPU::nmiChange() {
+  bool nmi = ppuctrl.nmiFlag && nmiOccured;
+  if (nmi && !nmiPrevious)
+    nmiDelay = 15;
+  nmiPrevious = nmi;
 }
 
-void PPU::next_screen() {
-  is_even_screen = !is_even_screen;
-  frame_count++;
-  console.get_engine().render();
+void PPU::nextScreen() {
+isEvenScreen = !isEvenScreen;
+frameCount++;
+console.getEngine().render();
 }
 
 void PPU::tick() {
-    if (nmi_delay > 0) {
-        nmi_delay--;
-        if (nmi_delay == 0 && ppuctrl.nmi_flag && nmi_occured)
-            console.get_cpu().trigger_nmi();
-    }
-    if ((ppumask.sprites_flag || ppumask.background_flag)
-        && !is_even_screen && scan_line == 261 && clock == 339) {
-        clock = 0;
-        scan_line = 0;
-        next_screen();
-        return;
-    }
+  if (nmiDelay > 0) {
+    nmiDelay--;
+    if (nmiDelay == 0 && ppuctrl.nmiFlag && nmiOccured)
+      console.getCpu().triggerNmi();
+  }
+  if ((ppumask.spritesFlag || ppumask.backgroundFlag)
+    && !isEvenScreen && scanLine == 261 && clock == 339) {
+    clock = 0;
+    scanLine = 0;
+    nextScreen();
+    return;
+  }
 
-    clock++;
-    if (clock == PPU::CLOCK_CYCLE) {
-        clock = 0;
-        scan_line++;
-        if (scan_line > PPU::PRE_RENDER_SCAN_LINE) {
-            scan_line = 0;
-            next_screen();
-        }
+  clock++;
+  if (clock == PPU::CLOCK_CYCLE) {
+    clock = 0;
+    scanLine++;
+    if (scanLine > PPU::PRE_RENDER_SCAN_LINE) {
+      scanLine = 0;
+      nextScreen();
     }
+  }
 }
-void PPU::clear_vertical_blank() {
-    nmi_occured = false;
-    nmi_change();
-}
-
-void PPU::set_vertical_blank() {
-    nmi_occured = true;
-    nmi_change();
+void PPU::clearVerticalBlank() {
+  nmiOccured = false;
+  nmiChange();
 }
 
-void PPU::increment_horizontal_scroll() {
-    if ((current_vram & 0x1f) == 31) {
-        // set coarse x to 0, switch horizontal nametable
-        current_vram &= 0xffe0;
-        current_vram ^= 0x400;
-    }
-    else current_vram += 1; // increment coarse x
+void PPU::setVerticalBlank() {
+  nmiOccured = true;
+  nmiChange();
 }
 
-void PPU::increment_vertical_scroll() {
-    if ((current_vram & 0x7000) != 0x7000)
-        current_vram += 0x1000;
+void PPU::incrementHorizontalScroll() {
+  if ((currentVram & 0x1f) == 31) {
+    // set coarse x to 0, switch horizontal nametable
+    currentVram &= 0xffe0;
+    currentVram ^= 0x400;
+  }
+  else currentVram += 1; // increment coarse x
+}
+
+void PPU::incrementVerticalScroll() {
+  if ((currentVram & 0x7000) != 0x7000)
+    currentVram += 0x1000;
+  else {
+    currentVram &= 0x8fff;
+    int coarseY = (currentVram & 0x3e0) >> 5;
+    if (coarseY == 29) {
+      coarseY = 0;
+      currentVram ^= 0x800;
+    }
+    else if (coarseY == 31)
+      coarseY = 0;
+    else
+      coarseY++;
+    currentVram = (currentVram & 0xfc1f) | (coarseY << 5);
+  }
+}
+
+void PPU::copyHorizontalScroll() {
+  currentVram = (currentVram & 0xfbe0) | (temporaryVram & 0x041f);
+}
+
+void PPU::copyVerticalScroll() {
+  currentVram = (currentVram & 0x841f) | (temporaryVram & 0x7be0);
+}
+
+int PPU::fetchSpriteGraphics(int num, int row) {
+  /* Fetches the pixel data for sprite num, 
+   * where row is the row WITHIN the sprite (0 = top) 
+   * */
+  uint8_t tileIndex = oamdata.readIndex(num * 4 + 1);
+  uint8_t attributes = oamdata.readIndex(num * 4 + 2);
+  bool verticalFlip = (attributes & 0x80) == 0x80;
+  bool horizontalFlip = (attributes & 0x40) == 0x40;
+  bool table;
+  if (!ppuctrl.spriteSizeFlag) {
+    if (verticalFlip) row = 7 - row;
+    table = ppuctrl.spriteTableFlag;
+  }
+  else {
+    if (verticalFlip) row = 15 - row;
+    table = tileIndex & 1;
+    tileIndex &= 0xfe;
+    if (row > 7) {
+      tileIndex++;
+      row -= 8;
+    }
+  }
+  uint16_t address = 0x1000 * table + 0x10 * tileIndex + row;
+  uint8_t lowTileByte = mem.read(address);
+  uint8_t highTileByte = mem.read(address + 8);
+  // combine the data for 8 pixels
+  uint8_t a, b, c;
+  int _spriteGraphics = 0;
+  a = (attributes & 0b11) << 2;
+  for (int i = 0; i < 8; i++) {
+    if (horizontalFlip) {
+      b = (highTileByte & 1) << 1;
+      c = (highTileByte & 1) << 0;
+      lowTileByte >>= 1;
+      highTileByte >>= 1;
+    }
     else {
-        current_vram &= 0x8fff;
-        int coarse_y = (current_vram & 0x3e0) >> 5;
-        if (coarse_y == 29) {
-            coarse_y = 0;
-            current_vram ^= 0x800;
-        }
-        else if (coarse_y == 31)
-            coarse_y = 0;
-        else
-            coarse_y++;
-        current_vram = (current_vram & 0xfc1f) | (coarse_y << 5);
+      b = (highTileByte & 0x80) >> 6;
+      c = (lowTileByte & 0x80) >> 7;
+      lowTileByte <<= 1;
+      highTileByte <<= 1;
     }
+    _spriteGraphics <<= 4;
+    _spriteGraphics |= (a | b | c);
+  }
+  return _spriteGraphics;
 }
 
-void PPU::copy_horizontal_scroll() {
-    current_vram = (current_vram & 0xfbe0) | (temporary_vram & 0x041f);
-}
-
-void PPU::copy_vertical_scroll() {
-    current_vram = (current_vram & 0x841f) | (temporary_vram & 0x7be0);
-}
-
-int PPU::fetch_sprite_graphics(int num, int row) {
-    /* Fetches the pixel data for sprite num, 
-     * where row is the row WITHIN the sprite (0 = top) 
-     * */
-    uint8_t tile_index = oamdata.read_index(num * 4 + 1);
-    uint8_t attributes = oamdata.read_index(num * 4 + 2);
-    bool vertical_flip = (attributes & 0x80) == 0x80;
-    bool horizontal_flip = (attributes & 0x40) == 0x40;
-    bool table;
-    if (!ppuctrl.sprite_size_flag) {
-        if (vertical_flip) row = 7 - row;
-        table = ppuctrl.sprite_table_flag;
+void PPU::loadSpriteData() {
+  // gets all sprite data for current scan line
+  int height = ppuctrl.spriteSizeFlag ? 16 : 8;
+  int _spriteCount = 0;
+  int x, y, attributeData, top, bottom;
+  for (int i = 0; i < 64; i++) {
+    x = oamdata.readIndex(i * 4 + 3);
+    attributeData = oamdata.readIndex(i * 4 + 2);
+    y = oamdata.readIndex(i * 4);
+    top = y;
+    bottom = y + height;
+    if ((scanLine < top) || (scanLine > bottom)) continue;
+    _spriteCount++;
+    if (_spriteCount <= 8) {
+      spriteGraphics[_spriteCount - 1] = fetchSpriteGraphics(i, scanLine - top);
+      spritePositions[_spriteCount - 1] = x;
+      spritePriorities[_spriteCount - 1] = (attributeData >> 5) & 1;
+      spriteIndexes[_spriteCount - 1] = i;
     }
-    else {
-        if (vertical_flip) row = 15 - row;
-        table = tile_index & 1;
-        tile_index &= 0xfe;
-        if (row > 7) {
-            tile_index++;
-            row -= 8;
-        }
-    }
-    uint16_t address = 0x1000 * table + 0x10 * tile_index + row;
-    uint8_t low_tile_byte = mem.read(address);
-    uint8_t high_tile_byte = mem.read(address + 8);
-    // combine the data for 8 pixels
-    uint8_t a, b, c;
-    int _sprite_graphics = 0;
-    a = (attributes & 0b11) << 2;
-    for (int i = 0; i < 8; i++) {
-        if (horizontal_flip) {
-            b = (high_tile_byte & 1) << 1;
-            c = (high_tile_byte & 1) << 0;
-            low_tile_byte >>= 1;
-            high_tile_byte >>= 1;
-        }
-        else {
-            b = (high_tile_byte & 0x80) >> 6;
-            c = (low_tile_byte & 0x80) >> 7;
-            low_tile_byte <<= 1;
-            high_tile_byte <<= 1;
-        }
-        _sprite_graphics <<= 4;
-        _sprite_graphics |= (a | b | c);
-    }
-    return _sprite_graphics;
+  }
+  if (_spriteCount > 8) {
+    // no rendering if we hit more than 8 sprites, but set overflow flag
+    _spriteCount = 8;
+    ppustatus.spriteOverflowFlag = true;
+  }
+  spriteCount = _spriteCount;
 }
 
-void PPU::load_sprite_data() {
-    // gets all sprite data for current scan line
-    int height = ppuctrl.sprite_size_flag ? 16 : 8;
-    int _sprite_count = 0;
-    int x, y, attribute_data, top, bottom;
-    for (int i = 0; i < 64; i++) {
-        x = oamdata.read_index(i * 4 + 3);
-        attribute_data = oamdata.read_index(i * 4 + 2);
-        y = oamdata.read_index(i * 4);
-        top = y;
-        bottom = y + height;
-        if ((scan_line < top) || (scan_line > bottom)) continue;
-        _sprite_count++;
-        if (_sprite_count <= 8) {
-            sprite_graphics[_sprite_count - 1] = fetch_sprite_graphics(i, scan_line - top);
-            sprite_positions[_sprite_count - 1] = x;
-            sprite_priorities[_sprite_count - 1] = (attribute_data >> 5) & 1;
-            sprite_indexes[_sprite_count - 1] = i;
-        }
-    }
-    if (_sprite_count > 8) {
-        // no rendering if we hit more than 8 sprites, but set overflow flag
-        _sprite_count = 8;
-        ppustatus.sprite_overflow_flag = true;
-    }
-    sprite_count = _sprite_count;
+uint8_t PPU::getBackgroundPixel() {
+  /* Gets pixel to render from the pre-loaded 64 bits of background data
+   * The progressive shift is done in the main loop.
+   * */
+  if (!ppumask.backgroundFlag) return 0;
+  uint32_t cycleData = backgroundData >> 32;
+  log.debug() << hex(backgroundData) << "cycle: " << hex(cycleData) << "\n";
+  uint8_t pixelData = (cycleData >> (7 - fineScroll) * 4) & 0xf; 
+  return pixelData;
 }
 
-uint8_t PPU::get_background_pixel() {
-    /* Gets pixel to render from the pre-loaded 64 bits of background data
-     * The progressive shift is done in the main loop.
-     * */
-    if (!ppumask.background_flag) return 0;
-    uint32_t cycle_data = background_data >> 32;
-    log.debug() << hex(background_data) << "cycle: " << hex(cycle_data) << "\n";
-    uint8_t pixel_data = (cycle_data >> (7 - fine_scroll) * 4) & 0xf; 
-    return pixel_data;
+void PPU::loadBackgroundData() {
+  /* Due to the fact that getBackgroundPixel() consumes data,
+   * we need to refill it (or rather pre fill it in the previous cycle). 
+   * One pixel needs 4 bits of info, total of 32 bits/cycle.
+   * */
+  uint32_t data = 0;
+  uint8_t a, b, c;
+  // attributeTableByte in fact contains the information twice (as there are
+  // only 4 palettes, hence 4 bytes needed). Trim and pass to higher bits.
+  a = (attributeTableByte & 0b11) << 2;
+  log.debug() << hex(higherTileByte) << hex(lowerTileByte) << " attr:" << hex(attributeTableByte) << "\n";
+  for (int i = 0; i < 8; i ++) {
+    b = (higherTileByte & 0x80) >> 6;
+    c = (lowerTileByte & 0x80) >> 7;
+    data <<= 4;
+    higherTileByte <<= 1;
+    lowerTileByte <<= 1;
+    data |= (a | b | c);
+  }
+  log.debug() << "oldBack " << hex(backgroundData) << " data " << hex(data) << "\n";
+  backgroundData |= data;
 }
 
-void PPU::load_background_data() {
-    /* Due to the fact that get_background_pixel() consumes data,
-     * we need to refill it (or rather pre fill it in the previous cycle). 
-     * One pixel needs 4 bits of info, total of 32 bits/cycle.
-     * */
-    uint32_t data = 0;
-    uint8_t a, b, c;
-    // attribute_table_byte in fact contains the information twice (as there are
-    // only 4 palettes, hence 4 bytes needed). Trim and pass to higher bits.
-    a = (attribute_table_byte & 0b11) << 2;
-    log.debug() << hex(higher_tile_byte) << hex(lower_tile_byte) << " attr:" << hex(attribute_table_byte) << "\n";
-    for (int i = 0; i < 8; i ++) {
-        b = (higher_tile_byte & 0x80) >> 6;
-        c = (lower_tile_byte & 0x80) >> 7;
-        data <<= 4;
-        higher_tile_byte <<= 1;
-        lower_tile_byte <<= 1;
-        data |= (a | b | c);
-    }
-    log.debug() << "old_back " << hex(background_data) << " data " << hex(data) << "\n";
-    background_data |= data;
+void PPU::fetchNametableByte() {
+  /* Given by 12 lowests bits of VRAM + $2000 offset */
+  nameTableByte = mem.read(0x2000 + (currentVram & 0xfff));
 }
 
-void PPU::fetch_nametable_byte() {
-    /* Given by 12 lowests bits of VRAM + $2000 offset */
-    name_table_byte = mem.read(0x2000 + (current_vram & 0xfff));
+void PPU::fetchAttributeTableByte() {
+  /* To get the attribute table byte, we need to combine:
+   *     - the 2 bits selecting the name table,
+   *     - the three highest bits of the coarse Y scroll,
+   *     - the three highest bits of the coarse X scroll
+   * With a #23C0 offset.
+   * */
+  uint16_t address = 0x23c0;
+  address |= currentVram & 0xc00;
+  address |= (currentVram & 0x380) >> 4;
+  address |= (currentVram & 0x1c) >> 2;
+  attributeTableByte = mem.read(address);
 }
 
-void PPU::fetch_attribute_table_byte() {
-    /* To get the attribute table byte, we need to combine:
-     *     - the 2 bits selecting the name table,
-     *     - the three highest bits of the coarse Y scroll,
-     *     - the three highest bits of the coarse X scroll
-     * With a #23C0 offset.
-     * */
-    uint16_t address = 0x23c0;
-    address |= current_vram & 0xc00;
-    address |= (current_vram & 0x380) >> 4;
-    address |= (current_vram & 0x1c) >> 2;
-    attribute_table_byte = mem.read(address);
+void PPU::fetchLowerTileByte() {
+  /*
+   * To fetch a tile byte, combine:
+   *  - table index(stored in PPUCTRL) * $1000
+   *  - tile index (in the name table byte) * $10
+   *  - fine Y scroll (3 highest bits of VRAM address)
+   * */
+  uint8_t fineY = (currentVram >> 12) & 0x7;
+  uint8_t tableIndex = ppuctrl.backgroundTableFlag;
+  uint8_t tileIndex = nameTableByte;
+  uint16_t address = 0x1000 * tableIndex + 0x10 * tileIndex + fineY;
+  lowerTileByte = mem.read(address);
 }
 
-void PPU::fetch_lower_tile_byte() {
-    /*
-     * To fetch a tile byte, combine:
-     *  - table index(stored in PPUCTRL) * $1000
-     *  - tile index (in the name table byte) * $10
-     *  - fine Y scroll (3 highest bits of VRAM address)
-     * */
-    uint8_t fine_y = (current_vram >> 12) & 0x7;
-    uint8_t table_index = ppuctrl.background_table_flag;
-    uint8_t tile_index = name_table_byte;
-    uint16_t address = 0x1000 * table_index + 0x10 * tile_index + fine_y;
-    lower_tile_byte = mem.read(address);
-}
-
-void PPU::fetch_higher_tile_byte() {
-    /* Read one byte above the lower tile byte */
-    uint8_t fine_y = (current_vram >> 12) & 0x7;
-    uint8_t table_index = ppuctrl.background_table_flag;
-    uint8_t tile_index = name_table_byte;
-    uint16_t address = 0x1000 * table_index + 0x10 * tile_index + fine_y;
-    higher_tile_byte = mem.read(address + 8);
+void PPU::fetchHigherTileByte() {
+  /* Read one byte above the lower tile byte */
+  uint8_t fineY = (currentVram >> 12) & 0x7;
+  uint8_t tableIndex = ppuctrl.backgroundTableFlag;
+  uint8_t tileIndex = nameTableByte;
+  uint16_t address = 0x1000 * tableIndex + 0x10 * tileIndex + fineY;
+  higherTileByte = mem.read(address + 8);
 }
 
 void PPU::step() {
-    tick();
-    bool rendering_enabled = ppumask.background_flag || ppumask.sprites_flag;
-    bool is_visible_clock = (clock >= 1) && (clock <= 256);
-    bool is_visible_line = scan_line < PPU::POST_RENDER_SCAN_LINE;
-    bool is_prerender_line = scan_line == PPU::PRE_RENDER_SCAN_LINE;
-    bool is_postrender_line = scan_line == PPU::POST_RENDER_SCAN_LINE;
-    bool is_fetch_line = is_visible_line || is_prerender_line;
-    bool is_fetch_clock = is_visible_clock || ((clock <= 336) && (clock >= 321));
-    if (rendering_enabled) {
-        if (is_visible_line && is_visible_clock) render_pixel();
-        if (is_fetch_line) {
-            if (is_fetch_clock) {
-                int _switch = clock % 8;
-                // make sure we have 8 new bits every 2 ticks
-                background_data <<= 4;
-                switch (_switch) {
-                    case 0:
-                        increment_horizontal_scroll();
-                        load_background_data();
-                        break;
-                    case 1:
-                        fetch_nametable_byte();
-                        break;
-                    case 3:
-                        fetch_attribute_table_byte();
-                        break;
-                    case 5:
-                        fetch_lower_tile_byte();
-                        break;
-                    case 7:
-                        fetch_higher_tile_byte();
-                        break;
-                    default:
-                        break;
-                }
-
-            }
-            if (clock == 256) increment_vertical_scroll();
-
-            if (clock == 257) copy_horizontal_scroll();
-
-            if (clock == 257) load_sprite_data();
+  tick();
+  bool renderingEnabled = ppumask.backgroundFlag || ppumask.spritesFlag;
+  bool isVisibleClock = (clock >= 1) && (clock <= 256);
+  bool isVisibleLine = scanLine < PPU::POST_RENDER_SCAN_LINE;
+  bool isPrerenderLine = scanLine == PPU::PRE_RENDER_SCAN_LINE;
+  bool isPostrenderLine = scanLine == PPU::POST_RENDER_SCAN_LINE;
+  bool isFetchLine = isVisibleLine || isPrerenderLine;
+  bool isFetchClock = isVisibleClock || ((clock <= 336) && (clock >= 321));
+  if (renderingEnabled) {
+    if (isVisibleLine && isVisibleClock) renderPixel();
+    if (isFetchLine) {
+      if (isFetchClock) {
+        int _switch = clock % 8;
+        // make sure we have 8 new bits every 2 ticks
+        backgroundData <<= 4;
+        switch (_switch) {
+          case 0:
+            incrementHorizontalScroll();
+            loadBackgroundData();
+            break;
+          case 1:
+            fetchNametableByte();
+            break;
+          case 3:
+            fetchAttributeTableByte();
+            break;
+          case 5:
+            fetchLowerTileByte();
+            break;
+          case 7:
+            fetchHigherTileByte();
+            break;
+          default:
+            break;
         }
-        if (is_prerender_line && (clock >= 280) && (clock <= 304))
-            copy_vertical_scroll();
-    }
-    if (is_prerender_line && (clock == 1)) {
-        clear_vertical_blank();
-        ppustatus.sprite_overflow_flag = false;
-        ppustatus.sprite_zero_flag = false;
-    }
 
-    if (is_postrender_line && (clock == 1)) set_vertical_blank();
+      }
+      if (clock == 256) incrementVerticalScroll();
+
+      if (clock == 257) copyHorizontalScroll();
+
+      if (clock == 257) loadSpriteData();
+    }
+    if (isPrerenderLine && (clock >= 280) && (clock <= 304))
+      copyVerticalScroll();
+  }
+  if (isPrerenderLine && (clock == 1)) {
+    clearVerticalBlank();
+    ppustatus.spriteOverflowFlag = false;
+    ppustatus.spriteZeroFlag = false;
+  }
+
+  if (isPostrenderLine && (clock == 1)) setVerticalBlank();
 
 }
 
-SpritePixel PPU::get_sprite_pixel() {
-    if (!ppumask.sprites_flag) return {0, 0};
-    for (int i = 0; i < sprite_count; i++) {
-        int offset = (clock - 1) - sprite_positions[i];
-        if ((offset < 0) || (offset > 7)) continue;
-        uint8_t color = (sprite_graphics[i] >> (7 - offset) * 4) & 0xf;
-        if (color % 4 == 0) continue; // sprite is transparent
-        return {i, color};
-    }
-    return {0, 0};
+SpritePixel PPU::getSpritePixel() {
+  if (!ppumask.spritesFlag) return {0, 0};
+  for (int i = 0; i < spriteCount; i++) {
+    int offset = (clock - 1) - spritePositions[i];
+    if ((offset < 0) || (offset > 7)) continue;
+    uint8_t color = (spriteGraphics[i] >> (7 - offset) * 4) & 0xf;
+    if (color % 4 == 0) continue; // sprite is transparent
+    return {i, color};
+  }
+  return {0, 0};
 }
-void PPU::render_pixel() {
-    int x = clock - 1;
-    int y = scan_line;
-    uint8_t background = get_background_pixel();
-    int color;
-    SpritePixel sprite_pix = get_sprite_pixel();
-    if ((x < 8) && !ppumask.left_background_flag) background = 0;
-    if ((x < 8) && !ppumask.left_sprites_flag) sprite_pix.color = 0;
-    bool b_opaque = background % 4 != 0;
-    bool s_opaque = sprite_pix.color % 4 != 0;
-    if (!s_opaque && !b_opaque) color = 0;
-    else if (!b_opaque && s_opaque) color = sprite_pix.color | 0x10;
-    else if (!s_opaque && b_opaque) color = background;
-    else {
-        if ((sprite_indexes[sprite_pix.num] == 0) && (x < 255))
-            ppustatus.sprite_zero_flag = true;
-        if (sprite_priorities[sprite_pix.num] == 0)
-            color = sprite_pix.color | 0x10;
-        else
-            color =  background;
-    }
-    uint8_t palette_info = mem.read(0x3f00 + color % 64);
-    log.debug() << "(" << x << "," << y << ")" << ": " << hex(palette_info) << "\n";
-    console.get_engine().colorPixel(x, y, palette_info);
+void PPU::renderPixel() {
+  int x = clock - 1;
+  int y = scanLine;
+  uint8_t background = getBackgroundPixel();
+  int color;
+  SpritePixel spritePix = getSpritePixel();
+  if ((x < 8) && !ppumask.leftBackgroundFlag) background = 0;
+  if ((x < 8) && !ppumask.leftSpritesFlag) spritePix.color = 0;
+  bool bOpaque = background % 4 != 0;
+  bool sOpaque = spritePix.color % 4 != 0;
+  if (!sOpaque && !bOpaque) color = 0;
+  else if (!bOpaque && sOpaque) color = spritePix.color | 0x10;
+  else if (!sOpaque && bOpaque) color = background;
+  else {
+    if ((spriteIndexes[spritePix.num] == 0) && (x < 255))
+      ppustatus.spriteZeroFlag = true;
+    if (spritePriorities[spritePix.num] == 0)
+      color = spritePix.color | 0x10;
+    else
+      color =  background;
+  }
+  uint8_t paletteInfo = mem.read(0x3f00 + color % 64);
+  log.debug() << "(" << x << "," << y << ")" << ": " << hex(paletteInfo) << "\n";
+  console.getEngine().colorPixel(x, y, paletteInfo);
 }
