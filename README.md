@@ -1,8 +1,19 @@
 # NES-CPP
 
 Yet another NES emulator.
-`make` to play.
-Still in development, tested on linux only.
+
+## Installation
+
+```
+# in the main folder
+mkdir build
+cd build
+cmake ..
+make
+./nes-cpp
+```
+
+Still in development, tested on linux and iOS.
 No sound.
 
 
