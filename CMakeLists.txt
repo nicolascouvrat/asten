@@ -10,10 +10,7 @@ set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(ROM_DIR "${CMAKE_CURRENT_SOURCE_DIR}/roms")
 
 # add sources
-file(GLOB SOURCES
-  "${SRC_DIR}/*.cpp"
-  "${INCLUDE_DIR}/*.h"
-)
+file(GLOB SOURCES "main.cpp")
 # make target
 add_executable(${PROJECT_NAME} ${SOURCES})
 # force usage of C++ 11
@@ -33,7 +30,7 @@ add_custom_command(
     ${ROM_DIR} ${CMAKE_CURRENT_BINARY_DIR}/roms
 )
 
-### RULES FOR EXTERNAL LIBRAIRIES ###
+### RULES FOR EXTERNAL LIBRARIES ###
 
 # GLFW
 set(GLFW_DIR "${EXT_DIR}/glfw")
@@ -54,8 +51,28 @@ set(GLAD_DIR "${EXT_DIR}/glad")
 add_library("glad" "${GLAD_DIR}/src/glad.c")
 target_include_directories("glad" PRIVATE "${GLAD_DIR}/include")
 # include and link it
-target_include_directories(${PROJECT_NAME} PRIVATE "${GLAD_DIR}/include")
 target_link_libraries(${PROJECT_NAME} "glad" "${CMAKE_DL_LIBS}")
+target_include_directories(${PROJECT_NAME} PRIVATE "${GLAD_DIR}/include")
+
+### RULES FOR INTERNAL LIBRARIES ###
+
+add_subdirectory("${SRC_DIR}/engine")
+target_include_directories("lib_engine" PRIVATE ${INCLUDE_DIR})
+target_include_directories("lib_engine" PRIVATE "${GLFW_DIR}/include")
+target_include_directories("lib_engine" PRIVATE "${GLAD_DIR}/include")
+target_link_libraries(${PROJECT_NAME} "lib_engine")
+
+add_subdirectory("${SRC_DIR}/utils")
+target_include_directories("lib_utils" PRIVATE ${INCLUDE_DIR})
+target_link_libraries(${PROJECT_NAME} "lib_utils")
+
+add_subdirectory("${SRC_DIR}/console")
+target_include_directories("lib_console" PRIVATE ${INCLUDE_DIR})
+target_include_directories("lib_console" PRIVATE "${GLFW_DIR}/include")
+target_include_directories("lib_console" PRIVATE "${GLAD_DIR}/include")
+target_link_libraries(${PROJECT_NAME} "lib_console")
+
+
 
 
 
