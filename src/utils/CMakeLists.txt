@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13.3)
 
-project(lib_utils)
+project(utils)
 
 file(GLOB LIB_UTILS_SRC "*.cpp")
 add_library(${PROJECT_NAME} ${LIB_UTILS_SRC})
