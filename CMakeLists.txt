@@ -42,7 +42,7 @@ set(GLFW_INSTALL OFF CACHE INTERNAL "GLFW install target")
 # use the sub CMakeLists
 add_subdirectory("${GLFW_DIR}")
 target_link_libraries(${PROJECT_NAME} "glfw" "${GLFW_LIBRARIES}")
-# target_include_directories(${PROJECT_NAME} PRIVATE "${GLFW_DIR}/include")
+target_include_directories(${PROJECT_NAME} PRIVATE "${GLFW_DIR}/include")
 # target_compile_definitions(${PROJECT_NAME} PRIVATE "GLFW_INCLUDE_NONE")
 
 # GLAD
@@ -52,7 +52,7 @@ add_library("glad" "${GLAD_DIR}/src/glad.c")
 target_include_directories("glad" PRIVATE "${GLAD_DIR}/include")
 # include and link it
 # target_link_libraries(${PROJECT_NAME} "glad" "${CMAKE_DL_LIBS}")
-# target_include_directories(${PROJECT_NAME} PRIVATE "${GLAD_DIR}/include")
+target_include_directories(${PROJECT_NAME} PRIVATE "${GLAD_DIR}/include")
 
 ### RULES FOR INTERNAL LIBRARIES ###
 
@@ -61,8 +61,8 @@ add_subdirectory("${SRC_DIR}/engine")
 target_include_directories("engine" PRIVATE ${INCLUDE_DIR})
 # engine is the place where glfw and glad are actually used, so the linking needs to be done at this
 # step
-# target_include_directories("engine" PRIVATE "${GLFW_DIR}/include")
-# target_include_directories("engine" PRIVATE "${GLAD_DIR}/include")
+target_include_directories("engine" PRIVATE "${GLFW_DIR}/include")
+target_include_directories("engine" PRIVATE "${GLAD_DIR}/include")
 target_link_libraries("engine" "glfw" "${GLFW_LIBRARIES}")
 target_link_libraries("engine" "glad" "${CMAKE_DL_LIBS}")
 target_link_libraries(${PROJECT_NAME} "engine")
@@ -75,8 +75,8 @@ target_link_libraries(${PROJECT_NAME} "utils")
 # CONSOLE
 add_subdirectory("${SRC_DIR}/console")
 target_include_directories("console" PRIVATE ${INCLUDE_DIR})
-# target_include_directories("console" PRIVATE "${GLFW_DIR}/include")
-# target_include_directories("console" PRIVATE "${GLAD_DIR}/include")
+target_include_directories("console" PRIVATE "${GLFW_DIR}/include")
+target_include_directories("console" PRIVATE "${GLAD_DIR}/include")
 # target_link_libraries("console" "glfw" "${GLFW_LIBRARIES}")
 # target_link_libraries("console" "glad" "${CMAKE_DL_LIBS}")
 target_link_libraries(${PROJECT_NAME} "console")
