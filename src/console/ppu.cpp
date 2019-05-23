@@ -401,6 +401,14 @@ frameCount++;
 console.getEngine().render();
 }
 
+int nextScanLine(int current) {
+  int next = current + 1;
+  if (next > PPU::PRE_RENDER_SCAN_LINE) {
+    next = 0;
+  }
+  return next;
+}
+
 void PPU::tick() {
   if (nmiDelay > 0) {
     nmiDelay--;
@@ -418,13 +426,13 @@ void PPU::tick() {
   clock++;
   if (clock == PPU::CLOCK_CYCLE) {
     clock = 0;
-    scanLine++;
-    if (scanLine > PPU::PRE_RENDER_SCAN_LINE) {
-      scanLine = 0;
+    scanLine = nextScanLine(scanLine);
+    if (scanLine == 0) {
       nextScreen();
     }
   }
 }
+
 void PPU::clearVerticalBlank() {
   nmiOccured = false;
   nmiChange();
@@ -518,21 +526,24 @@ int PPU::fetchSpriteGraphics(int num, int row) {
   return _spriteGraphics;
 }
 
+// loadSpriteData fetches the sprite information for all sprites of the next
+// scan line
 void PPU::loadSpriteData() {
-  // gets all sprite data for current scan line
   int height = ppuctrl.spriteSizeFlag ? 16 : 8;
   int _spriteCount = 0;
   int x, y, attributeData, top, bottom;
+  int lineToLoad = nextScanLine(scanLine);
+
   for (int i = 0; i < 64; i++) {
     x = oamdata.readIndex(i * 4 + 3);
     attributeData = oamdata.readIndex(i * 4 + 2);
     y = oamdata.readIndex(i * 4);
     top = y;
     bottom = y + height;
-    if ((scanLine < top) || (scanLine > bottom)) continue;
+    if ((lineToLoad < top) || (lineToLoad > bottom)) continue;
     _spriteCount++;
     if (_spriteCount <= 8) {
-      spriteGraphics[_spriteCount - 1] = fetchSpriteGraphics(i, scanLine - top);
+      spriteGraphics[_spriteCount - 1] = fetchSpriteGraphics(i, lineToLoad - top);
       spritePositions[_spriteCount - 1] = x;
       spritePriorities[_spriteCount - 1] = (attributeData >> 5) & 1;
       spriteIndexes[_spriteCount - 1] = i;
@@ -567,7 +578,6 @@ void PPU::loadBackgroundData() {
   // attributeTableByte in fact contains the information twice (as there are
   // only 4 palettes, hence 4 bytes needed). Trim and pass to higher bits.
   a = (attributeTableByte & 0b11) << 2;
-  log.debug() << hex(higherTileByte) << hex(lowerTileByte) << " attr:" << hex(attributeTableByte) << "\n";
   for (int i = 0; i < 8; i ++) {
     b = (higherTileByte & 0x80) >> 6;
     c = (lowerTileByte & 0x80) >> 7;
@@ -576,7 +586,6 @@ void PPU::loadBackgroundData() {
     lowerTileByte <<= 1;
     data |= (a | b | c);
   }
-  log.debug() << "oldBack " << hex(backgroundData) << " data " << hex(data) << "\n";
   backgroundData |= data;
 }
 
@@ -690,6 +699,7 @@ SpritePixel PPU::getSpritePixel() {
   }
   return {0, 0};
 }
+
 void PPU::renderPixel() {
   int x = clock - 1;
   int y = scanLine;
@@ -698,6 +708,7 @@ void PPU::renderPixel() {
   SpritePixel spritePix = getSpritePixel();
   if ((x < 8) && !ppumask.leftBackgroundFlag) background = 0;
   if ((x < 8) && !ppumask.leftSpritesFlag) spritePix.color = 0;
+  log.debug() << "sprite: " << hex(spritePix.color) << "back: " << hex(background) << "\n";
   bool bOpaque = background % 4 != 0;
   bool sOpaque = spritePix.color % 4 != 0;
   if (!sOpaque && !bOpaque) color = 0;
