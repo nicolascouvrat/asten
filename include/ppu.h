@@ -68,11 +68,14 @@ class PPUSTATUS: public Register {
     bool verticalBlankStartedFlag;
 };
 
+// PPUMASK is a register wired at $2003
+// This register is write only (reads are performed directly from the PPU)
 class OAMADDR: public Register {
   public:
     uint8_t read();
     void write(uint8_t);
     OAMADDR(PPU&);
+    friend class PPU;
   private:
     uint8_t address;
 };

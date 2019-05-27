@@ -129,15 +129,15 @@ uint8_t PPUSTATUS::read() {
 }
 
 OAMADDR::OAMADDR(PPU& _ppu): Register(_ppu) {
-  address = 0x00;
+  address = 0x0;
 }
 
 void OAMADDR::write(uint8_t value) {
-  address = address;
+  address = value;
 }
 
 uint8_t OAMADDR::read() {
-  return address;
+  throw invalidRegisterOp("OAMADDR", "read");
 }
 
 OAMDATA::OAMDATA(PPU& _ppu): Register(_ppu) {}
@@ -329,7 +329,7 @@ void PPU::setWriteToggle(bool status) { writeToggle = status; }
 
 bool PPU::getWriteToggle() { return writeToggle; }
 
-uint8_t PPU::getOamAddress() { return oamaddr.read(); }
+uint8_t PPU::getOamAddress() { return oamaddr.address; }
 
 void PPU::incrementOamAddress() { oamaddr.write(oamaddr.read() + 1); }
 
