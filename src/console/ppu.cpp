@@ -129,6 +129,7 @@ uint8_t PPUSTATUS::read() {
 }
 
 OAMADDR::OAMADDR(PPU& _ppu): Register(_ppu) {
+  // OAM address to access
   address = 0x0;
 }
 
@@ -155,20 +156,23 @@ void OAMDATA::upload(const std::vector<uint8_t>& page) {
   std::copy(page.begin(), page.end(), data);
 }
 
-uint8_t OAMDATA::readIndex(uint8_t index) { return data[index]; }
-
 PPUSCROLL::PPUSCROLL(PPU& _ppu): Register(_ppu) {}
 
 void PPUSCROLL::write(uint8_t value) {
   if (ppu.getWriteToggle()) {
+    // t: CBA..HG FED..... = d: HGFEDCBA
+    // w:                  = 0
     ppu.setTemporaryVram(
       (ppu.getTemporaryVram() & 0x0c1f) | ((value & 0x7) << 12) | ((value & 0xf8) << 2)
     );
     ppu.setWriteToggle(false);
   }
   else {
+    // t: ....... ...HGFED = d: HGFED...
+    // x:              CBA = d: .....CBA
+    // w:                  = 1
     ppu.setTemporaryVram(
-      (ppu.getTemporaryVram() & 0x7fe0) | (value >> 3)
+      (ppu.getTemporaryVram() & 0xffe0) | (value >> 3)
     );
     ppu.setFineScroll(value & 0x7);
     ppu.setWriteToggle(true);
@@ -331,7 +335,7 @@ bool PPU::getWriteToggle() { return writeToggle; }
 
 uint8_t PPU::getOamAddress() { return oamaddr.address; }
 
-void PPU::incrementOamAddress() { oamaddr.write(oamaddr.read() + 1); }
+void PPU::incrementOamAddress() { oamaddr.write(oamaddr.address + 1); }
 
 void PPU::setCurrentVram(uint16_t val){ currentVram = val; }
 
@@ -519,8 +523,8 @@ int PPU::fetchSpriteGraphics(int num, int row) {
   /* Fetches the pixel data for sprite num, 
    * where row is the row WITHIN the sprite (0 = top) 
    * */
-  uint8_t tileIndex = oamdata.readIndex(num * 4 + 1);
-  uint8_t attributes = oamdata.readIndex(num * 4 + 2);
+  uint8_t tileIndex = oamdata.data[num * 4 + 1];
+  uint8_t attributes = oamdata.data[num * 4 + 2];
   bool verticalFlip = (attributes & 0x80) == 0x80;
   bool horizontalFlip = (attributes & 0x40) == 0x40;
   bool table;
@@ -572,9 +576,9 @@ void PPU::loadSpriteData() {
   int lineToLoad = nextScanLine(scanLine);
 
   for (int i = 0; i < 64; i++) {
-    x = oamdata.readIndex(i * 4 + 3);
-    attributeData = oamdata.readIndex(i * 4 + 2);
-    y = oamdata.readIndex(i * 4);
+    x = oamdata.data[i * 4 + 3];
+    attributeData = oamdata.data[i * 4 + 2];
+    y = oamdata.data[i * 4];
     top = y;
     bottom = y + height;
     if ((lineToLoad < top) || (lineToLoad >= bottom)) continue;

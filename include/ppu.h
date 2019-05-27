@@ -54,7 +54,7 @@ class PPUMASK: public Register {
     bool redEmphasisFlag, greenEmphasisFlag, blueEmphasisFlag;
 };
 
-// PPUMASK is a register wired at $2002
+// PPUSTATUS is a register wired at $2002
 // This register is read only 
 class PPUSTATUS: public Register {
   public:
@@ -68,7 +68,7 @@ class PPUSTATUS: public Register {
     bool verticalBlankStartedFlag;
 };
 
-// PPUMASK is a register wired at $2003
+// OAMADDR is a register wired at $2003
 // This register is write only (reads are performed directly from the PPU)
 class OAMADDR: public Register {
   public:
@@ -80,17 +80,21 @@ class OAMADDR: public Register {
     uint8_t address;
 };
 
+// OAMDATA is a register wired at $2004
+// This register is read/write
 class OAMDATA: public Register {
   public:
     uint8_t read();
     void write(uint8_t);
     OAMDATA(PPU&);
     void upload(const std::vector<uint8_t>&);
-    uint8_t readIndex(uint8_t);
+    friend class PPU;
   private:
     uint8_t data[256];
 };
 
+// PPUSCROLL is a register wired at $2005
+// This register is write only (reads are performed directly from the PPU)
 class PPUSCROLL: public Register {
   public:
     uint8_t read();
