@@ -102,6 +102,8 @@ class PPUSCROLL: public Register {
     PPUSCROLL(PPU&);
 };
 
+// PPUADDR is a register wired at $2006
+// This register is write only (reads are performed directly from the PPU)
 class PPUADDR: public Register {
   public:
     uint8_t read();

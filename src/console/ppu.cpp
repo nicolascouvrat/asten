@@ -187,12 +187,18 @@ PPUADDR::PPUADDR(PPU& _ppu): Register(_ppu) {}
 
 void PPUADDR::write(uint8_t value) {
   if (ppu.getWriteToggle()) {
-    uint16_t newVram = (ppu.getTemporaryVram() & 0x7f00) | value;
+    // t: ....... HGFEDCBA = d: HGFEDCBA
+    // v                   = t
+    // w:                  = 0
+    uint16_t newVram = (ppu.getTemporaryVram() & 0xff00) | value;
     ppu.setTemporaryVram(newVram);
     ppu.setCurrentVram(newVram);
     ppu.setWriteToggle(false);
   }
   else {
+    // t: .FEDCBA ........ = d: ..FEDCBA
+    // t: X...... ........ = 0
+    // w:                  = 1
     ppu.setTemporaryVram(
       (ppu.getTemporaryVram() & 0x00ff) | ((value & 0x3f) << 8)
     );
