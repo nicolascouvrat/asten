@@ -122,6 +122,9 @@ class PPUDATA: public Register {
     uint8_t bufferedValue;
 };
 
+// OAMDATA is a register wired at $4014
+// This register is write only, and writing a byte there will copy data from CPU
+// page $XX00 - $XXFF to OAM data
 class OAMDMA: public Register {
   public:
     uint8_t read();

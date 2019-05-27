@@ -265,6 +265,7 @@ void OAMDMA::write(uint8_t value) {
   // we want to copy from 0xvalue00 to 0xvalueFF included, so add 1
   uint16_t addressEnd = (addressBegin | 0xFF) + 1;
   ppu.uploadToOamdata(addressBegin, addressEnd);
+  // emulate the time CPU has to wait for the copy to take place
   if ((ppu.getClock() % 2) == 0)
     ppu.makeCpuWait(513);
   else
@@ -366,6 +367,8 @@ bool PPU::getIncrementFlag() { return ppuctrl.incrementFlag; }
 
 PPUMemory& PPU::getMemory() { return mem; }
 
+// uploadToOamdata takes a page from the CPU memory between begin (included) and
+// end (excluded), and copies it to the OAM data
 void PPU::uploadToOamdata(uint16_t begin, uint16_t end) {
   std::vector<uint8_t> buffer(end - begin);
   for (int i = 0; i < end - begin; i++)
