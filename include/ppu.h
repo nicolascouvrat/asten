@@ -39,6 +39,8 @@ class PPUCTRL: public Register {
     bool masterSlaveFlag, nmiFlag;
 };
 
+// PPUMASK is a register wired at $2001
+// This register is write only (reads are performed directly from the PPU)
 class PPUMASK: public Register {
   public:
     uint8_t read();
@@ -52,6 +54,8 @@ class PPUMASK: public Register {
     bool redEmphasisFlag, greenEmphasisFlag, blueEmphasisFlag;
 };
 
+// PPUMASK is a register wired at $2002
+// This register is read only 
 class PPUSTATUS: public Register {
   public:
     uint8_t read();
@@ -169,8 +173,8 @@ class PPU {
     Logger log;
     PPUMemory mem;
     Console& console;
-    // TODO: check
-    int latchValue;
+    // corresponds to whatever was written to the ppu
+    uint8_t latchValue;
     
     // NMI
     bool nmiOccured, nmiPrevious;

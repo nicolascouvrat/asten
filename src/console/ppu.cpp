@@ -40,13 +40,18 @@ PPUCTRL::PPUCTRL(PPU& _ppu): Register(_ppu) {
 // - master/slave select
 // - nmi flag
 void PPUCTRL::write(uint8_t value) {
-  nametableFlag          = (value & 0b00000011) >> 0;
-  incrementFlag          = (value & 0b00000100) >> 2;
+  nametableFlag         = (value & 0b00000011) >> 0;
+  incrementFlag         = (value & 0b00000100) >> 2;
   spriteTableFlag       = (value & 0b00001000) >> 3;
   backgroundTableFlag   = (value & 0b00010000) >> 4;
   spriteSizeFlag        = (value & 0b00100000) >> 5;
   masterSlaveFlag       = (value & 0b01000000) >> 6;
-  nmiFlag                = (value & 0b10000000) >> 7;
+  nmiFlag               = (value & 0b10000000) >> 7;
+
+  // t: ...BA.. ........ = d: ......BA
+  ppu.setTemporaryVram (
+    (ppu.getTemporaryVram() & 0xfcff) | ((value & 0x3) << 10)
+  );
 }
 
 uint8_t PPUCTRL::read() {
@@ -54,22 +59,28 @@ uint8_t PPUCTRL::read() {
 }
 
 PPUMASK::PPUMASK(PPU& _ppu): Register(_ppu) {
+  // 0: normal color, 1: greyscale
   greyscaleFlag = false;
+  // 1: show background in leftmost 8 pixels, 0: hide
   leftBackgroundFlag = false;
+  // 1: show sprites in leftmost 8 pixels, 0: hide
   leftSpritesFlag = false;
+  // show background
   backgroundFlag = false;
+  // show sprites
   spritesFlag = false;
+  // emphasize colors
   redEmphasisFlag = false;
   greenEmphasisFlag = false;
   blueEmphasisFlag = false;
 }
 
 void PPUMASK::write(uint8_t value) {
-  greyscaleFlag          = (value & 0b00000001) >> 0;
+  greyscaleFlag         = (value & 0b00000001) >> 0;
   leftBackgroundFlag    = (value & 0b00000010) >> 1;
   leftSpritesFlag       = (value & 0b00000100) >> 2;
-  backgroundFlag         = (value & 0b00001000) >> 3;
-  spritesFlag            = (value & 0b00010000) >> 4;
+  backgroundFlag        = (value & 0b00001000) >> 3;
+  spritesFlag           = (value & 0b00010000) >> 4;
   redEmphasisFlag       = (value & 0b00100000) >> 5;
   greenEmphasisFlag     = (value & 0b01000000) >> 6;
   blueEmphasisFlag      = (value & 0b10000000) >> 7;
@@ -81,8 +92,13 @@ uint8_t PPUMASK::read() {
 }
 
 PPUSTATUS::PPUSTATUS(PPU& _ppu): Register(_ppu) {
+  // supposed to be set to 1 when more than 8 sprites appear on a scan line but
+  // has known hardware bug
   spriteOverflowFlag = false;
+  // set when non zero pixel of sprite zero overlaps with non zero pixel of
+  // background
   spriteZeroFlag = false;
+  // 0: not in vblank, 1: in vblank
   verticalBlankStartedFlag = false;
 }
 
@@ -90,8 +106,14 @@ void PPUSTATUS::write(uint8_t value) {
   throw invalidRegisterOp("PPUSTATUS", "write");
 }
 
+// read returns the following bits:
+// - 5 lowest bits of whatever was previously written to the PPU (the latch
+// value)
+// - sprite overflow flag
+// - sprite zero flag
+// - vblank flag
 uint8_t PPUSTATUS::read() {
-  uint8_t value = 0x00;
+  uint8_t value = ppu.getLatchValue() & 0x1f;
   value |= verticalBlankStartedFlag << 7;
   value |= spriteZeroFlag << 6;
   value |= spriteOverflowFlag << 5;
@@ -99,9 +121,9 @@ uint8_t PPUSTATUS::read() {
     value |= 1 << 7;
   }
   ppu.setNmiStatus(false, false);
-  value |= ppu.getLatchValue() & 0x1f;
 
   verticalBlankStartedFlag = false;
+  // w:                  = 0
   ppu.setWriteToggle(false);
   return value;
 }
@@ -667,7 +689,7 @@ void PPU::step() {
   bool isVisibleClock = (clock >= 1) && (clock <= 256);
   bool isVisibleLine = scanLine < PPU::POST_RENDER_SCAN_LINE;
   bool isPrerenderLine = scanLine == PPU::PRE_RENDER_SCAN_LINE;
-  bool isPostrenderLine = scanLine == PPU::POST_RENDER_SCAN_LINE;
+  bool isNextOfPostrenderLine = scanLine == PPU::POST_RENDER_SCAN_LINE + 1;
   bool isFetchLine = isVisibleLine || isPrerenderLine;
   bool isFetchClock = isVisibleClock || ((clock <= 336) && (clock >= 321));
   if (renderingEnabled) {
@@ -714,7 +736,8 @@ void PPU::step() {
     ppustatus.spriteZeroFlag = false;
   }
 
-  if (isPostrenderLine && (clock == 1)) setVerticalBlank();
+  // vertical blank is set after post-render line
+  if (isNextOfPostrenderLine && (clock == 1)) setVerticalBlank();
 
 }
 
