@@ -15,15 +15,30 @@ std::runtime_error invalidRegisterOp(std::string registerName, std::string op) {
 Register::Register(PPU& _ppu): ppu(_ppu) {}
 
 PPUCTRL::PPUCTRL(PPU& _ppu): Register(_ppu) {
+  // Base nametable address (0 = $2000, 1: $2400, 2: $2800, 3: $2C00)
   nametableFlag = 0; // on two bits
+  // VRAM address increment per read/write of PPUDATA (0: add 1, 1: add 32)
   incrementFlag = false;
+  // sprite pattern table for 8x8 sprites (ignored in 8x16) (0: $0000, 1: $1000)
   spriteTableFlag = false;
+  // background pattern table (0: $0000, 1: $1000)
   backgroundTableFlag = false;
+  // 0: 8x8, 1: 8x16
   spriteSizeFlag = false;
+  // 0: read from EXT pins, 1: output
   masterSlaveFlag = false;
+  // generate a nmi at the start of vertical blanking
   nmiFlag = false;
 }
 
+// write the byte to the register. Bits are (lowest to highest):
+// - base nametable address (2 bits)
+// - increment flag
+// - sprite pattern address
+// - background pattern address
+// - sprite size
+// - master/slave select
+// - nmi flag
 void PPUCTRL::write(uint8_t value) {
   nametableFlag          = (value & 0b00000011) >> 0;
   incrementFlag          = (value & 0b00000100) >> 2;
@@ -262,7 +277,7 @@ PPU::PPU(Console& _console):
   backgroundData = 0; // 64 bits
 
   spriteCount = 0;
-  // log.setLevel(DEBUG);
+  log.setLevel(DEBUG);
 
 }
 
@@ -540,7 +555,7 @@ void PPU::loadSpriteData() {
     y = oamdata.readIndex(i * 4);
     top = y;
     bottom = y + height;
-    if ((lineToLoad < top) || (lineToLoad > bottom)) continue;
+    if ((lineToLoad < top) || (lineToLoad >= bottom)) continue;
     _spriteCount++;
     if (_spriteCount <= 8) {
       spriteGraphics[_spriteCount - 1] = fetchSpriteGraphics(i, lineToLoad - top);
@@ -563,7 +578,9 @@ uint8_t PPU::getBackgroundPixel() {
    * */
   if (!ppumask.backgroundFlag) return 0;
   uint32_t cycleData = backgroundData >> 32;
-  log.debug() << hex(backgroundData) << "cycle: " << hex(cycleData) << "\n";
+  if (frameCount > 20 * 60) {
+    log.debug() << hex(backgroundData) << "cycle: " << hex(cycleData) << "\n";
+  }
   uint8_t pixelData = (cycleData >> (7 - fineScroll) * 4) & 0xf; 
   return pixelData;
 }
@@ -578,6 +595,11 @@ void PPU::loadBackgroundData() {
   // attributeTableByte in fact contains the information twice (as there are
   // only 4 palettes, hence 4 bytes needed). Trim and pass to higher bits.
   a = (attributeTableByte & 0b11) << 2;
+  if (frameCount > 20 * 60) {
+    log.debug() << "attr: " << hex(attributeTableByte) 
+                << "high: " << hex(higherTileByte)
+                << "low: " << hex(lowerTileByte) << "\n";
+  }
   for (int i = 0; i < 8; i ++) {
     b = (higherTileByte & 0x80) >> 6;
     c = (lowerTileByte & 0x80) >> 7;
@@ -585,6 +607,9 @@ void PPU::loadBackgroundData() {
     higherTileByte <<= 1;
     lowerTileByte <<= 1;
     data |= (a | b | c);
+  }
+  if (frameCount > 20 * 60) {
+    log.debug() << "new data: " << hex(data) << "\n";
   }
   backgroundData |= data;
 }
@@ -606,6 +631,11 @@ void PPU::fetchAttributeTableByte() {
   address |= (currentVram & 0x380) >> 4;
   address |= (currentVram & 0x1c) >> 2;
   attributeTableByte = mem.read(address);
+  if (frameCount > 20 * 60) {
+    log.debug() << "addr: " << hex(address) 
+                << " vram: " << hex(currentVram)
+                << " attr: " << hex(attributeTableByte) << "\n";
+  }
 }
 
 void PPU::fetchLowerTileByte() {
@@ -708,7 +738,6 @@ void PPU::renderPixel() {
   SpritePixel spritePix = getSpritePixel();
   if ((x < 8) && !ppumask.leftBackgroundFlag) background = 0;
   if ((x < 8) && !ppumask.leftSpritesFlag) spritePix.color = 0;
-  log.debug() << "sprite: " << hex(spritePix.color) << "back: " << hex(background) << "\n";
   bool bOpaque = background % 4 != 0;
   bool sOpaque = spritePix.color % 4 != 0;
   if (!sOpaque && !bOpaque) color = 0;
@@ -723,6 +752,9 @@ void PPU::renderPixel() {
       color =  background;
   }
   uint8_t paletteInfo = mem.read(0x3f00 + color % 64);
-  log.debug() << "(" << x << "," << y << ")" << ": " << hex(paletteInfo) << "\n";
+  if (frameCount > 20 * 60) {
+    log.debug() << "sprite: " << hex(spritePix.color) << "back: " << hex(background) << "\n";
+    log.debug() << "(" << x << "," << y << ")" << ": " << hex(paletteInfo) << "\n";
+  }
   console.getEngine().colorPixel(x, y, paletteInfo);
 }

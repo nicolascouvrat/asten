@@ -13,6 +13,7 @@ struct SpritePixel {
 };
 
 class PPU;
+// Register is a generic PPU register, supporting read and write operations
 class Register {
   public:
     virtual uint8_t read() = 0;
@@ -22,6 +23,8 @@ class Register {
     PPU& ppu;
 };
 
+// PPUCTRL is a register wired at address $2000
+// This register is write only (reads are performed directly from the PPU)
 class PPUCTRL: public Register {
   public:
     uint8_t read();
@@ -184,7 +187,14 @@ class PPU {
     PPUDATA ppudata;
     OAMDMA oamdma;
 
+    // currentVram and temporaryVram are composed of:
+    // - 5 lowest bits: coarse X scroll
+    // - 5 next bits: coarse Y scroll
+    // - 2 next bits: nametable bits
+    // - 3 next bits: fine y scroll (offset of scanline within tile)
+    // - upper bit: unused
     uint16_t currentVram, temporaryVram;
+    // fine x scroll (3 bits)
     uint8_t fineScroll;
     bool writeToggle;
     
