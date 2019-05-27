@@ -111,6 +111,8 @@ class PPUADDR: public Register {
     PPUADDR(PPU&);
 };
 
+// PPUDATA is a register wired at $2007
+// This register is read/write
 class PPUDATA: public Register {
   public:
     uint8_t read();
@@ -146,7 +148,6 @@ class PPU {
     void setWriteToggle(bool);
     bool getWriteToggle();
     void setCurrentVram(uint16_t);
-    uint16_t getCurrentVram();
     void setTemporaryVram(uint16_t);
     uint16_t getTemporaryVram();
     void setFineScroll(uint8_t);

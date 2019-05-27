@@ -215,34 +215,45 @@ PPUDATA::PPUDATA(PPU& _ppu): Register(_ppu) {
 }
 
 void PPUDATA::write(uint8_t value) {
-  ppu.getMemory().write(ppu.currentVram & 0x3fff, value);
-  // uint16_t currentVram = ppu.getCurrentVram();
-  // std::cout << hex(currentVram) << " " << hex(ppu.currentVram) << "\n";
-  // uint16_t add = currentVram & 0x3fff;
-  // PPUMemory& mem = ppu.getMemory();
-  // mem.write(add, value);
+  ppu.getMemory().write(ppu.currentVram, value);
   if (ppu.getIncrementFlag())
     ppu.currentVram += 32;
-    // ppu.setCurrentVram(currentVram + 32);
   else {
     ppu.currentVram += 1;
-    // ppu.setCurrentVram(currentVram + 1);
   }
 }
 
 
 uint8_t PPUDATA::read() {
-  uint8_t temp = bufferedValue;
-  uint16_t currentVram = ppu.getCurrentVram();
-  bufferedValue = ppu.getMemory().read(currentVram & 0x3fff);
+  // currentVram is on 15 bits but the ppu memory space is only 14 bits wide, so
+  // the highest bit is unused
+  uint16_t vram = ppu.currentVram & 0x3fff;
+  uint8_t value = ppu.getMemory().read(vram);
 
+  // technically, the increment is done "after" reading, but since we've already
+  // stored the previous vram in a variable we can get rid of this first
   if (ppu.getIncrementFlag())
-    ppu.setCurrentVram(currentVram + 32);
+    ppu.currentVram += 32;
   else
-    ppu.setCurrentVram(currentVram + 1);
+    ppu.currentVram++;
 
-  if ((currentVram & 0x3f00) == 0x3f00)
-    return bufferedValue; // this is a palette, return directly
+  // PPUDATA behaves differently depending on wheter the currentVram is in the
+  // range $0000 - $3eff (i.e. before the palettes) or not
+  //
+  // in both cases, it will update the buffered value before returning
+  if (vram >= 0x3f00) {
+    // the ppu memory has 4 nametables from $2000 to $2fff, and these are
+    // mirrored from $3000 to $3eff, meaning there is a "hole" in mirroring from
+    // $3f00 to $3fff. When reading a palette, the value returned is the palette
+    // value, but the value stored in the buffer will be that "missing" mirror.
+    bufferedValue = ppu.getMemory().read(vram - 0x1000);
+    return value;
+  }
+
+  // if not reading a palette, return the buffered value and put the new value
+  // in the buffer
+  uint8_t temp = bufferedValue;
+  bufferedValue = value;
   return temp;
 }
 
@@ -344,10 +355,6 @@ uint8_t PPU::getOamAddress() { return oamaddr.address; }
 void PPU::incrementOamAddress() { oamaddr.write(oamaddr.address + 1); }
 
 void PPU::setCurrentVram(uint16_t val){ currentVram = val; }
-
-uint16_t PPU::getCurrentVram() { 
-  return currentVram;
-}
 
 void PPU::setTemporaryVram(uint16_t val){ temporaryVram = val; }
 
