@@ -321,7 +321,7 @@ PPU::PPU(Console& _console):
   backgroundData = 0; // 64 bits
 
   spriteCount = 0;
-  log.setLevel(DEBUG);
+  // log.setLevel(DEBUG);
 
 }
 
@@ -500,10 +500,19 @@ void PPU::setVerticalBlank() {
   nmiChange();
 }
 
+// incrementHorizontalScroll sets the "internal tile pointer" (currentVram) to
+// one tile on the right of the current tile, or to the beginning of the next
+// line if we are already at the rightmost tile
 void PPU::incrementHorizontalScroll() {
   if ((currentVram & 0x1f) == 31) {
-    // set coarse x to 0, switch horizontal nametable
+    // set the 5 horizontal scroll bits to 0, and increment the vertical scroll
+    // by one. Note that this is useful only because we want to pre-fetch the
+    // first tile of the next line while rendering the last tile of the previous
+    // line
     currentVram &= 0xffe0;
+    // we only swap the lsb of the coarseY, because the increment will be done
+    // at the real end of the line (technically 8 cycles later), which will in
+    // turn bump the second bit
     currentVram ^= 0x400;
   }
   else currentVram += 1; // increment coarse x
@@ -633,13 +642,20 @@ void PPU::loadBackgroundData() {
    * One pixel needs 4 bits of info, total of 32 bits/cycle.
    * */
   uint32_t data = 0;
-  uint8_t a, b, c;
-  // attributeTableByte in fact contains the information twice (as there are
-  // only 4 palettes, hence 4 bytes needed). Trim and pass to higher bits.
-  a = (attributeTableByte & 0b11) << 2;
+  uint8_t a, b, c, shift;
+  // attributeTableByte in fact contains the information for a 4 * 4 tile
+  // square, each 2 * 2 tile group being coded on two bits:
+  //
+  // msb (bottom_right | bottom_left | topright | topleft) lsb
+  //
+  // to select the correct 2 bits, we need to know in which square we are, which
+  // is done by looking at the 2 bit of the coarseX and coarseY scroll
+  shift = ((currentVram >> 4) & 0b100) | (currentVram & 0b10);
+  a = ((attributeTableByte >> shift) & 0b11) << 2;
   if (frameCount > 20 * 60) {
     log.debug() << "attr: " << hex(attributeTableByte) 
                 << "high: " << hex(higherTileByte)
+                << "vram: " << hex(currentVram)
                 << "low: " << hex(lowerTileByte) << "\n";
   }
   for (int i = 0; i < 8; i ++) {
@@ -721,8 +737,12 @@ void PPU::step() {
         backgroundData <<= 4;
         switch (_switch) {
           case 0:
-            incrementHorizontalScroll();
+            // the order is important: we first load the background data for the
+            // 8 next pixels (i.e the current tile), then increment the
+            // horizontal scroll to signify that all the fetches should get the
+            // data for the next tile
             loadBackgroundData();
+            incrementHorizontalScroll();
             break;
           case 1:
             fetchNametableByte();
