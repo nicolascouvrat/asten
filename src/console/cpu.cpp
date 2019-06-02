@@ -12,7 +12,7 @@ bool pagesDiffer(uint16_t a, uint16_t b) {
 /* CONSTRUCTOR */
 
 CPU::CPU(Console& console):
-  log(Logger::getLogger("CPU")),
+  log(Logger::getLogger("CPU", "cpu.log")),
   mem(console), 
   instructionTable{
     &CPU::brk, &CPU::ora, &CPU::kil, &CPU::slo, &CPU::nop, &CPU::ora, &CPU::asl, &CPU::slo,
@@ -66,7 +66,7 @@ CPU::CPU(Console& console):
   clock = 0;
   cyclesToWait = 0;
   latestInstruction = 0x04; // NOP
-  log.setLevel(DEBUG);
+  log.setLevel(INFO);
 }
 
 /* PUBLIC FUNCTIONS */
@@ -97,6 +97,7 @@ void CPU::fastForwardClock(long ticks) {
 }
 
 long CPU::step() {
+  log.debug() << dumpState() << "\n";
   if (cyclesToWait > 0) {
     // simulates CPU doing copy op to PPU memory
     cyclesToWait--;
@@ -321,15 +322,15 @@ void CPU::adc(const InstructionInfo& i){
 }
  
 void CPU::ahx(const InstructionInfo& i){
-  log.debug() << "WARNING: UNIMPLEMENTED OP" << "\n";
+  log.warn() << "WARNING: UNIMPLEMENTED OP" << "\n";
 }
 
 void CPU::alr(const InstructionInfo& i){
-  log.debug() << "WARNING: UNIMPLEMENTED OP" << "\n";
+  log.warn() << "WARNING: UNIMPLEMENTED OP" << "\n";
 }
 
 void CPU::anc(const InstructionInfo& i){
-  log.debug() << "WARNING: UNIMPLEMENTED OP" << "\n";
+  log.warn() << "WARNING: UNIMPLEMENTED OP" << "\n";
 }
 
 void CPU::_and(const InstructionInfo& i){
@@ -338,7 +339,7 @@ void CPU::_and(const InstructionInfo& i){
 }
 
 void CPU::arr(const InstructionInfo& i){
-  log.debug() << "WARNING: UNIMPLEMENTED OP" << "\n";
+  log.warn() << "WARNING: UNIMPLEMENTED OP" << "\n";
 }
 
 void CPU::asl(const InstructionInfo& i){
@@ -354,7 +355,7 @@ void CPU::asl(const InstructionInfo& i){
 }
 
 void CPU::axs(const InstructionInfo& i){
-  log.debug() << "WARNING: UNIMPLEMENTED OP" << "\n";
+  log.warn() << "WARNING: UNIMPLEMENTED OP" << "\n";
 }
 
 void CPU::bcc(const InstructionInfo& i){
@@ -504,11 +505,11 @@ void CPU::jsr(const InstructionInfo& i){
 }
 
 void CPU::kil(const InstructionInfo& i){
-  log.debug() << "WARNING: UNIMPLEMENTED OP" << "\n";
+  log.warn() << "WARNING: UNIMPLEMENTED OP" << "\n";
 }
 
 void CPU::las(const InstructionInfo& i){
-  log.debug() << "WARNING: UNIMPLEMENTED OP" << "\n";
+  log.warn() << "WARNING: UNIMPLEMENTED OP" << "\n";
 }
 
 void CPU::lax(const InstructionInfo& i){
@@ -674,7 +675,7 @@ void CPU::sty(const InstructionInfo& i){
 }
 
 void CPU::tas(const InstructionInfo& i){
-  log.debug() << "WARNING: UNIMPLEMENTED OP" << "\n";
+  log.warn() << "WARNING: UNIMPLEMENTED OP" << "\n";
 }
 
 void CPU::tax(const InstructionInfo& i){
@@ -707,5 +708,5 @@ void CPU::tya(const InstructionInfo& i){
 }
 
 void CPU::xaa(const InstructionInfo& i){
-  log.debug() << "WARNING: UNIMPLEMENTED OP" << "\n";
+  log.warn() << "WARNING: UNIMPLEMENTED OP" << "\n";
 }

@@ -63,6 +63,7 @@ class HorizontalMirror: public PPUMirror {
     int getTable(int);
 };
 
+// Mapper emulates the combination of a NES cartridge and its circuits
 class Mapper {
   public:
     virtual uint8_t readPrg(uint16_t) = 0;
@@ -70,6 +71,8 @@ class Mapper {
     virtual uint8_t readChr(uint16_t) = 0;
     virtual void writeChr(uint16_t, uint8_t) = 0;
     static Mapper *fromNesFile(std::string fileName);
+    // mirrorAddress is used to get the right nametable depending on the
+    // mirroring
     uint16_t mirrorAddress(uint16_t);
   protected:
     Logger log;
@@ -94,5 +97,34 @@ class NROMMapper: public Mapper {
     const bool isNrom_128;
 };
 
+class MMC3Mapper: public Mapper {
+  public:
+    uint8_t readPrg(uint16_t p);
+    void writePrg(uint16_t p, uint8_t v);
+    uint8_t readChr(uint16_t p);
+    void writeChr(uint16_t p, uint8_t v);
+    MMC3Mapper(NESHeader, const std::vector<uint8_t>&);
+  private:
+    // the size of one memory page (8kb)
+    static const int PAGE_SIZE = 0x2000;
+    // index of the bank to update
+    uint8_t currentBank;
+    // mapper of one bank to its index (i.e. which page of memory should it
+    // point to)
+    uint8_t bankIndexes[8];
+    // false: 0x8000 - 0x9fff swappable, 0xc000 - 0xdfff fixed to second to last
+    // true: 0xc000 - 0xdfff swappable, 0x8000 - 0x9fff fixed to second to last
+    bool prgROMMode;
+    bool chrInversion;
+
+    void writeBankSelect(uint8_t);
+    void writeBankData(uint8_t);
+    void writeMirroring(uint8_t);
+    void writePRGRAMProtect(uint8_t);
+    void writeIRQLatch(uint8_t);
+    void writeIRQReload(uint8_t);
+    void writeIRQDisable(uint8_t);
+    void writeIRQEnable(uint8_t);
+};
 
 #endif

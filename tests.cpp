@@ -73,7 +73,7 @@ int test_PPU() {
 }
 
 int integrationTest() {
-  Console console("roms/dk.nes");
+  Console console("roms/ff3.nes");
   while (console.isRunning()) {
     console.step();
   }

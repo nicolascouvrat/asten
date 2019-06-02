@@ -9,6 +9,12 @@ std::runtime_error invalidNesFileError(std::string fileName) {
   return std::runtime_error(fileName + ": " + std::strerror(errno));
 }
 
+std::runtime_error mapperNotImplementedError(std::string what) {
+  return std::runtime_error("Not implemented mapper op: " + what);
+}
+
+// fromNesFile opens a .nes file, parses its header then generates an
+// appropriate mapper on top of cartridge data
 Mapper *Mapper::fromNesFile(std::string fileName) {
   uint8_t rawHeader[NESHeader::SIZE];
 
@@ -31,8 +37,16 @@ Mapper *Mapper::fromNesFile(std::string fileName) {
   if (!in.read((char*)rawData.data(), rawData.size()))
     throw invalidNesFileError(fileName);
 
+  // parse header object and return adequate mapper
   NESHeader header = parseHeader(rawHeader);
-  return new NROMMapper(header, rawData);
+  switch(header.mapperId){
+    case 0:
+      return new NROMMapper(header, rawData);
+    case 4:
+      return new MMC3Mapper(header, rawData);
+    default:
+      throw mapperNotImplementedError("mapper id n" + std::to_string(header.mapperId));
+  }
 }
 
 Mapper::Mapper(NESHeader header, const std::vector<uint8_t>& rawData):
@@ -42,8 +56,8 @@ Mapper::Mapper(NESHeader header, const std::vector<uint8_t>& rawData):
   prgRam(new uint8_t[header.prgRamSize * PRG_RAM_UNIT]),
   chrRom(new uint8_t[header.chrRomSize * CHR_ROM_UNIT])
 {
-  log.setLevel(DEBUG);
-  log.debug() << header << "\n";
+  log.setLevel(INFO);
+  log.info() << header << "\n";
   int j = 0;
   for (int i = 0; i < header.prgRomSize * PRG_ROM_UNIT; i++)
     prgRom[i] = rawData[j++];
@@ -110,4 +124,94 @@ int VerticalMirror::getTable(int num) {
 int HorizontalMirror::getTable(int num) {
   int mirrorPattern[4] = {0, 0, 2, 2};
   return mirrorPattern[num];
+}
+
+MMC3Mapper::MMC3Mapper(NESHeader h, const std::vector<uint8_t>& d):
+  Mapper(h, d)
+{}
+
+uint8_t MMC3Mapper::readPrg(uint16_t address){
+  log.debug() << "Attempted mapper read addr=" << hex(address) << "\n";
+  return 0;
+}
+
+uint8_t MMC3Mapper::readChr(uint16_t address){
+  log.debug() << "Attempted mapper read addr=" << hex(address) << "\n";
+  return 0;
+}
+
+// writePrg is called for address >= 0x8000
+void MMC3Mapper::writePrg(uint16_t address, uint8_t value) {
+  if (address < 0x8000) {
+    log.error() << "Trying to write PRG at " <<  hex(address) << "\n";
+  }
+  else if (address < 0xa000 && address % 2 == 0) {
+    writeBankSelect(value);
+  }
+  else if (address < 0xa000 && address % 2 == 1) {
+    writeBankData(value);
+  }
+  else if (address < 0xc000 && address % 2 == 0) {
+    writeMirroring(value);
+  }
+  else if (address < 0xc000 && address % 2 == 1) {
+    writePRGRAMProtect(value);
+  }
+  else if (address < 0xe000 && address % 2 == 0) {
+    writeIRQLatch(value);
+  }
+  else if (address < 0xe000 && address % 2 == 1) {
+    writeIRQReload(value);
+  }
+  else if (address % 2 == 0) {
+    writeIRQDisable(value);
+  }
+  else {
+    writeIRQEnable(value);
+  }
+}
+
+void MMC3Mapper::writeChr(uint16_t address, uint8_t value) {
+  log.debug() << "Attempted mapper write addr=" << hex(address) << " val=" << hex(value) << "\n";
+}
+
+// writeBankSelect sets internal MMC3 values according to value
+// bits 0 - 2: bank register to update
+// bits 3 - 5: nothing
+// bit 6: PRG ROM mode
+// bit 7: CHR A12 inversion
+void MMC3Mapper::writeBankSelect(uint8_t value) {
+  currentBank = value & 0x7;
+  prgROMMode = (value >> 6) & 0x1;
+  chrInversion = (value >> 7);
+}
+
+// writeBankData will set the offset of the currentBank so that it points to the
+// correct location in prgRom
+void MMC3Mapper::writeBankData(uint8_t value) {
+  bankIndexes[currentBank] = value;
+}
+
+void MMC3Mapper::writeMirroring(uint8_t value) {
+  throw mapperNotImplementedError("writeMirroring");
+}
+
+void MMC3Mapper::writePRGRAMProtect(uint8_t value) {
+  throw mapperNotImplementedError("writePRGRAMProtect");
+}
+
+void MMC3Mapper::writeIRQLatch(uint8_t value) {
+  throw mapperNotImplementedError("writeIRQLatch");
+}
+
+void MMC3Mapper::writeIRQReload(uint8_t value) {
+  throw mapperNotImplementedError("writeIRQReload");
+}
+
+void MMC3Mapper::writeIRQDisable(uint8_t value) {
+  throw mapperNotImplementedError("writeIRQDisable");
+}
+
+void MMC3Mapper::writeIRQEnable(uint8_t value) {
+  throw mapperNotImplementedError("writeIRQEnable");
 }
