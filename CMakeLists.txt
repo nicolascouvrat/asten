@@ -10,7 +10,7 @@ set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(ROM_DIR "${CMAKE_CURRENT_SOURCE_DIR}/roms")
 
 # add sources
-file(GLOB SOURCES "main.cpp")
+file(GLOB SOURCES "nes.cpp")
 # make target
 add_executable(${PROJECT_NAME} ${SOURCES})
 # force usage of C++ 11
