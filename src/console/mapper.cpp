@@ -63,6 +63,7 @@ Mapper::Mapper(NESHeader header, const std::vector<uint8_t>& rawData):
     prgRom[i] = rawData[j++];
   for (int i = 0; i < header.chrRomSize * CHR_ROM_UNIT; i++)
     chrRom[i] = rawData[j++];
+  prgRomSize = header.prgRomSize;
 }
 
 uint16_t Mapper::mirrorAddress(uint16_t address) {
@@ -128,11 +129,29 @@ int HorizontalMirror::getTable(int num) {
 
 MMC3Mapper::MMC3Mapper(NESHeader h, const std::vector<uint8_t>& d):
   Mapper(h, d)
-{}
+{
+  cpuOffsets[0] = computeOffset(0);
+  cpuOffsets[1] = computeOffset(1);
+  cpuOffsets[2] = computeOffset(-2);
+  cpuOffsets[3] = computeOffset(-1);
+}
 
+// readPrg returns the byte stored in PRGROM for this address
+// 
+// It works by finding which page the address belongs to, then reading from the
+// memory using the offsets determined by the internal state of the mapper
 uint8_t MMC3Mapper::readPrg(uint16_t address){
-  log.debug() << "Attempted mapper read addr=" << hex(address) << "\n";
-  return 0;
+  if (address < 0x8000) {
+    log.error() << "Trying to write PRG at " <<  hex(address) << "\n";
+    return 0;
+  }
+  int index = (address - 0x8000) % MMC3Mapper::PAGE_SIZE;
+  int offset = (address - 0x8000) / MMC3Mapper::PAGE_SIZE;
+  int redirectedAddress = cpuOffsets[index] + offset;
+  log.info() << "index=" << index << " offset=" << offset << " redirected=" << redirectedAddress << "\n";
+  log.info() << "addr=" << hex(address - 0x8000) << "\n";
+
+  return prgRom[redirectedAddress];
 }
 
 uint8_t MMC3Mapper::readChr(uint16_t address){
@@ -184,12 +203,42 @@ void MMC3Mapper::writeBankSelect(uint8_t value) {
   currentBank = value & 0x7;
   prgROMMode = (value >> 6) & 0x1;
   chrInversion = (value >> 7);
+  setCpuOffsets();
 }
 
 // writeBankData will set the offset of the currentBank so that it points to the
 // correct location in prgRom
 void MMC3Mapper::writeBankData(uint8_t value) {
   bankIndexes[currentBank] = value;
+  setCpuOffsets();
+}
+
+// setCpuOffsets assigns the 4 cpu memory pages (0x8000 thru 0xffff) to
+// different locations in prgRom
+void MMC3Mapper::setCpuOffsets() {
+  // in all cases, 0xa000 - 0xbfff has the page index given by the last bank
+  // MMC3 is capped at 64 pages of prgROM, so ignore the two uper bits
+  cpuOffsets[1] = computeOffset(bankIndexes[7] & 63);
+  // in all cases, 0xe000 - 0xffff is locked to the last page
+  cpuOffsets[3] = computeOffset(-1);
+  if (prgROMMode) {
+    // 0x8000-0x9fff locked, 0xc000 - 0xdfff swappable
+    cpuOffsets[0] = computeOffset(-2);
+    cpuOffsets[2] = computeOffset(bankIndexes[6] & 63);
+  } else {
+    // 0x8000-0x9fff swappable, 0xc000 - 0xdfff locked
+    cpuOffsets[0] = computeOffset(bankIndexes[6] & 63);
+    cpuOffsets[2] = computeOffset(-2);
+  }
+}
+
+// computeOffset returns the offset of in memory for a given index (that can be
+// negative, in which case it will read from the end)
+int MMC3Mapper::computeOffset(int pageIndex) {
+  if (pageIndex < 0) {
+    pageIndex += prgRomSize;
+  }
+  return MMC3Mapper::PAGE_SIZE * pageIndex;
 }
 
 void MMC3Mapper::writeMirroring(uint8_t value) {

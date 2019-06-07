@@ -84,6 +84,7 @@ class Mapper {
     uint8_t *prgRom;
     uint8_t *prgRam;
     uint8_t *chrRom;
+    int prgRomSize;
 };
 
 class NROMMapper: public Mapper {
@@ -97,6 +98,7 @@ class NROMMapper: public Mapper {
     const bool isNrom_128;
 };
 
+// MMC3Mapper has a total of 8 banks, but controls a total of 
 class MMC3Mapper: public Mapper {
   public:
     uint8_t readPrg(uint16_t p);
@@ -112,6 +114,11 @@ class MMC3Mapper: public Mapper {
     // mapper of one bank to its index (i.e. which page of memory should it
     // point to)
     uint8_t bankIndexes[8];
+
+    // although the MMC3 only has two banks dedicated to the CPU, it in fact
+    // controls the offsets for 4 pages at all time (0x8000 to 0xffff)
+    int cpuOffsets[4];
+
     // false: 0x8000 - 0x9fff swappable, 0xc000 - 0xdfff fixed to second to last
     // true: 0xc000 - 0xdfff swappable, 0x8000 - 0x9fff fixed to second to last
     bool prgROMMode;
@@ -125,6 +132,9 @@ class MMC3Mapper: public Mapper {
     void writeIRQReload(uint8_t);
     void writeIRQDisable(uint8_t);
     void writeIRQEnable(uint8_t);
+
+    void setCpuOffsets();
+    int computeOffset(int);
 };
 
 #endif
