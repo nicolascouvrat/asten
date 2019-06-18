@@ -56,7 +56,7 @@ Mapper::Mapper(NESHeader header, const std::vector<uint8_t>& rawData):
   prgRam(new uint8_t[header.prgRamSize * PRG_RAM_UNIT]),
   chrRom(new uint8_t[header.chrRomSize * CHR_ROM_UNIT])
 {
-  log.setLevel(INFO);
+  log.setLevel(DEBUG);
   log.info() << header << "\n";
   int j = 0;
   for (int i = 0; i < header.prgRomSize * PRG_ROM_UNIT; i++)
@@ -145,11 +145,9 @@ uint8_t MMC3Mapper::readPrg(uint16_t address){
     log.error() << "Trying to write PRG at " <<  hex(address) << "\n";
     return 0;
   }
-  int index = (address - 0x8000) % MMC3Mapper::PAGE_SIZE;
-  int offset = (address - 0x8000) / MMC3Mapper::PAGE_SIZE;
+  int offset = (address - 0x8000) % MMC3Mapper::PAGE_SIZE;
+  int index = (address - 0x8000) / MMC3Mapper::PAGE_SIZE;
   int redirectedAddress = cpuOffsets[index] + offset;
-  log.info() << "index=" << index << " offset=" << offset << " redirected=" << redirectedAddress << "\n";
-  log.info() << "addr=" << hex(address - 0x8000) << "\n";
 
   return prgRom[redirectedAddress];
 }
@@ -249,18 +247,37 @@ void MMC3Mapper::writePRGRAMProtect(uint8_t value) {
   throw mapperNotImplementedError("writePRGRAMProtect");
 }
 
-void MMC3Mapper::writeIRQLatch(uint8_t value) {
-  throw mapperNotImplementedError("writeIRQLatch");
+// clockIRQCounter checks the counter value
+//  - if it is 0 and interrupts are enabled, then a CPU IRQ is triggered
+//  - if it is 0 OR if the reload flag is true, it sets the counter to the latch
+//  value. Else, it decrements
+//  XXX there are slight variants for this depending on the hardware, see wiki
+//  https://wiki.nesdev.com/w/index.php/MMC3#IRQ_Specifics
+void MMC3Mapper::clockIRQCounter() {
+  if (IRQCounter == 0 && IRQEnabled) {
+    // TODO: trigger IRQ
+  }
+  if (IRQCounter == 0 || IRQReload) {
+    IRQReload = false;
+    IRQCounter = IRQLatch;
+  } else {
+    IRQCounter--;
+  }
 }
 
+void MMC3Mapper::writeIRQLatch(uint8_t value) {
+  IRQLatch = value;
+}
+
+// writeIRQReload will trigger a reload at the next counter clock
 void MMC3Mapper::writeIRQReload(uint8_t value) {
-  throw mapperNotImplementedError("writeIRQReload");
+  IRQReload = true;
 }
 
 void MMC3Mapper::writeIRQDisable(uint8_t value) {
-  throw mapperNotImplementedError("writeIRQDisable");
+  IRQEnabled = false;
 }
 
 void MMC3Mapper::writeIRQEnable(uint8_t value) {
-  throw mapperNotImplementedError("writeIRQEnable");
+  IRQEnabled = true;
 }

@@ -106,6 +106,13 @@ class MMC3Mapper: public Mapper {
     uint8_t readChr(uint16_t p);
     void writeChr(uint16_t p, uint8_t v);
     MMC3Mapper(NESHeader, const std::vector<uint8_t>&);
+    // this should be called on each rise of PPU A12, and will decrement the
+    // counter and/or perform other operations (reloads...) depending on the
+    // mapper's internal registers
+    //
+    // If the counter reaches 0 and IRQ are not disabled, this will generate and
+    // IRQ interrupt
+    void clockIRQCounter();
   private:
     // the size of one memory page (8kb)
     static const int PAGE_SIZE = 0x2000;
@@ -123,6 +130,21 @@ class MMC3Mapper: public Mapper {
     // true: 0xc000 - 0xdfff swappable, 0x8000 - 0x9fff fixed to second to last
     bool prgROMMode;
     bool chrInversion;
+
+    // IRQ counter
+    // The counter supports values up from 1 to 256. It is not possible to
+    // directly interact with it, only to indirectly "control" it through writes
+    // to adresses >= 0xc000
+    uint8_t IRQCounter;
+    // The irq latch stores the value that will be loaded in the counter on next
+    // reload
+    uint8_t IRQLatch;
+    // IRQ reload is not instantaneous and will happen at the next counter clock
+    bool IRQReload;
+    // flag that denotes if IRQ interrupts are enabled. Note that having it
+    // disabled does not prevent the counter from decrementing, only the
+    // interrupts from happening
+    bool IRQEnabled;
 
     void writeBankSelect(uint8_t);
     void writeBankData(uint8_t);
