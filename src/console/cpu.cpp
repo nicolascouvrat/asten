@@ -5,6 +5,10 @@ constexpr uint8_t CPU::instructionModes[];
 constexpr uint8_t CPU::instructionCycles[];
 constexpr uint8_t CPU::instructionCyclesExtra[];
 
+std::runtime_error notImplementedOp(std::string opcode) {
+  return std::runtime_error("Not implemented op: " + opcode);
+}
+
 bool pagesDiffer(uint16_t a, uint16_t b) {
     return (a & 0xff00) != (b & 0xff00);
 }
@@ -322,15 +326,15 @@ void CPU::adc(const InstructionInfo& i){
 }
  
 void CPU::ahx(const InstructionInfo& i){
-  log.warn() << "WARNING: UNIMPLEMENTED OP" << "\n";
+  throw notImplementedOp("ahx");
 }
 
 void CPU::alr(const InstructionInfo& i){
-  log.warn() << "WARNING: UNIMPLEMENTED OP" << "\n";
+  throw notImplementedOp("alr");
 }
 
 void CPU::anc(const InstructionInfo& i){
-  log.warn() << "WARNING: UNIMPLEMENTED OP" << "\n";
+  throw notImplementedOp("anc");
 }
 
 void CPU::_and(const InstructionInfo& i){
@@ -339,7 +343,7 @@ void CPU::_and(const InstructionInfo& i){
 }
 
 void CPU::arr(const InstructionInfo& i){
-  log.warn() << "WARNING: UNIMPLEMENTED OP" << "\n";
+  throw notImplementedOp("arr");
 }
 
 void CPU::asl(const InstructionInfo& i){
@@ -355,7 +359,7 @@ void CPU::asl(const InstructionInfo& i){
 }
 
 void CPU::axs(const InstructionInfo& i){
-  log.warn() << "WARNING: UNIMPLEMENTED OP" << "\n";
+  throw notImplementedOp("axs");
 }
 
 void CPU::bcc(const InstructionInfo& i){
@@ -505,11 +509,11 @@ void CPU::jsr(const InstructionInfo& i){
 }
 
 void CPU::kil(const InstructionInfo& i){
-  log.warn() << "WARNING: UNIMPLEMENTED OP" << "\n";
+  throw notImplementedOp("kil");
 }
 
 void CPU::las(const InstructionInfo& i){
-  log.warn() << "WARNING: UNIMPLEMENTED OP" << "\n";
+  throw notImplementedOp("las");
 }
 
 void CPU::lax(const InstructionInfo& i){
@@ -675,7 +679,7 @@ void CPU::sty(const InstructionInfo& i){
 }
 
 void CPU::tas(const InstructionInfo& i){
-  log.warn() << "WARNING: UNIMPLEMENTED OP" << "\n";
+  throw notImplementedOp("tas");
 }
 
 void CPU::tax(const InstructionInfo& i){
@@ -708,5 +712,5 @@ void CPU::tya(const InstructionInfo& i){
 }
 
 void CPU::xaa(const InstructionInfo& i){
-  log.warn() << "WARNING: UNIMPLEMENTED OP" << "\n";
+  throw notImplementedOp("xaa");
 }
