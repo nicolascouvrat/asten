@@ -63,6 +63,7 @@ class HorizontalMirror: public PPUMirror {
     int getTable(int);
 };
 
+class Console;
 // Mapper emulates the combination of a NES cartridge and its circuits
 class Mapper {
   public:
@@ -72,14 +73,15 @@ class Mapper {
     virtual void writeChr(uint16_t, uint8_t) = 0;
     // Call to signify that PPU A12 had a rising edge
     virtual void clockIRQCounter() = 0;
-    static Mapper *fromNesFile(std::string fileName);
+    static Mapper *fromNesFile(Console& c, std::string fileName);
     // mirrorAddress is used to get the right nametable depending on the
     // mirroring
     uint16_t mirrorAddress(uint16_t);
   protected:
     Logger log;
     PPUMirror* mirror;
-    Mapper(NESHeader, const std::vector<uint8_t>&);
+    Console& console;
+    Mapper(Console&, NESHeader, const std::vector<uint8_t>&);
     static const int PRG_ROM_UNIT = 0x4000;
     static const int CHR_ROM_UNIT = 0x2000;
     static const int PRG_RAM_UNIT = 0x2000;
@@ -97,7 +99,7 @@ class NROMMapper: public Mapper {
     void writeChr(uint16_t p, uint8_t v);
     // Does nothing
     void clockIRQCounter();
-    NROMMapper(NESHeader, const std::vector<uint8_t>&);
+    NROMMapper(Console&, NESHeader, const std::vector<uint8_t>&);
   private:
     const bool isNrom_128;
 };
@@ -109,7 +111,7 @@ class MMC3Mapper: public Mapper {
     void writePrg(uint16_t p, uint8_t v);
     uint8_t readChr(uint16_t p);
     void writeChr(uint16_t p, uint8_t v);
-    MMC3Mapper(NESHeader, const std::vector<uint8_t>&);
+    MMC3Mapper(Console&, NESHeader, const std::vector<uint8_t>&);
     // this should be called on each rise of PPU A12, and will decrement the
     // counter and/or perform other operations (reloads...) depending on the
     // mapper's internal registers

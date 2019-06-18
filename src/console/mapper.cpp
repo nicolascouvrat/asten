@@ -1,8 +1,9 @@
-#include "mapper.h"
-
 #include <cerrno>
 #include <cstring>
 #include <iostream>
+
+#include "mapper.h"
+#include "console.h"
 
 
 std::runtime_error invalidNesFileError(std::string fileName) {
@@ -15,7 +16,7 @@ std::runtime_error mapperNotImplementedError(std::string what) {
 
 // fromNesFile opens a .nes file, parses its header then generates an
 // appropriate mapper on top of cartridge data
-Mapper *Mapper::fromNesFile(std::string fileName) {
+Mapper *Mapper::fromNesFile(Console& c, std::string fileName) {
   uint8_t rawHeader[NESHeader::SIZE];
 
   std::ifstream in(fileName, std::ios::binary);
@@ -41,17 +42,18 @@ Mapper *Mapper::fromNesFile(std::string fileName) {
   NESHeader header = parseHeader(rawHeader);
   switch(header.mapperId){
     case 0:
-      return new NROMMapper(header, rawData);
+      return new NROMMapper(c, header, rawData);
     case 4:
-      return new MMC3Mapper(header, rawData);
+      return new MMC3Mapper(c, header, rawData);
     default:
       throw mapperNotImplementedError("mapper id n" + std::to_string(header.mapperId));
   }
 }
 
-Mapper::Mapper(NESHeader header, const std::vector<uint8_t>& rawData):
+Mapper::Mapper(Console& c, NESHeader header, const std::vector<uint8_t>& rawData):
   log(Logger::getLogger("Mapper")),
   mirror(PPUMirror::fromId(header.mirrorId)),
+  console(c),
   prgRom(new uint8_t[header.prgRomSize * PRG_ROM_UNIT]),
   prgRam(new uint8_t[header.prgRamSize * PRG_RAM_UNIT]),
   chrRom(new uint8_t[header.chrRomSize * CHR_ROM_UNIT])
@@ -74,8 +76,8 @@ uint16_t Mapper::mirrorAddress(uint16_t address) {
   return pointer;
 }
 
-NROMMapper::NROMMapper(NESHeader h, const std::vector<uint8_t>& d):
-  Mapper(h, d),
+NROMMapper::NROMMapper(Console& c, NESHeader h, const std::vector<uint8_t>& d):
+  Mapper(c, h, d),
   // NROM-128 have 16kB of PRG_ROM, NROM-256 have 32kB
   isNrom_128((h.prgRomSize > 1) ? false : true)
 {}
@@ -130,8 +132,8 @@ int HorizontalMirror::getTable(int num) {
   return mirrorPattern[num];
 }
 
-MMC3Mapper::MMC3Mapper(NESHeader h, const std::vector<uint8_t>& d):
-  Mapper(h, d)
+MMC3Mapper::MMC3Mapper(Console& c, NESHeader h, const std::vector<uint8_t>& d):
+  Mapper(c, h, d)
 {
   cpuOffsets[0] = computeOffset(0);
   cpuOffsets[1] = computeOffset(1);
@@ -258,7 +260,7 @@ void MMC3Mapper::writePRGRAMProtect(uint8_t value) {
 //  https://wiki.nesdev.com/w/index.php/MMC3#IRQ_Specifics
 void MMC3Mapper::clockIRQCounter() {
   if (IRQCounter == 0 && IRQEnabled) {
-    // TODO: trigger IRQ
+    console.getCpu().triggerIrq();
   }
   if (IRQCounter == 0 || IRQReload) {
     IRQReload = false;

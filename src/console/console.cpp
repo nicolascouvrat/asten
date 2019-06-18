@@ -18,7 +18,7 @@ Controller& Console::getRightController() { return rightController; }
 Console::Console(std::string name): 
   log(Logger::getLogger("Console")),
   cpu(*this), ppu(*this),
-  mapper(Mapper::fromNesFile(name))
+  mapper(Mapper::fromNesFile(*this, name))
 {
   log.setLevel(DEBUG);
   cpu.reset();
