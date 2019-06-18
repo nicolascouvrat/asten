@@ -70,6 +70,8 @@ class Mapper {
     virtual void writePrg(uint16_t, uint8_t) = 0;
     virtual uint8_t readChr(uint16_t) = 0;
     virtual void writeChr(uint16_t, uint8_t) = 0;
+    // Call to signify that PPU A12 had a rising edge
+    virtual void clockIRQCounter() = 0;
     static Mapper *fromNesFile(std::string fileName);
     // mirrorAddress is used to get the right nametable depending on the
     // mirroring
@@ -93,6 +95,8 @@ class NROMMapper: public Mapper {
     void writePrg(uint16_t p, uint8_t v);
     uint8_t readChr(uint16_t p);
     void writeChr(uint16_t p, uint8_t v);
+    // Does nothing
+    void clockIRQCounter();
     NROMMapper(NESHeader, const std::vector<uint8_t>&);
   private:
     const bool isNrom_128;

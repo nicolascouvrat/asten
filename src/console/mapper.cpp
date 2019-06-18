@@ -94,6 +94,9 @@ void NROMMapper::writePrg(uint16_t address, uint8_t value) {
     log.error() << "Trying to write prg at " << hex(address) << "\n";
 }
 
+// clockIRQCounter does nothing for the NROM Mapper
+void NROMMapper::clockIRQCounter() {}
+
 uint8_t NROMMapper::readChr(uint16_t address) {
   return chrRom[address];
 }

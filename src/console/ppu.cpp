@@ -5,6 +5,7 @@
 
 #include "console.h"
 #include "cpu.h"
+#include "mapper.h"
 
 
 std::runtime_error invalidRegisterOp(std::string registerName, std::string op) {
@@ -766,6 +767,10 @@ void PPU::step() {
       if (clock == 257) copyHorizontalScroll();
 
       if (clock == 257) loadSpriteData();
+
+      // this emulates the rising edge on PPU A12
+      // TODO: emulate more precisely
+      if (clock == 260) console.getMapper()->clockIRQCounter();
     }
     if (isPrerenderLine && (clock >= 280) && (clock <= 304))
       copyVerticalScroll();
