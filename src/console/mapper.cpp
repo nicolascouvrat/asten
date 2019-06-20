@@ -135,10 +135,10 @@ int HorizontalMirror::getTable(int num) {
 MMC3Mapper::MMC3Mapper(Console& c, NESHeader h, const std::vector<uint8_t>& d):
   Mapper(c, h, d)
 {
-  cpuOffsets[0] = computeOffset(0);
-  cpuOffsets[1] = computeOffset(1);
-  cpuOffsets[2] = computeOffset(-2);
-  cpuOffsets[3] = computeOffset(-1);
+  cpuOffsets[0] = computeCpuOffset(0);
+  cpuOffsets[1] = computeCpuOffset(1);
+  cpuOffsets[2] = computeCpuOffset(-2);
+  cpuOffsets[3] = computeCpuOffset(-1);
 }
 
 // readPrg returns the byte stored in PRGROM for this address
@@ -150,8 +150,8 @@ uint8_t MMC3Mapper::readPrg(uint16_t address){
     log.error() << "Trying to write PRG at " <<  hex(address) << "\n";
     return 0;
   }
-  int offset = (address - 0x8000) % MMC3Mapper::PAGE_SIZE;
-  int index = (address - 0x8000) / MMC3Mapper::PAGE_SIZE;
+  int index = (address - 0x8000) / MMC3Mapper::PRG_PAGE_SIZE;
+  int offset = (address - 0x8000) % MMC3Mapper::PRG_PAGE_SIZE;
   int redirectedAddress = cpuOffsets[index] + offset;
   uint8_t value = prgRom[redirectedAddress];
   log.debug() << "read " << hex(value) << " at " << hex(address) << "\n";
@@ -163,7 +163,14 @@ uint8_t MMC3Mapper::readPrg(uint16_t address){
 
 uint8_t MMC3Mapper::readChr(uint16_t address){
   log.debug() << "Attempted mapper read addr=" << hex(address) << "\n";
-  return 0;
+  if (address > 0x2000) {
+    log.error() << "Trying to read CHR at " << hex(address) << "\n";
+    return 0;
+  }
+  int index = address / MMC3Mapper::CHR_PAGE_SIZE;
+  int offset = address % MMC3Mapper::CHR_PAGE_SIZE;
+  int redirectedAddress = ppuOffsets[index] + offset;
+  return chrRom[redirectedAddress];
 }
 
 // writePrg is called for address >= 0x8000
@@ -199,7 +206,7 @@ void MMC3Mapper::writePrg(uint16_t address, uint8_t value) {
 }
 
 void MMC3Mapper::writeChr(uint16_t address, uint8_t value) {
-  log.debug() << "Attempted mapper write addr=" << hex(address) << " val=" << hex(value) << "\n";
+  log.error() << "Attempted mapper write addr=" << hex(address) << " val=" << hex(value) << "\n";
 }
 
 // writeBankSelect sets internal MMC3 values according to value
@@ -212,6 +219,7 @@ void MMC3Mapper::writeBankSelect(uint8_t value) {
   prgROMMode = (value >> 6) & 0x1;
   chrInversion = (value >> 7);
   setCpuOffsets();
+  setPpuOffsets();
 }
 
 // writeBankData will set the offset of the currentBank so that it points to the
@@ -219,6 +227,7 @@ void MMC3Mapper::writeBankSelect(uint8_t value) {
 void MMC3Mapper::writeBankData(uint8_t value) {
   bankIndexes[currentBank] = value;
   setCpuOffsets();
+  setPpuOffsets();
 }
 
 // setCpuOffsets assigns the 4 cpu memory pages (0x8000 thru 0xffff) to
@@ -226,28 +235,72 @@ void MMC3Mapper::writeBankData(uint8_t value) {
 void MMC3Mapper::setCpuOffsets() {
   // in all cases, 0xa000 - 0xbfff has the page index given by the last bank
   // MMC3 is capped at 64 pages of prgROM, so ignore the two uper bits
-  cpuOffsets[1] = computeOffset(bankIndexes[7] & 63);
+  cpuOffsets[1] = computeCpuOffset(bankIndexes[7] & 63);
   // in all cases, 0xe000 - 0xffff is locked to the last page
-  cpuOffsets[3] = computeOffset(-1);
+  cpuOffsets[3] = computeCpuOffset(-1);
   if (prgROMMode) {
     // 0x8000-0x9fff locked, 0xc000 - 0xdfff swappable
-    cpuOffsets[0] = computeOffset(-2);
-    cpuOffsets[2] = computeOffset(bankIndexes[6] & 63);
+    cpuOffsets[0] = computeCpuOffset(-2);
+    cpuOffsets[2] = computeCpuOffset(bankIndexes[6] & 63);
   } else {
     // 0x8000-0x9fff swappable, 0xc000 - 0xdfff locked
-    cpuOffsets[0] = computeOffset(bankIndexes[6] & 63);
-    cpuOffsets[2] = computeOffset(-2);
+    cpuOffsets[0] = computeCpuOffset(bankIndexes[6] & 63);
+    cpuOffsets[2] = computeCpuOffset(-2);
   }
 }
 
-// computeOffset returns the offset of in memory for a given index (that can be
+// setPpuOffsets assigns the 8 ppu memory pages (0x0000 thru 0x1fff) to
+// different locations in chrRom
+void MMC3Mapper::setPpuOffsets() {
+  // 2kb pages cannot select uneven banks, so ignore the lowest bit
+  int r0 = computePpuOffset(bankIndexes[0] & 0xfe, true);
+  int r1 = computePpuOffset(bankIndexes[1] & 0xfe, true);
+  int r2 = computePpuOffset(bankIndexes[2], false);
+  int r3 = computePpuOffset(bankIndexes[3], false);
+  int r4 = computePpuOffset(bankIndexes[4], false);
+  int r5 = computePpuOffset(bankIndexes[5], false);
+  if (chrInversion) {
+    // then we have 2 * 2kb banks at 0x0000 - 0x0fff and 1kb after
+    ppuOffsets[0] = r0;
+    ppuOffsets[1] = r0;
+    ppuOffsets[2] = r1;
+    ppuOffsets[3] = r1;
+    ppuOffsets[4] = r2;
+    ppuOffsets[5] = r3;
+    ppuOffsets[6] = r4;
+    ppuOffsets[7] = r5;
+  } else {
+    // then we have 1kb banks and 2 * 2kb at 0x1000 - 0x1fff
+    ppuOffsets[0] = r2;
+    ppuOffsets[1] = r3;
+    ppuOffsets[2] = r4;
+    ppuOffsets[3] = r5;
+    ppuOffsets[4] = r0;
+    ppuOffsets[5] = r0;
+    ppuOffsets[6] = r1;
+    ppuOffsets[7] = r1;
+  }
+}
+
+// computeCpuOffset returns the offset of in memory for a given index (that can be
 // negative, in which case it will read from the end)
-int MMC3Mapper::computeOffset(int pageIndex) {
+int MMC3Mapper::computeCpuOffset(int pageIndex) {
   if (pageIndex < 0) {
     // prgRomSize is in units of 0x4000 while a mapper page is 0x2000
     pageIndex += prgRomSize * 2;
   }
-  return MMC3Mapper::PAGE_SIZE * pageIndex;
+  return MMC3Mapper::PRG_PAGE_SIZE * pageIndex;
+}
+
+// computePpuOffset returns the offset in memory of a given index (that has to
+// be positive), depending of if the page size is 2kb or 1kb
+int MMC3Mapper::computePpuOffset(int pageIndex, bool isDouble) {
+  if (pageIndex < 0) {
+    throw std::runtime_error("ppu offset should not be negative");
+  }
+  int pageSize = MMC3Mapper::CHR_PAGE_SIZE;
+  // if (isDouble) pageSize = pageSize * 2;
+  return pageSize * pageIndex;
 }
 
 void MMC3Mapper::writeMirroring(uint8_t value) {

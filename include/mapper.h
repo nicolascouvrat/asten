@@ -120,8 +120,10 @@ class MMC3Mapper: public Mapper {
     // IRQ interrupt
     void clockIRQCounter();
   private:
-    // the size of one memory page (8kb)
-    static const int PAGE_SIZE = 0x2000;
+    // the size of one prg memory page (8kb)
+    static const int PRG_PAGE_SIZE = 0x2000;
+    // the size of one chr memory page (1 kb)
+    static const int CHR_PAGE_SIZE = 0x400;
     // index of the bank to update
     uint8_t currentBank;
     // mapper of one bank to its index (i.e. which page of memory should it
@@ -131,6 +133,9 @@ class MMC3Mapper: public Mapper {
     // although the MMC3 only has two banks dedicated to the CPU, it in fact
     // controls the offsets for 4 pages at all time (0x8000 to 0xffff)
     int cpuOffsets[4];
+
+    // stores the offsets pointing to the correct place in the CHR rom
+    int ppuOffsets[8];
 
     // false: 0x8000 - 0x9fff swappable, 0xc000 - 0xdfff fixed to second to last
     // true: 0xc000 - 0xdfff swappable, 0x8000 - 0x9fff fixed to second to last
@@ -162,7 +167,12 @@ class MMC3Mapper: public Mapper {
     void writeIRQEnable(uint8_t);
 
     void setCpuOffsets();
-    int computeOffset(int);
+    void setPpuOffsets();
+    // return the appropriate offset for a page number (that can be negative)
+    int computeCpuOffset(int);
+    // return the appropriate offset for a page number (that has to be
+    // positive), depending on if it is a 2kb page of a 1kb page
+    int computePpuOffset(int, bool);
 };
 
 #endif
