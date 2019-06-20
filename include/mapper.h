@@ -140,6 +140,8 @@ class MMC3Mapper: public Mapper {
     // false: 0x8000 - 0x9fff swappable, 0xc000 - 0xdfff fixed to second to last
     // true: 0xc000 - 0xdfff swappable, 0x8000 - 0x9fff fixed to second to last
     bool prgROMMode;
+    // false: 2 * 2kb banks at 0x1000 - 0x1fff and 1kb before
+    // true: 2 * 2kb banks at 0x0000 - 0x0fff and 1kb after
     bool chrInversion;
 
     // IRQ counter
@@ -156,6 +158,10 @@ class MMC3Mapper: public Mapper {
     // disabled does not prevent the counter from decrementing, only the
     // interrupts from happening
     bool IRQEnabled;
+    // this will have no effect on cartridges with hardwired 4-screen VRAM. This
+    // can be identified by the header
+    // TODO: implement
+    bool isHorizontalMirroring;
 
     void writeBankSelect(uint8_t);
     void writeBankData(uint8_t);

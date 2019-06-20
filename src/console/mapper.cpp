@@ -58,7 +58,7 @@ Mapper::Mapper(Console& c, NESHeader header, const std::vector<uint8_t>& rawData
   prgRam(new uint8_t[header.prgRamSize * PRG_RAM_UNIT]),
   chrRom(new uint8_t[header.chrRomSize * CHR_ROM_UNIT])
 {
-  log.setLevel(DEBUG);
+  log.setLevel(INFO);
   log.info() << header << "\n";
   int j = 0;
   for (int i = 0; i < header.prgRomSize * PRG_ROM_UNIT; i++)
@@ -156,7 +156,7 @@ MMC3Mapper::MMC3Mapper(Console& c, NESHeader h, const std::vector<uint8_t>& d):
 // memory using the offsets determined by the internal state of the mapper
 uint8_t MMC3Mapper::readPrg(uint16_t address){
   if (address < 0x8000) {
-    log.error() << "Trying to write PRG at " <<  hex(address) << "\n";
+    log.error() << "Trying to read PRG at " <<  hex(address) << "\n";
     return 0;
   }
   int index = (address - 0x8000) / MMC3Mapper::PRG_PAGE_SIZE;
@@ -215,7 +215,14 @@ void MMC3Mapper::writePrg(uint16_t address, uint8_t value) {
 }
 
 void MMC3Mapper::writeChr(uint16_t address, uint8_t value) {
-  log.error() << "Attempted mapper write addr=" << hex(address) << " val=" << hex(value) << "\n";
+  if (address > 0x2000) {
+    log.error() << "Trying to write CHR at " << hex(address) << "\n";
+    return;
+  }
+  int index = address / MMC3Mapper::CHR_PAGE_SIZE;
+  int offset = address % MMC3Mapper::CHR_PAGE_SIZE;
+  int redirectedAddress = ppuOffsets[index] + offset;
+  chrRom[redirectedAddress] = value;
 }
 
 // writeBankSelect sets internal MMC3 values according to value
@@ -312,11 +319,11 @@ int MMC3Mapper::computePpuOffset(int pageIndex) {
 }
 
 void MMC3Mapper::writeMirroring(uint8_t value) {
-  throw mapperNotImplementedError("writeMirroring");
+  isHorizontalMirroring = value & 1;
 }
 
 void MMC3Mapper::writePRGRAMProtect(uint8_t value) {
-  throw mapperNotImplementedError("writePRGRAMProtect");
+  log.warn() << "writePRGRAMProtect is ignored\n";
 }
 
 // clockIRQCounter checks the counter value
