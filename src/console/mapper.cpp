@@ -51,7 +51,7 @@ Mapper *Mapper::fromNesFile(Console& c, std::string fileName) {
 }
 
 Mapper::Mapper(Console& c, NESHeader header, const std::vector<uint8_t>& rawData):
-  log(Logger::getLogger("Mapper")),
+  log(Logger::getLogger("Mapper", "mapper.log")),
   mirror(PPUMirror::fromId(header.mirrorId)),
   console(c),
   prgRom(new uint8_t[header.prgRomSize * PRG_ROM_UNIT]),
@@ -153,8 +153,12 @@ uint8_t MMC3Mapper::readPrg(uint16_t address){
   int offset = (address - 0x8000) % MMC3Mapper::PAGE_SIZE;
   int index = (address - 0x8000) / MMC3Mapper::PAGE_SIZE;
   int redirectedAddress = cpuOffsets[index] + offset;
+  uint8_t value = prgRom[redirectedAddress];
+  log.debug() << "read " << hex(value) << " at " << hex(address) << "\n";
+  log.debug() << "offset " << hex(cpuOffsets[index]) << "\n";
+  log.debug() << "offset " << offset << " index " << index << "\n";
 
-  return prgRom[redirectedAddress];
+  return value;
 }
 
 uint8_t MMC3Mapper::readChr(uint16_t address){
@@ -164,6 +168,7 @@ uint8_t MMC3Mapper::readChr(uint16_t address){
 
 // writePrg is called for address >= 0x8000
 void MMC3Mapper::writePrg(uint16_t address, uint8_t value) {
+  log.debug() << "write " << hex(value) << " at " << hex(address) << "\n";
   if (address < 0x8000) {
     log.error() << "Trying to write PRG at " <<  hex(address) << "\n";
   }
@@ -239,7 +244,8 @@ void MMC3Mapper::setCpuOffsets() {
 // negative, in which case it will read from the end)
 int MMC3Mapper::computeOffset(int pageIndex) {
   if (pageIndex < 0) {
-    pageIndex += prgRomSize;
+    // prgRomSize is in units of 0x4000 while a mapper page is 0x2000
+    pageIndex += prgRomSize * 2;
   }
   return MMC3Mapper::PAGE_SIZE * pageIndex;
 }
