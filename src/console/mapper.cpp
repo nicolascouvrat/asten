@@ -139,6 +139,15 @@ MMC3Mapper::MMC3Mapper(Console& c, NESHeader h, const std::vector<uint8_t>& d):
   cpuOffsets[1] = computeCpuOffset(1);
   cpuOffsets[2] = computeCpuOffset(-2);
   cpuOffsets[3] = computeCpuOffset(-1);
+
+  ppuOffsets[0] = computePpuOffset(0);
+  ppuOffsets[1] = computePpuOffset(1);
+  ppuOffsets[2] = computePpuOffset(2);
+  ppuOffsets[3] = computePpuOffset(3);
+  ppuOffsets[4] = computePpuOffset(4);
+  ppuOffsets[5] = computePpuOffset(5);
+  ppuOffsets[6] = computePpuOffset(6);
+  ppuOffsets[7] = computePpuOffset(7);
 }
 
 // readPrg returns the byte stored in PRGROM for this address
@@ -253,12 +262,12 @@ void MMC3Mapper::setCpuOffsets() {
 // different locations in chrRom
 void MMC3Mapper::setPpuOffsets() {
   // 2kb pages cannot select uneven banks, so ignore the lowest bit
-  int r0 = computePpuOffset(bankIndexes[0] & 0xfe, true);
-  int r1 = computePpuOffset(bankIndexes[1] & 0xfe, true);
-  int r2 = computePpuOffset(bankIndexes[2], false);
-  int r3 = computePpuOffset(bankIndexes[3], false);
-  int r4 = computePpuOffset(bankIndexes[4], false);
-  int r5 = computePpuOffset(bankIndexes[5], false);
+  int r0 = computePpuOffset(bankIndexes[0] & 0xfe);
+  int r1 = computePpuOffset(bankIndexes[1] & 0xfe);
+  int r2 = computePpuOffset(bankIndexes[2]);
+  int r3 = computePpuOffset(bankIndexes[3]);
+  int r4 = computePpuOffset(bankIndexes[4]);
+  int r5 = computePpuOffset(bankIndexes[5]);
   if (chrInversion) {
     // then we have 2 * 2kb banks at 0x0000 - 0x0fff and 1kb after
     ppuOffsets[0] = r0;
@@ -294,12 +303,11 @@ int MMC3Mapper::computeCpuOffset(int pageIndex) {
 
 // computePpuOffset returns the offset in memory of a given index (that has to
 // be positive), depending of if the page size is 2kb or 1kb
-int MMC3Mapper::computePpuOffset(int pageIndex, bool isDouble) {
+int MMC3Mapper::computePpuOffset(int pageIndex) {
   if (pageIndex < 0) {
     throw std::runtime_error("ppu offset should not be negative");
   }
   int pageSize = MMC3Mapper::CHR_PAGE_SIZE;
-  // if (isDouble) pageSize = pageSize * 2;
   return pageSize * pageIndex;
 }
 

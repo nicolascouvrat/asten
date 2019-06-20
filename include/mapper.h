@@ -171,8 +171,8 @@ class MMC3Mapper: public Mapper {
     // return the appropriate offset for a page number (that can be negative)
     int computeCpuOffset(int);
     // return the appropriate offset for a page number (that has to be
-    // positive), depending on if it is a 2kb page of a 1kb page
-    int computePpuOffset(int, bool);
+    // positive)
+    int computePpuOffset(int);
 };
 
 #endif
