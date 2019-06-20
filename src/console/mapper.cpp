@@ -65,6 +65,12 @@ Mapper::Mapper(Console& c, NESHeader header, const std::vector<uint8_t>& rawData
     prgRom[i] = rawData[j++];
   for (int i = 0; i < header.chrRomSize * CHR_ROM_UNIT; i++)
     chrRom[i] = rawData[j++];
+  
+  if (header.chrRomSize == 0) {
+    // then "chrRom" is in fact "chrRam" and we want to give it a size of one
+    // TODO: do this more cleanly, also this assumes iNES and not NES2.0
+    chrRom = new uint8_t[CHR_ROM_UNIT];
+  }
   prgRomSize = header.prgRomSize;
 }
 
