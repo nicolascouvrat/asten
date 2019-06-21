@@ -71,6 +71,10 @@ Mapper::Mapper(Console& c, NESHeader header, const std::vector<uint8_t>& rawData
     // TODO: do this more cleanly, also this assumes iNES and not NES2.0
     chrRom = new uint8_t[CHR_ROM_UNIT];
   }
+  if (header.prgRamSize == 0) {
+    // TODO: should that really be there?
+    prgRam = new  uint8_t[PRG_RAM_UNIT];
+  }
   prgRomSize = header.prgRomSize;
 }
 
@@ -161,9 +165,12 @@ MMC3Mapper::MMC3Mapper(Console& c, NESHeader h, const std::vector<uint8_t>& d):
 // It works by finding which page the address belongs to, then reading from the
 // memory using the offsets determined by the internal state of the mapper
 uint8_t MMC3Mapper::readPrg(uint16_t address){
-  if (address < 0x8000) {
+  if (address < 0x6000) {
     log.error() << "Trying to read PRG at " <<  hex(address) << "\n";
     return 0;
+  }
+  if (address < 0x8000) {
+    return prgRam[address - 0x6000];
   }
   int index = (address - 0x8000) / MMC3Mapper::PRG_PAGE_SIZE;
   int offset = (address - 0x8000) % MMC3Mapper::PRG_PAGE_SIZE;
@@ -191,8 +198,11 @@ uint8_t MMC3Mapper::readChr(uint16_t address){
 // writePrg is called for address >= 0x8000
 void MMC3Mapper::writePrg(uint16_t address, uint8_t value) {
   log.debug() << "write " << hex(value) << " at " << hex(address) << "\n";
-  if (address < 0x8000) {
+  if (address < 0x6000) {
     log.error() << "Trying to write PRG at " <<  hex(address) << "\n";
+  }
+  else if (address < 0x8000)  {
+    prgRam[address - 0x6000] = value;
   }
   else if (address < 0xa000 && address % 2 == 0) {
     writeBankSelect(value);
@@ -274,33 +284,27 @@ void MMC3Mapper::setCpuOffsets() {
 // setPpuOffsets assigns the 8 ppu memory pages (0x0000 thru 0x1fff) to
 // different locations in chrRom
 void MMC3Mapper::setPpuOffsets() {
-  // 2kb pages cannot select uneven banks, so ignore the lowest bit
-  int r0 = computePpuOffset(bankIndexes[0] & 0xfe);
-  int r1 = computePpuOffset(bankIndexes[1] & 0xfe);
-  int r2 = computePpuOffset(bankIndexes[2]);
-  int r3 = computePpuOffset(bankIndexes[3]);
-  int r4 = computePpuOffset(bankIndexes[4]);
-  int r5 = computePpuOffset(bankIndexes[5]);
   if (chrInversion) {
     // then we have 2 * 2kb banks at 0x0000 - 0x0fff and 1kb after
-    ppuOffsets[0] = r0;
-    ppuOffsets[1] = r0;
-    ppuOffsets[2] = r1;
-    ppuOffsets[3] = r1;
-    ppuOffsets[4] = r2;
-    ppuOffsets[5] = r3;
-    ppuOffsets[6] = r4;
-    ppuOffsets[7] = r5;
+    // for 2kb pages cannot select uneven banks, so ignore the lowest bit
+    ppuOffsets[0] = computePpuOffset(bankIndexes[0] & 0xfe);
+    ppuOffsets[1] = computePpuOffset(bankIndexes[0] | 0x01);
+    ppuOffsets[2] = computePpuOffset(bankIndexes[1] & 0xfe);
+    ppuOffsets[3] = computePpuOffset(bankIndexes[1] | 0x01);
+    ppuOffsets[4] = computePpuOffset(bankIndexes[2]);
+    ppuOffsets[5] = computePpuOffset(bankIndexes[3]);
+    ppuOffsets[6] = computePpuOffset(bankIndexes[4]);
+    ppuOffsets[7] = computePpuOffset(bankIndexes[5]);
   } else {
     // then we have 1kb banks and 2 * 2kb at 0x1000 - 0x1fff
-    ppuOffsets[0] = r2;
-    ppuOffsets[1] = r3;
-    ppuOffsets[2] = r4;
-    ppuOffsets[3] = r5;
-    ppuOffsets[4] = r0;
-    ppuOffsets[5] = r0;
-    ppuOffsets[6] = r1;
-    ppuOffsets[7] = r1;
+    ppuOffsets[0] = computePpuOffset(bankIndexes[2]);
+    ppuOffsets[1] = computePpuOffset(bankIndexes[3]);
+    ppuOffsets[2] = computePpuOffset(bankIndexes[4]);
+    ppuOffsets[3] = computePpuOffset(bankIndexes[5]);
+    ppuOffsets[4] = computePpuOffset(bankIndexes[0] & 0xfe);
+    ppuOffsets[5] = computePpuOffset(bankIndexes[0] | 0x01);
+    ppuOffsets[6] = computePpuOffset(bankIndexes[1] & 0xfe);
+    ppuOffsets[7] = computePpuOffset(bankIndexes[1] | 0x01);
   }
 }
 
