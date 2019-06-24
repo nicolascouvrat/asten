@@ -63,24 +63,32 @@ class HorizontalMirror: public PPUMirror {
     int getTable(int);
 };
 
+class Console;
+// Mapper emulates the combination of a NES cartridge and its circuits
 class Mapper {
   public:
     virtual uint8_t readPrg(uint16_t) = 0;
     virtual void writePrg(uint16_t, uint8_t) = 0;
     virtual uint8_t readChr(uint16_t) = 0;
     virtual void writeChr(uint16_t, uint8_t) = 0;
-    static Mapper *fromNesFile(std::string fileName);
+    // Call to signify that PPU A12 had a rising edge
+    virtual void clockIRQCounter() = 0;
+    static Mapper *fromNesFile(Console& c, std::string fileName);
+    // mirrorAddress is used to get the right nametable depending on the
+    // mirroring
     uint16_t mirrorAddress(uint16_t);
   protected:
     Logger log;
     PPUMirror* mirror;
-    Mapper(NESHeader, const std::vector<uint8_t>&);
+    Console& console;
+    Mapper(Console&, NESHeader, const std::vector<uint8_t>&);
     static const int PRG_ROM_UNIT = 0x4000;
     static const int CHR_ROM_UNIT = 0x2000;
     static const int PRG_RAM_UNIT = 0x2000;
     uint8_t *prgRom;
     uint8_t *prgRam;
     uint8_t *chrRom;
+    int prgRomSize;
 };
 
 class NROMMapper: public Mapper {
@@ -89,10 +97,88 @@ class NROMMapper: public Mapper {
     void writePrg(uint16_t p, uint8_t v);
     uint8_t readChr(uint16_t p);
     void writeChr(uint16_t p, uint8_t v);
-    NROMMapper(NESHeader, const std::vector<uint8_t>&);
+    // Does nothing
+    void clockIRQCounter();
+    NROMMapper(Console&, NESHeader, const std::vector<uint8_t>&);
   private:
     const bool isNrom_128;
 };
 
+// MMC3Mapper has a total of 8 banks, but controls a total of 
+class MMC3Mapper: public Mapper {
+  public:
+    uint8_t readPrg(uint16_t p);
+    void writePrg(uint16_t p, uint8_t v);
+    uint8_t readChr(uint16_t p);
+    void writeChr(uint16_t p, uint8_t v);
+    MMC3Mapper(Console&, NESHeader, const std::vector<uint8_t>&);
+    // this should be called on each rise of PPU A12, and will decrement the
+    // counter and/or perform other operations (reloads...) depending on the
+    // mapper's internal registers
+    //
+    // If the counter reaches 0 and IRQ are not disabled, this will generate and
+    // IRQ interrupt
+    void clockIRQCounter();
+  private:
+    // the size of one prg memory page (8kb)
+    static const int PRG_PAGE_SIZE = 0x2000;
+    // the size of one chr memory page (1 kb)
+    static const int CHR_PAGE_SIZE = 0x400;
+    // index of the bank to update
+    uint8_t currentBank;
+    // mapper of one bank to its index (i.e. which page of memory should it
+    // point to)
+    uint8_t bankIndexes[8];
+
+    // although the MMC3 only has two banks dedicated to the CPU, it in fact
+    // controls the offsets for 4 pages at all time (0x8000 to 0xffff)
+    int cpuOffsets[4];
+
+    // stores the offsets pointing to the correct place in the CHR rom
+    int ppuOffsets[8];
+
+    // false: 0x8000 - 0x9fff swappable, 0xc000 - 0xdfff fixed to second to last
+    // true: 0xc000 - 0xdfff swappable, 0x8000 - 0x9fff fixed to second to last
+    bool prgROMMode;
+    // false: 2 * 2kb banks at 0x1000 - 0x1fff and 1kb before
+    // true: 2 * 2kb banks at 0x0000 - 0x0fff and 1kb after
+    bool chrInversion;
+
+    // IRQ counter
+    // The counter supports values up from 1 to 256. It is not possible to
+    // directly interact with it, only to indirectly "control" it through writes
+    // to adresses >= 0xc000
+    uint8_t IRQCounter;
+    // The irq latch stores the value that will be loaded in the counter on next
+    // reload
+    uint8_t IRQLatch;
+    // IRQ reload is not instantaneous and will happen at the next counter clock
+    bool IRQReload;
+    // flag that denotes if IRQ interrupts are enabled. Note that having it
+    // disabled does not prevent the counter from decrementing, only the
+    // interrupts from happening
+    bool IRQEnabled;
+    // this will have no effect on cartridges with hardwired 4-screen VRAM. This
+    // can be identified by the header
+    // TODO: implement
+    bool isHorizontalMirroring;
+
+    void writeBankSelect(uint8_t);
+    void writeBankData(uint8_t);
+    void writeMirroring(uint8_t);
+    void writePRGRAMProtect(uint8_t);
+    void writeIRQLatch(uint8_t);
+    void writeIRQReload(uint8_t);
+    void writeIRQDisable(uint8_t);
+    void writeIRQEnable(uint8_t);
+
+    void setCpuOffsets();
+    void setPpuOffsets();
+    // return the appropriate offset for a page number (that can be negative)
+    int computeCpuOffset(int);
+    // return the appropriate offset for a page number (that has to be
+    // positive)
+    int computePpuOffset(int);
+};
 
 #endif
