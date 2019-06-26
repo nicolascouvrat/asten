@@ -121,6 +121,10 @@ void NesEngine::processInput() {
     glfwSetWindowShouldClose(window, true);
 }
 
+bool NesEngine::shouldReset() {
+  return glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS;
+}
+
 // Fills up the buttons
 std::array<bool, 8> NesEngine::getButtons() {
   std::array<bool, 8> buttons = {0};

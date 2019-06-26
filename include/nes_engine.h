@@ -40,6 +40,8 @@ class NesEngine {
     // being in the top left).
     void colorPixel(int, int, int);
     std::array<bool, 8> getButtons();
+    // Returns true if the reset button is being pressed
+    bool shouldReset();
   private:
     static constexpr Color palette[64] = {
       Color(0x666666), Color(0x002A88), Color(0x1412A7), Color(0x3B00A4), Color(0x5C007E), Color(0x6E0040), Color(0x6C0600), Color(0x561D00),

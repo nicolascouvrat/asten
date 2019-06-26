@@ -26,6 +26,9 @@ Console::Console(std::string name):
 }
 
 void Console::step() {
+  if (engine.shouldReset()) {
+    cpu.reset();
+  }
   auto buttons = engine.getButtons();
   leftController.set(buttons);
   long cpuSteps = cpu.step();
