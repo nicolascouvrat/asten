@@ -7,11 +7,11 @@
 #include "cpu.h"
 #include "ppu.h"
 #include "logger.h"
-#include "nes_engine.h"
 #include "controller.h"
 
 
 class Mapper;
+class Engine;
 class Console {
   public:
     Console(std::string);
@@ -20,7 +20,7 @@ class Console {
     PPU& getPpu();
     Controller& getLeftController();
     Controller& getRightController();
-    NesEngine& getEngine();
+    Engine* getEngine();
     void step();
     bool isRunning();
   private:
@@ -29,8 +29,8 @@ class Console {
     PPU ppu;
     Controller leftController;
     Controller rightController;
-    NesEngine engine;
     Mapper *mapper;
+    Engine *engine;
 };
 
 #endif

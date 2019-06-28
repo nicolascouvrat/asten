@@ -6,6 +6,7 @@
 #include "console.h"
 #include "cpu.h"
 #include "mapper.h"
+#include "engine.h"
 
 
 std::runtime_error invalidRegisterOp(std::string registerName, std::string op) {
@@ -454,9 +455,9 @@ void PPU::nmiChange() {
 }
 
 void PPU::nextScreen() {
-isEvenScreen = !isEvenScreen;
-frameCount++;
-console.getEngine().render();
+  isEvenScreen = !isEvenScreen;
+  frameCount++;
+  console.getEngine()->render();
 }
 
 int nextScanLine(int current) {
@@ -824,5 +825,5 @@ void PPU::renderPixel() {
     log.debug() << "sprite: " << hex(spritePix.color) << "back: " << hex(background) << "\n";
     log.debug() << "(" << x << "," << y << ")" << ": " << hex(paletteInfo) << "\n";
   }
-  console.getEngine().colorPixel(x, y, paletteInfo);
+  console.getEngine()->colorPixel(x, y, paletteInfo);
 }
