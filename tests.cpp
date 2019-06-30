@@ -4,7 +4,7 @@
 
 #include "console.h"
 #include "logger.h"
-#include "nes_engine.h"
+#include "classic_interface.h"
 
 
 int test_CPU() {
@@ -81,7 +81,7 @@ int integrationTest() {
 }
 
 int testEngine() {
-  NesEngine engine;
+  ClassicInterface engine;
   while (engine.isRunning()) {
     engine.render();
   }

@@ -24,14 +24,14 @@ struct Color {
 
 const char* const WINDOW_NAME = "NES Emulator OwO";
 
-class NesEngine: public IOInterface {
+class ClassicInterface: public IOInterface {
   public:
     class Error: public std::runtime_error {
         public:
             Error(const char *msg): std::runtime_error(msg) {}
     };
-    NesEngine();
-    ~NesEngine();
+    ClassicInterface();
+    ~ClassicInterface();
     // Returns false if the window (i.e. the GLFW context) is down
     bool isRunning();
     // Calls rendering logic (flushes all changes to pixel color to the screen)

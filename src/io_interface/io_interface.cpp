@@ -1,6 +1,6 @@
 #include "io_interface.h"
-#include "nes_engine.h"
+#include "classic_interface.h"
 
 IOInterface* IOInterface::newIOInterface() {
-  return new NesEngine();
+  return new ClassicInterface();
 }
