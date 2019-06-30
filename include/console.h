@@ -11,7 +11,7 @@
 
 
 class Mapper;
-class Engine;
+class IOInterface;
 class Console {
   public:
     Console(std::string);
@@ -20,7 +20,7 @@ class Console {
     PPU& getPpu();
     Controller& getLeftController();
     Controller& getRightController();
-    Engine* getEngine();
+    IOInterface* getInterface();
     void step();
     bool isRunning();
   private:
@@ -30,7 +30,7 @@ class Console {
     Controller leftController;
     Controller rightController;
     Mapper *mapper;
-    Engine *engine;
+    IOInterface *interface;
 };
 
 #endif

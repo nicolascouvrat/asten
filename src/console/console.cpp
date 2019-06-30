@@ -1,7 +1,7 @@
 #include "console.h"
 
 #include "mapper.h"
-#include "engine.h"
+#include "io_interface.h"
 
 
 Mapper *Console::getMapper() { return mapper; }
@@ -10,7 +10,7 @@ CPU& Console::getCpu() { return cpu; }
 
 PPU& Console::getPpu() { return ppu; }
 
-Engine* Console::getEngine() { return engine; }
+IOInterface* Console::getInterface() { return interface; }
 
 Controller& Console::getLeftController() { return leftController; }
 
@@ -20,7 +20,7 @@ Console::Console(std::string name):
   log(Logger::getLogger("Console")),
   cpu(*this), ppu(*this),
   mapper(Mapper::fromNesFile(*this, name)),
-  engine(Engine::newEngine())
+  interface(IOInterface::newIOInterface())
 {
   log.setLevel(DEBUG);
   cpu.reset();
@@ -28,10 +28,10 @@ Console::Console(std::string name):
 }
 
 void Console::step() {
-  if (engine->shouldReset()) {
+  if (interface->shouldReset()) {
     cpu.reset();
   }
-  auto buttons = engine->getButtons();
+  auto buttons = interface->getButtons();
   leftController.set(buttons);
   long cpuSteps = cpu.step();
   cpu.fastForwardClock(2 * cpuSteps);
@@ -40,7 +40,7 @@ void Console::step() {
 }
 
 bool Console::isRunning() {
-  return engine->isRunning();
+  return interface->isRunning();
 }
     
 

@@ -3,9 +3,9 @@
 
 #include <array>
 
-class Engine {
+class IOInterface {
   public:
-    static Engine* newEngine();
+    static IOInterface* newIOInterface();
     virtual bool isRunning() = 0;
     virtual void render() = 0;
     virtual void colorPixel(int x, int y, int palette) = 0;

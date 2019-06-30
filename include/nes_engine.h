@@ -11,7 +11,7 @@
 #include "resource_manager.h"
 #include "shader_program.h"
 #include "logger.h"
-#include "engine.h"
+#include "io_interface.h"
 
 struct Color {
   float r, g, b;
@@ -24,7 +24,7 @@ struct Color {
 
 const char* const WINDOW_NAME = "NES Emulator OwO";
 
-class NesEngine: public Engine {
+class NesEngine: public IOInterface {
   public:
     class Error: public std::runtime_error {
         public:
