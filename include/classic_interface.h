@@ -11,6 +11,7 @@
 #include "resource_manager.h"
 #include "shader_program.h"
 #include "logger.h"
+#include "io_interface.h"
 
 struct Color {
   float r, g, b;
@@ -23,23 +24,23 @@ struct Color {
 
 const char* const WINDOW_NAME = "NES Emulator OwO";
 
-class NesEngine {
+class ClassicInterface: public IOInterface {
   public:
     class Error: public std::runtime_error {
         public:
             Error(const char *msg): std::runtime_error(msg) {}
     };
-    NesEngine();
-    ~NesEngine();
-    // Returns false if the window (i.e. the GLFW context) is down
-    bool isRunning();
+    ClassicInterface();
+    ~ClassicInterface();
+    // Returns true if the window (the GLFW context) is about to close
+    bool shouldClose();
     // Calls rendering logic (flushes all changes to pixel color to the screen)
     void render();
     // Changes the pixel at coordinates X, Y to color C, C being and index in
     // the NES palette. Coordinates are left to right, top to bottom ((0,0)
     // being in the top left).
     void colorPixel(int, int, int);
-    std::array<bool, 8> getButtons();
+    std::array<ButtonSet, 2> getButtons();
     // Returns true if the reset button is being pressed
     bool shouldReset();
   private:

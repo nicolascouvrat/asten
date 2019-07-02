@@ -1,6 +1,4 @@
 #include "controller.h"
-// TODO: remove
-#include "utilities.h"
 
 Controller::Controller(): 
   log(Logger::getLogger("Controller")),
@@ -29,8 +27,13 @@ void Controller::write(uint8_t value) {
   strobe = value & 1;
 }
 
-void Controller::set(std::array<bool, 8>& values) {
-  for (int i = 0; i < 8; i++) {
-    buttons[i] = values[i];
-  }
+void Controller::set(ButtonSet bs) {
+  buttons[Buttons::A] = bs.A;
+  buttons[Buttons::B] = bs.B;
+  buttons[Buttons::SELECT] = bs.SELECT;
+  buttons[Buttons::START] = bs.START;
+  buttons[Buttons::UP] = bs.UP;
+  buttons[Buttons::DOWN] = bs.DOWN;
+  buttons[Buttons::LEFT] = bs.LEFT;
+  buttons[Buttons::RIGHT] = bs.RIGHT;
 }

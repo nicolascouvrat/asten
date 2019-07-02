@@ -56,16 +56,15 @@ target_include_directories(${PROJECT_NAME} PRIVATE "${GLAD_DIR}/include")
 
 ### RULES FOR INTERNAL LIBRARIES ###
 
-# ENGINE
-add_subdirectory("${SRC_DIR}/engine")
-target_include_directories("engine" PRIVATE ${INCLUDE_DIR})
-# engine is the place where glfw and glad are actually used, so the linking needs to be done at this
-# step
-target_include_directories("engine" PRIVATE "${GLFW_DIR}/include")
-target_include_directories("engine" PRIVATE "${GLAD_DIR}/include")
-target_link_libraries("engine" "glfw" "${GLFW_LIBRARIES}")
-target_link_libraries("engine" "glad" "${CMAKE_DL_LIBS}")
-target_link_libraries(${PROJECT_NAME} "engine")
+# INTERFACE
+add_subdirectory("${SRC_DIR}/io_interface")
+target_include_directories("io_interface" PRIVATE ${INCLUDE_DIR})
+# io_interface is the place where glfw and glad are actually used, so the linking needs to be done at this step
+target_include_directories("io_interface" PRIVATE "${GLFW_DIR}/include")
+target_include_directories("io_interface" PRIVATE "${GLAD_DIR}/include")
+target_link_libraries("io_interface" "glfw" "${GLFW_LIBRARIES}")
+target_link_libraries("io_interface" "glad" "${CMAKE_DL_LIBS}")
+target_link_libraries(${PROJECT_NAME} "io_interface")
 
 # UTILS
 add_subdirectory("${SRC_DIR}/utils")
@@ -77,6 +76,7 @@ add_subdirectory("${SRC_DIR}/console")
 target_include_directories("console" PRIVATE ${INCLUDE_DIR})
 target_include_directories("console" PRIVATE "${GLFW_DIR}/include")
 target_include_directories("console" PRIVATE "${GLAD_DIR}/include")
+target_link_libraries("console" "io_interface")
 # target_link_libraries("console" "glfw" "${GLFW_LIBRARIES}")
 # target_link_libraries("console" "glad" "${CMAKE_DL_LIBS}")
 target_link_libraries(${PROJECT_NAME} "console")

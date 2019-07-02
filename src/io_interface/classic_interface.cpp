@@ -1,15 +1,15 @@
-#include "nes_engine.h"
+#include "classic_interface.h"
 
 #include <iostream>
 
 #include "controller.h"
 
 
-constexpr Color NesEngine::palette[64];
+constexpr Color ClassicInterface::palette[64];
 
 
-NesEngine::NesEngine():
-  log(Logger::getLogger("NesEngine")),
+ClassicInterface::ClassicInterface():
+  log(Logger::getLogger("ClassicInterface")),
   quad{
     0.0f, 0.0f, // top left
     adaptWidth(ZOOM_FACTOR), 0.0f, // top right
@@ -30,7 +30,7 @@ NesEngine::NesEngine():
   frameCounter = 0;
 }
 
-NesEngine::~NesEngine() {
+ClassicInterface::~ClassicInterface() {
   glfwTerminate();
   delete colors;
   delete offsets;
@@ -39,18 +39,18 @@ NesEngine::~NesEngine() {
 // Normalizes the [0, ZOOM_FACTOR * WIDTH] on the [0, 2] scale (which means that
 // it will return correct size for the screen. However, the position requires a
 // -1 to correct it).
-float NesEngine::adaptWidth(int value) {
+float ClassicInterface::adaptWidth(int value) {
   float divisor = (float) 2 / (NATIVE_NES_WIDTH * ZOOM_FACTOR);
   return (float) value * divisor;
 }
 
-float NesEngine::adaptHeight(int value) {
+float ClassicInterface::adaptHeight(int value) {
   float divisor = (float) 2 / (NATIVE_NES_HEIGHT * ZOOM_FACTOR);
   return (float) value * divisor;
 }
 
 // Performs GLFW related initialization and spins up the window environment.
-void NesEngine::initWindow() {
+void ClassicInterface::initWindow() {
   // Initialize GLFW
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -74,14 +74,14 @@ void NesEngine::initWindow() {
   glViewport(0, 0, width, height);
 }
 
-void NesEngine::initShaderProgram() {
+void ClassicInterface::initShaderProgram() {
   shaderProgram = ResourceManager::createShaderProgram(
       "nes_shader_program", "shaders/nes_vertex_shader.vs", "shaders/nes_fragment_shader.fs");
 }
 
-bool NesEngine::isRunning() { return window != NULL && !glfwWindowShouldClose(window); }
+bool ClassicInterface::shouldClose() { return window == NULL || glfwWindowShouldClose(window); }
 
-void NesEngine::calculateFPS() {
+void ClassicInterface::calculateFPS() {
   auto now = std::chrono::high_resolution_clock::now();
   frameCounter++;
   auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - timeStamp);
@@ -96,7 +96,7 @@ void NesEngine::calculateFPS() {
 //  2. Load new color data (as only this can be changed)
 //  3. Draw instances
 //  4. Handle events
-void NesEngine::render() {
+void ClassicInterface::render() {
   glClearColor(1.0f, 0.0f, 0.1f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -115,34 +115,34 @@ void NesEngine::render() {
   glfwPollEvents();
 }
 
-void NesEngine::processInput() {
+void ClassicInterface::processInput() {
   // exit window on escape
   if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     glfwSetWindowShouldClose(window, true);
 }
 
-bool NesEngine::shouldReset() {
+bool ClassicInterface::shouldReset() {
   return glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS;
 }
 
 // Fills up the buttons
-std::array<bool, 8> NesEngine::getButtons() {
-  std::array<bool, 8> buttons = {0};
-  buttons[Controller::Buttons::A] = glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
-  buttons[Controller::Buttons::B] = glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS;
-  buttons[Controller::Buttons::SELECT] = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
-  buttons[Controller::Buttons::START] = glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
-  buttons[Controller::Buttons::UP] = glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS;
-  buttons[Controller::Buttons::DOWN] = glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS;
-  buttons[Controller::Buttons::LEFT] = glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS;
-  buttons[Controller::Buttons::RIGHT] = glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS;
+std::array<ButtonSet, 2> ClassicInterface::getButtons() {
+  std::array<ButtonSet, 2> buttons = {0};
+  buttons[0].A = glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
+  buttons[0].B = glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS;
+  buttons[0].SELECT = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
+  buttons[0].START = glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
+  buttons[0].UP = glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS;
+  buttons[0].DOWN = glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS;
+  buttons[0].LEFT = glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS;
+  buttons[0].RIGHT = glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS;
   return buttons;
 }
 
 // Creates the offsets that will be used to render the NES tiles (basically
 // glorified pixels). Offsets are ordered LINE PER LINE, TOP TO BOTTOM and LEFT
 // TO RIGHT.
-void NesEngine::initGrid() {
+void ClassicInterface::initGrid() {
   offsets = new float[NATIVE_NES_WIDTH * NATIVE_NES_HEIGHT * 2];
   int i = 0;
   float xOffset, yOffset;
@@ -158,7 +158,7 @@ void NesEngine::initGrid() {
 }
 
 // The color array has to be adjusted with the offset array!
-void NesEngine::initColor() {
+void ClassicInterface::initColor() {
   colors = new float[NATIVE_NES_WIDTH * NATIVE_NES_HEIGHT * 3];
   bool isEven = false;
   float color = 0.0;
@@ -173,7 +173,7 @@ void NesEngine::initColor() {
 }
 
 // X goes left to right, Y top to bottom
-void NesEngine::colorPixel(int x, int y, int paletteIndex) {
+void ClassicInterface::colorPixel(int x, int y, int paletteIndex) {
   int index = (y * NATIVE_NES_WIDTH + x) * 3;
   Color color = palette[paletteIndex];
   colors[index] = color.r; // red
@@ -183,7 +183,7 @@ void NesEngine::colorPixel(int x, int y, int paletteIndex) {
 
 // Handles OpenGL related logic (creating, binding buffers and attribute
 // pointers).
-void NesEngine::initVAO() {
+void ClassicInterface::initVAO() {
   int tileCount = NATIVE_NES_WIDTH * NATIVE_NES_HEIGHT;
   glGenVertexArrays(1, &VAO);
   glGenBuffers(1, &quadVBO);

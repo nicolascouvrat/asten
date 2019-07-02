@@ -1,6 +1,7 @@
 #include "console.h"
 
 #include "mapper.h"
+#include "io_interface.h"
 
 
 Mapper *Console::getMapper() { return mapper; }
@@ -9,16 +10,17 @@ CPU& Console::getCpu() { return cpu; }
 
 PPU& Console::getPpu() { return ppu; }
 
-NesEngine& Console::getEngine() { return engine; }
+IOInterface* Console::getInterface() { return interface; }
 
 Controller& Console::getLeftController() { return leftController; }
 
 Controller& Console::getRightController() { return rightController; }
 
-Console::Console(std::string name): 
+Console::Console(std::string romPath, InterfaceType type): 
   log(Logger::getLogger("Console")),
   cpu(*this), ppu(*this),
-  mapper(Mapper::fromNesFile(*this, name))
+  mapper(Mapper::fromNesFile(*this, romPath)),
+  interface(IOInterface::newIOInterface(type))
 {
   log.setLevel(DEBUG);
   cpu.reset();
@@ -26,11 +28,12 @@ Console::Console(std::string name):
 }
 
 void Console::step() {
-  if (engine.shouldReset()) {
+  if (interface->shouldReset()) {
     cpu.reset();
   }
-  auto buttons = engine.getButtons();
-  leftController.set(buttons);
+  auto buttons = interface->getButtons();
+  leftController.set(buttons[0]);
+  rightController.set(buttons[1]);
   long cpuSteps = cpu.step();
   cpu.fastForwardClock(2 * cpuSteps);
   for (int i = 0; i < 3 * cpuSteps; i++)
@@ -38,7 +41,7 @@ void Console::step() {
 }
 
 bool Console::isRunning() {
-  return engine.isRunning();
+  return !interface->shouldClose();
 }
     
 
