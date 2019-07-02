@@ -5,23 +5,36 @@
 #include <array>
 
 #include "logger.h"
+#include "io_interface.h"
 
+// Buttons are the different possible buttons supported by the NES
+// The order is important, as the enum value is equal to the index in the button
+// byte stored in the controller
+enum Buttons {
+  A,
+  B,
+  SELECT,
+  START,
+  UP,
+  DOWN,
+  LEFT,
+  RIGHT,
+  // the total number of buttons
+  Buttons_MAX = RIGHT,
+};
+
+// Controller describes a game controller seen by the cpu, i.e. independent of
+// its hardware
 class Controller {
   public:
     Controller();
+    // read returns which buttons are set
     uint8_t read();
-    void write(uint8_t);
-    enum Buttons: int {
-      A,
-      B,
-      SELECT,
-      START,
-      UP,
-      DOWN,
-      LEFT,
-      RIGHT,
-    };
-    void set(std::array<bool, 8>&);
+    // write the strobe value in the controller
+    void write(uint8_t strobe);
+    // sets the internal register according to the buttons activated from the
+    // interface
+    void set(ButtonSet);
   private:
     Logger log;
     bool buttons[8];

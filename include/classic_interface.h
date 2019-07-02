@@ -32,15 +32,15 @@ class ClassicInterface: public IOInterface {
     };
     ClassicInterface();
     ~ClassicInterface();
-    // Returns false if the window (i.e. the GLFW context) is down
-    bool isRunning();
+    // Returns true if the window (the GLFW context) is about to close
+    bool shouldClose();
     // Calls rendering logic (flushes all changes to pixel color to the screen)
     void render();
     // Changes the pixel at coordinates X, Y to color C, C being and index in
     // the NES palette. Coordinates are left to right, top to bottom ((0,0)
     // being in the top left).
     void colorPixel(int, int, int);
-    std::array<bool, 8> getButtons();
+    std::array<ButtonSet, 2> getButtons();
     // Returns true if the reset button is being pressed
     bool shouldReset();
   private:

@@ -79,7 +79,7 @@ void ClassicInterface::initShaderProgram() {
       "nes_shader_program", "shaders/nes_vertex_shader.vs", "shaders/nes_fragment_shader.fs");
 }
 
-bool ClassicInterface::isRunning() { return window != NULL && !glfwWindowShouldClose(window); }
+bool ClassicInterface::shouldClose() { return window == NULL || glfwWindowShouldClose(window); }
 
 void ClassicInterface::calculateFPS() {
   auto now = std::chrono::high_resolution_clock::now();
@@ -126,16 +126,16 @@ bool ClassicInterface::shouldReset() {
 }
 
 // Fills up the buttons
-std::array<bool, 8> ClassicInterface::getButtons() {
-  std::array<bool, 8> buttons = {0};
-  buttons[Controller::Buttons::A] = glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
-  buttons[Controller::Buttons::B] = glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS;
-  buttons[Controller::Buttons::SELECT] = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
-  buttons[Controller::Buttons::START] = glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
-  buttons[Controller::Buttons::UP] = glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS;
-  buttons[Controller::Buttons::DOWN] = glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS;
-  buttons[Controller::Buttons::LEFT] = glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS;
-  buttons[Controller::Buttons::RIGHT] = glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS;
+std::array<ButtonSet, 2> ClassicInterface::getButtons() {
+  std::array<ButtonSet, 2> buttons = {0};
+  buttons[0].A = glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
+  buttons[0].B = glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS;
+  buttons[0].SELECT = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
+  buttons[0].START = glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
+  buttons[0].UP = glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS;
+  buttons[0].DOWN = glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS;
+  buttons[0].LEFT = glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS;
+  buttons[0].RIGHT = glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS;
   return buttons;
 }
 

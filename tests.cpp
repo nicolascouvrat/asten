@@ -82,7 +82,7 @@ int integrationTest() {
 
 int testEngine() {
   ClassicInterface engine;
-  while (engine.isRunning()) {
+  while (!engine.shouldClose()) {
     engine.render();
   }
   return 0;

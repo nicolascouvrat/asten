@@ -32,7 +32,8 @@ void Console::step() {
     cpu.reset();
   }
   auto buttons = interface->getButtons();
-  leftController.set(buttons);
+  leftController.set(buttons[0]);
+  rightController.set(buttons[1]);
   long cpuSteps = cpu.step();
   cpu.fastForwardClock(2 * cpuSteps);
   for (int i = 0; i < 3 * cpuSteps; i++)
@@ -40,7 +41,7 @@ void Console::step() {
 }
 
 bool Console::isRunning() {
-  return interface->isRunning();
+  return !interface->shouldClose();
 }
     
 
