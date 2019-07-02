@@ -20,7 +20,7 @@ Console::Console(std::string name):
   log(Logger::getLogger("Console")),
   cpu(*this), ppu(*this),
   mapper(Mapper::fromNesFile(*this, name)),
-  interface(IOInterface::newIOInterface())
+  interface(IOInterface::newIOInterface(InterfaceType::CLASSIC))
 {
   log.setLevel(DEBUG);
   cpu.reset();

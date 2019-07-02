@@ -3,6 +3,12 @@
 
 #include <array>
 
+// InterfaceType are the different implementations of IOInterface available
+enum InterfaceType {
+  // CLASSIC is a Window/Keyboard application
+  CLASSIC,
+};
+
 // ButtonSet simply is a set of 8 booleans describing which buttons are enabled
 // for one controller
 struct ButtonSet {
@@ -13,7 +19,7 @@ struct ButtonSet {
 // order to be usable by the emulator
 class IOInterface {
   public:
-    static IOInterface* newIOInterface();
+    static IOInterface* newIOInterface(InterfaceType type);
     // shouldClose returns true if the interface received the instruction to
     // close down
     virtual bool shouldClose() = 0;
