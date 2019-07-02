@@ -1,6 +1,4 @@
 #include "controller.h"
-// TODO: remove
-#include "utilities.h"
 
 Controller::Controller(): 
   log(Logger::getLogger("Controller")),
