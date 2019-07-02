@@ -2,6 +2,7 @@
 
 #include "console.h"
 #include "logger.h"
+#include "io_interface.h"
 
 
 int main(int argc, char* argv[]) {
@@ -11,7 +12,7 @@ int main(int argc, char* argv[]) {
     return -1;
   } 
   std::string path(argv[1]);
-  Console console(path);
+  Console console(path, InterfaceType::CLASSIC);
   while (console.isRunning()) {
     console.step();
   }

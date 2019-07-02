@@ -16,11 +16,11 @@ Controller& Console::getLeftController() { return leftController; }
 
 Controller& Console::getRightController() { return rightController; }
 
-Console::Console(std::string name): 
+Console::Console(std::string romPath, InterfaceType type): 
   log(Logger::getLogger("Console")),
   cpu(*this), ppu(*this),
-  mapper(Mapper::fromNesFile(*this, name)),
-  interface(IOInterface::newIOInterface(InterfaceType::CLASSIC))
+  mapper(Mapper::fromNesFile(*this, romPath)),
+  interface(IOInterface::newIOInterface(type))
 {
   log.setLevel(DEBUG);
   cpu.reset();
