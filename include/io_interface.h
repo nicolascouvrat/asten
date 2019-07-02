@@ -9,6 +9,8 @@ enum InterfaceType {
   CLASSIC,
   // SINK is the void implementation (no input, discarted)
   SINK,
+  // MONITOR wraps a classic interface and sends usage statistics
+  MONITOR,
 };
 
 // ButtonSet simply is a set of 8 booleans describing which buttons are enabled
