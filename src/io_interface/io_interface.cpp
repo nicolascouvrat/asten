@@ -5,5 +5,7 @@ IOInterface* IOInterface::newIOInterface(InterfaceType type) {
   switch (type) {
     case CLASSIC:
       return new ClassicInterface();
+    case SINK:
+      return new IOSink();
   }
 }
