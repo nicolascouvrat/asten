@@ -48,7 +48,7 @@
 Memory::Memory(Console& c, Logger l):
   log(l), console(c)
 {
-  log.setLevel(DEBUG);
+  log.setLevel(ERROR);
 }
 
 CPUMemory::CPUMemory(Console& c):
@@ -86,7 +86,7 @@ uint8_t CPUMemory::read(uint16_t address) {
   }
   else if (address == 0x4015) {
     // TODO: APU
-    log.error() << "UNIMPLEMENTED READ AT " << hex(address) << "\n";
+    log.warn() << "UNIMPLEMENTED READ AT " << hex(address) << "\n";
     return 0;
   }
   else if (address == 0x4016)
@@ -95,7 +95,7 @@ uint8_t CPUMemory::read(uint16_t address) {
     return console.getRightController().read();
   if (address < 0x6000) {
     // TODO: expansion modules and other stuff
-    log.error() << "UNIMPLEMENTED READ AT " << hex(address) << "\n";
+    log.warn() << "UNIMPLEMENTED READ AT " << hex(address) << "\n";
     return 0;
   }
   else
@@ -112,7 +112,7 @@ void CPUMemory::write(uint16_t address, uint8_t value) {
     console.getPpu().writeRegister(address, value);
   else if (address == 0x4015) {
     // TODO: APU
-    log.error() << "UNIMPLEMENTED WRITE AT " << hex(address) << "\n";
+    log.warn() << "UNIMPLEMENTED WRITE AT " << hex(address) << "\n";
   }
   else if (address == 0x4016)
     console.getLeftController().write(value);
@@ -120,7 +120,7 @@ void CPUMemory::write(uint16_t address, uint8_t value) {
     console.getRightController().write(value);
   else if (address < 0x6000) {
     // TODO: implement expansion modules
-    log.error() << "UNIMPLEMENTED WRITE AT " << hex(address) << "\n";
+    log.warn() << "UNIMPLEMENTED WRITE AT " << hex(address) << "\n";
   }
   else
     console.getMapper()->writePrg(address, value);
@@ -138,7 +138,7 @@ uint8_t PPUMemory::read(uint16_t address) {
     return palette[pointer];
   }
   else {
-    log.error() << "UNEXPECTED READ AT " << hex(address) << "\n";
+    log.warn() << "UNEXPECTED READ AT " << hex(address) << "\n";
     return 0;
   }
 }
@@ -157,6 +157,6 @@ void PPUMemory::write(uint16_t address, uint8_t value) {
     palette[pointer] = value;
   }
   else {
-    log.error() << "UNEXPECTED WRITE AT " << hex(address) << "\n";
+    log.warn() << "UNEXPECTED WRITE AT " << hex(address) << "\n";
   }
 }
