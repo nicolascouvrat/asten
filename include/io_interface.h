@@ -23,6 +23,10 @@ struct ButtonSet {
 // order to be usable by the emulator
 class IOInterface {
   public:
+    // WIDTH and HEIGHT are the native dimensions of the NES output.
+    // colorPixel's x should be < WIDTH and y < HEIGHT
+    static const int WIDTH = 256;
+    static const int HEIGHT = 240;
     static IOInterface* newIOInterface(InterfaceType type);
     // shouldClose returns true if the interface received the instruction to
     // close down
