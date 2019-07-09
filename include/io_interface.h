@@ -11,6 +11,8 @@ enum InterfaceType {
   SINK,
   // MONITOR wraps a classic interface and sends usage statistics
   MONITOR,
+  // REPLAY wraps a classic interface and uses a file to replay it on screen
+  REPLAY,
 };
 
 // ButtonSet simply is a set of 8 booleans describing which buttons are enabled

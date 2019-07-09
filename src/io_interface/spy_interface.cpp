@@ -2,8 +2,7 @@
 
 
 SpyInterface::SpyInterface(InterfaceType t):
-  colors({0}),
-  out("game.log")
+  colors({0}), out("game.log")
 {
   target = IOInterface::newIOInterface(t);
   buf.reserve(SpyInterface::BUF_SIZE);
@@ -36,5 +35,4 @@ void SpyInterface::maybeFlush() {
       buf.resize(0);
     }
   }
-  buf.push_back('\n');
 }
