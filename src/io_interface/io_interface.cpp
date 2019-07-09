@@ -1,6 +1,7 @@
 #include "io_interface.h"
 #include "classic_interface.h"
 #include "spy_interface.h"
+#include "replay_interface.h"
 
 IOInterface* IOInterface::newIOInterface(InterfaceType type) {
   switch (type) {
@@ -10,5 +11,7 @@ IOInterface* IOInterface::newIOInterface(InterfaceType type) {
       return new IOSink();
     case MONITOR:
       return new SpyInterface(InterfaceType::CLASSIC);
+    case REPLAY:
+      return new ReplayInterface(InterfaceType::CLASSIC);
   }
 }
