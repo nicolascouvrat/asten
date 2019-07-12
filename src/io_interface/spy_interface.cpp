@@ -17,6 +17,7 @@ void SpyInterface::render() {
     buf.push_back(*i);
     maybeFlush();
   }
+  buf.push_back('\n');
   target->render();
 }
 

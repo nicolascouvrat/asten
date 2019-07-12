@@ -14,6 +14,9 @@ enum InterfaceType {
   MONITOR,
   // REPLAY wraps a classic interface and uses a file to replay it on screen
   REPLAY,
+  // DEBUG wraps a classic interface and uses a file to replay button presses
+  // It then compares the output with whatever was in the file
+  DEBUG_INTERFACE,
 };
 
 // Codes to encode a ButtonSet into a char vector

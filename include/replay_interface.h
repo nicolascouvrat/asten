@@ -6,9 +6,9 @@
 
 #include "io_interface.h"
 
-// SpyInterface is a wrapper around another IOInterface.
+// ReplayInterface is a wrapper around another interface
 //
-// It will mimic its properties all the while sending usage statistics
+// It will read from a saved monitor file and display whatever was saved there
 class ReplayInterface: public IOInterface {
   public:
     ReplayInterface(InterfaceType targetType);

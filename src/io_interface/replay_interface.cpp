@@ -26,20 +26,5 @@ void ReplayInterface::colorPixel(int x, int y, int palette) {
 }
 
 std::array<ButtonSet, 2> ReplayInterface::getButtons() {
-  char c = in.peek();
-  std::array<ButtonSet, 2> buttons({0});
-  if (c == BUTTONS_START) {
-    // jump over
-    in.ignore();
-    std::string buttons_str;
-    while (in.get(c)) {
-      if (c == BUTTONS_END) {
-        break;
-      }
-      buttons_str.push_back(c);
-    }
-    auto btn = DecodeButtonSet(buttons_str);
-    buttons[0] = btn;
-  }
-  return buttons;
+  return target->getButtons();
 }

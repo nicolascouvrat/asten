@@ -2,6 +2,7 @@
 #include "classic_interface.h"
 #include "spy_interface.h"
 #include "replay_interface.h"
+#include "compare_interface.h"
 
 IOInterface* IOInterface::newIOInterface(InterfaceType type) {
   switch (type) {
@@ -13,6 +14,8 @@ IOInterface* IOInterface::newIOInterface(InterfaceType type) {
       return new SpyInterface(InterfaceType::CLASSIC);
     case REPLAY:
       return new ReplayInterface(InterfaceType::CLASSIC);
+    case DEBUG_INTERFACE:
+      return new CompareInterface(InterfaceType::CLASSIC);
   }
 }
 
