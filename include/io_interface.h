@@ -2,6 +2,7 @@
 #define GUARD_ENGINE_H
 
 #include <array>
+#include <string>
 
 // InterfaceType are the different implementations of IOInterface available
 enum InterfaceType {
@@ -15,11 +16,32 @@ enum InterfaceType {
   REPLAY,
 };
 
+// Codes to encode a ButtonSet into a char vector
+// All chars corresponding to an ASCII code >= 64 are safe due to how 
+// colors can only go from 0 to 63
+const char BUTTONS_START = 'X';
+const char BUTTONS_END = 'Z';
+const char A_CODE = 'A';
+const char B_CODE = 'B';
+const char SELECT_CODE = 'S';
+const char START_CODE = 'T';
+const char UP_CODE = 'U';
+const char DOWN_CODE = 'D';
+const char LEFT_CODE = 'L';
+const char RIGHT_CODE = 'R';
+
 // ButtonSet simply is a set of 8 booleans describing which buttons are enabled
 // for one controller
 struct ButtonSet {
   bool A, B, SELECT, START, UP, DOWN, LEFT, RIGHT;
 };
+
+// EncodeButtonSet to a char vector writable to a file
+std::string EncodeButtonSet(ButtonSet bs);
+
+// Decode creates a ButtonSet from a properly formatted char array
+ButtonSet DecodeButtonSet(std::string in);
+
 
 // IOInterface describes what any I/O implementation should be able to do in
 // order to be usable by the emulator
@@ -39,6 +61,7 @@ class IOInterface {
     // render outputs all the pixels to the screen
     virtual void render() = 0;
     // colorPixel sets the color of pixel in position x, y
+    // palette should be < 64 (the maximum number of colors supported by a NES)
     virtual void colorPixel(int x, int y, int palette) = 0;
     // getButtons returns which buttons are enabled for each controller
     virtual std::array<ButtonSet, 2> getButtons() = 0;

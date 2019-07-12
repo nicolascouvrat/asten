@@ -13,7 +13,10 @@ bool SpyInterface::shouldClose() { return target->shouldClose(); }
 bool SpyInterface::shouldReset() { return target->shouldReset(); }
 
 void SpyInterface::render() {
-  maybeFlush();
+  for (auto i = colors.begin(); i != colors.end(); i++) {
+    buf.push_back(*i);
+    maybeFlush();
+  }
   target->render();
 }
 
@@ -24,15 +27,16 @@ void SpyInterface::colorPixel(int x, int y, int palette) {
 }
 
 std::array<ButtonSet, 2> SpyInterface::getButtons() {
-  return target->getButtons();
+  auto buttons = target->getButtons();
+  auto encoded = EncodeButtonSet(buttons[0]);
+  buf.append(encoded);
+  maybeFlush();
+  return buttons;
 }
 
 void SpyInterface::maybeFlush() {
-  for (auto i = colors.begin(); i != colors.end(); i++) {
-    buf.push_back(*i);
-    if (buf.length() + 1 > SpyInterface::BUF_SIZE) {
-      out << buf;
-      buf.resize(0);
-    }
+  if (buf.length() + 1 > SpyInterface::BUF_SIZE) {
+    out << buf;
+    buf.resize(0);
   }
 }
