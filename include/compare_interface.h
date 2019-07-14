@@ -3,8 +3,14 @@
 
 #include <array>
 #include <fstream>
+#include <queue>
 
 #include "io_interface.h"
+
+struct ButtonsStep {
+  long prevCounter;
+  std::array<ButtonSet, 2> buttons;
+};
 
 // CompareInterface is a wrapper around another interface
 //
@@ -21,6 +27,10 @@ class CompareInterface: public IOInterface {
   private:
     IOInterface *target;
     std::ifstream in;
+    std::array<ButtonSet, 2> currentButtons;
+    std::queue<ButtonsStep> nextButtons;
+    long currentCount;
+    void loadNextButtons();
 };
 
 #endif

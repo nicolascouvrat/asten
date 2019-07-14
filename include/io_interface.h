@@ -37,13 +37,19 @@ const char RIGHT_CODE = 'R';
 // for one controller
 struct ButtonSet {
   bool A, B, SELECT, START, UP, DOWN, LEFT, RIGHT;
+  // isEqual returns true if the two ButtonSets are equal
+  bool isEqual(ButtonSet);
+  // encode returns a string, writable to a file, encoding the ButtonSet
+  // count indicates the number of times the PREVIOUS button set was called, to
+  // avoid encoding the same data over and over again
+  // 
+  // for example, X100AZX10BZ at the beginning of a file means that there was 100 *
+  // the empty button set before switching to A, then 10 * A before switching to B
+  std::string encode(long count);
 };
 
-// EncodeButtonSet to a char vector writable to a file
-std::string EncodeButtonSet(ButtonSet bs);
-
 // Decode creates a ButtonSet from a properly formatted char array
-ButtonSet DecodeButtonSet(std::string in);
+long DecodeButtonSet(std::string in, ButtonSet* bs);
 
 
 // IOInterface describes what any I/O implementation should be able to do in

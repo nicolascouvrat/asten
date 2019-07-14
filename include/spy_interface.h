@@ -25,6 +25,10 @@ class SpyInterface: public IOInterface {
     std::array<char, IOInterface::WIDTH * IOInterface::HEIGHT> colors;
     std::ofstream out;
 
+    // identicalCount indicates the number of times getButtons() has been called
+    // before there was a change in currentButtons;
+    long identicalCount;
+    std::array<ButtonSet, 2> currentButtons;
     void maybeFlush();
 };
 

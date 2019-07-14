@@ -2,7 +2,8 @@
 
 
 CompareInterface::CompareInterface(InterfaceType t):
-  in("game.log")
+  in("game.log"),
+  currentButtons({0})
 {
   target = IOInterface::newIOInterface(t);
 }
@@ -17,24 +18,50 @@ void CompareInterface::render() {
 
 void CompareInterface::colorPixel(int x, int y, int palette) {
   // just drop it
-  in.ignore();
+  char c = in.peek();
+  if (c == BUTTONS_START) {
+    loadNextButtons();
+  } else {
+    in.ignore();
+  }
   target->colorPixel(x, y, palette);
 }
 
 std::array<ButtonSet, 2> CompareInterface::getButtons() {
+  // if we did not already buffer some buttons
   char c = in.peek();
-  std::array<ButtonSet, 2> buttons({0});
   if (c == BUTTONS_START) {
-    std::string buttons_str;
-    while (in.get(c)) {
-      buttons_str.push_back(c);
-      if (c == BUTTONS_END) {
-        break;
-      }
-    }
-    auto btn = DecodeButtonSet(buttons_str);
-    buttons[0] = btn;
+    loadNextButtons();
   }
-  return buttons;
+
+  if (nextButtons.size() == 0) {
+    currentCount ++;
+    return currentButtons;
+  }
+
+  auto nextStep = nextButtons.front();
+  
+  if (currentCount == nextStep.prevCounter) {
+    currentButtons = nextStep.buttons;
+    nextButtons.pop();
+    currentCount = 0;
+  } else {
+    currentCount++;
+  }
+  return currentButtons;
+}
+
+void CompareInterface::loadNextButtons() {
+  char c;
+  std::string buttons_str;
+  while (in.get(c)) {
+    buttons_str.push_back(c);
+    if (c == BUTTONS_END) {
+      break;
+    }
+  }
+  ButtonsStep decoded;
+  decoded.prevCounter = DecodeButtonSet(buttons_str, &decoded.buttons[0]);
+  nextButtons.push(decoded);
 }
 
