@@ -1,4 +1,5 @@
 #include "compare_interface.h"
+#include <iostream>
 
 
 CompareInterface::CompareInterface(InterfaceType t):
@@ -20,11 +21,14 @@ void CompareInterface::colorPixel(int x, int y, int palette) {
   // just drop it
   char c = in.peek();
   if (c == BUTTONS_START) {
+    std::cout << "WHAT\n";
     loadNextButtons();
+    in.get(c);
   } else {
-    in.ignore();
+    in.get(c);
+    // in.ignore();
   }
-  target->colorPixel(x, y, palette);
+    target->colorPixel(x, y, (int)c);
 }
 
 std::array<ButtonSet, 2> CompareInterface::getButtons() {
@@ -41,7 +45,18 @@ std::array<ButtonSet, 2> CompareInterface::getButtons() {
 
   auto nextStep = nextButtons.front();
   
+  if (currentCount <= nextStep.prevCounter) {
+    std::cout << currentCount << "\n";
+    std::cout << nextStep.prevCounter << "\n";
+  } else {
+    std::cout << currentCount << "\n";
+    std::cout << nextStep.prevCounter << "\n";
+    std::cout << currentButtons[0];
+    throw std::runtime_error("BOOM");
+  }
   if (currentCount == nextStep.prevCounter) {
+    std::cout << "firing\n";
+    std::cout << nextStep.buttons[0];
     currentButtons = nextStep.buttons;
     nextButtons.pop();
     currentCount = 0;
@@ -62,6 +77,7 @@ void CompareInterface::loadNextButtons() {
   }
   ButtonsStep decoded;
   decoded.prevCounter = DecodeButtonSet(buttons_str, &decoded.buttons[0]);
+  std::cout << decoded.buttons[0];
   nextButtons.push(decoded);
 }
 

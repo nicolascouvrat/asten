@@ -12,6 +12,18 @@ struct ButtonsStep {
   std::array<ButtonSet, 2> buttons;
 };
 
+inline std::ostream& operator<< (std::ostream& o, const ButtonSet& bs) {
+  return o
+    << "A:" << bs.A << " "
+    << "B:" << bs.B << " "
+    << "SELECT:" << bs.SELECT << " "
+    << "START:" << bs.START << " "
+    << "UP:" << bs.UP << " "
+    << "DOWN:" << bs.DOWN << " "
+    << "LEFT:" << bs.LEFT << " "
+    << "RIGHT:" << bs.RIGHT << "\n";
+}
+
 // CompareInterface is a wrapper around another interface
 //
 // It will read from a saved monitor file, replay its button presses and compare
