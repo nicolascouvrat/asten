@@ -21,15 +21,19 @@ class SpyInterface: public IOInterface {
   private:
     static const int BUF_SIZE = 1048576; // 1 MB
     IOInterface *target;
-    std::string buf;
-    std::array<char, IOInterface::WIDTH * IOInterface::HEIGHT> colors;
-    std::ofstream out;
+
+    std::string screenBuf;
+    std::ofstream screenOut;
+
+    std::string buttonsBuf;
+    std::ofstream buttonsOut;
 
     // identicalCount indicates the number of times getButtons() has been called
     // before there was a change in currentButtons;
     long identicalCount;
     std::array<ButtonSet, 2> currentButtons;
-    void maybeFlush();
+
+    void maybeFlush(std::string& buf, std::ofstream& out);
 };
 
 #endif
