@@ -38,11 +38,15 @@ class CompareInterface: public IOInterface {
     std::array<ButtonSet, 2> getButtons();
   private:
     IOInterface *target;
-    std::ifstream in;
+
+    std::ifstream screenIn;
+    std::ifstream buttonsIn;
+  
     std::array<ButtonSet, 2> currentButtons;
     std::queue<ButtonsStep> nextButtons;
     long currentCount;
     void loadNextButtons();
+    bool isDone;
 };
 
 #endif

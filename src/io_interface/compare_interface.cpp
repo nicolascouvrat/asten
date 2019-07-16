@@ -3,13 +3,19 @@
 
 
 CompareInterface::CompareInterface(InterfaceType t):
-  in("game.log"),
+  screenIn("screen.log"),
+  buttonsIn("buttons.log"),
   currentButtons({0})
 {
   target = IOInterface::newIOInterface(t);
+  char c = buttonsIn.peek();
+  while (c != EOF) {
+    loadNextButtons();
+    c = buttonsIn.peek();
+  }
 }
 
-bool CompareInterface::shouldClose() { return target->shouldClose(); }
+bool CompareInterface::shouldClose() { return isDone; }
 
 bool CompareInterface::shouldReset() { return target->shouldReset(); }
 
@@ -18,58 +24,40 @@ void CompareInterface::render() {
 }
 
 void CompareInterface::colorPixel(int x, int y, int palette) {
-  // just drop it
-  char c = in.peek();
-  if (c == BUTTONS_START) {
-    std::cout << "WHAT\n";
-    loadNextButtons();
-    in.get(c);
-  } else {
-    in.get(c);
-    // in.ignore();
+  char c;
+  screenIn.get(c);
+  if (c == 'Y') {
+    isDone = true;
+    return;
   }
-    target->colorPixel(x, y, (int)c);
+  if ((int)c != palette) {
+    // TODO: this probably does not work for games where random numbers are
+    // involved...
+    // throw std::runtime_error("OOPS");
+  }
+  target->colorPixel(x, y, palette);
 }
 
 std::array<ButtonSet, 2> CompareInterface::getButtons() {
-  // if we did not already buffer some buttons
-  char c = in.peek();
-  if (c == BUTTONS_START) {
-    loadNextButtons();
+  if (nextButtons.size() > 0) {
+    auto next = nextButtons.front();
+
+    if (currentCount == next.prevCounter) {
+      currentButtons = next.buttons;
+      nextButtons.pop();
+      currentCount = 0;
+      return currentButtons;
+    }
   }
 
-  if (nextButtons.size() == 0) {
-    currentCount ++;
-    return currentButtons;
-  }
-
-  auto nextStep = nextButtons.front();
-  
-  if (currentCount <= nextStep.prevCounter) {
-    std::cout << currentCount << "\n";
-    std::cout << nextStep.prevCounter << "\n";
-  } else {
-    std::cout << currentCount << "\n";
-    std::cout << nextStep.prevCounter << "\n";
-    std::cout << currentButtons[0];
-    throw std::runtime_error("BOOM");
-  }
-  if (currentCount == nextStep.prevCounter) {
-    std::cout << "firing\n";
-    std::cout << nextStep.buttons[0];
-    currentButtons = nextStep.buttons;
-    nextButtons.pop();
-    currentCount = 0;
-  } else {
-    currentCount++;
-  }
+  currentCount ++;
   return currentButtons;
 }
 
 void CompareInterface::loadNextButtons() {
   char c;
   std::string buttons_str;
-  while (in.get(c)) {
+  while (buttonsIn.get(c)) {
     buttons_str.push_back(c);
     if (c == BUTTONS_END) {
       break;
@@ -77,7 +65,6 @@ void CompareInterface::loadNextButtons() {
   }
   ButtonsStep decoded;
   decoded.prevCounter = DecodeButtonSet(buttons_str, &decoded.buttons[0]);
-  std::cout << decoded.buttons[0];
   nextButtons.push(decoded);
 }
 

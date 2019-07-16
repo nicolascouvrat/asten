@@ -20,6 +20,7 @@ SpyInterface::SpyInterface(InterfaceType t):
 bool SpyInterface::shouldClose() { 
   bool willClose = target->shouldClose();
   if (willClose) {
+    screenBuf.push_back('Y');
     flushBuf(screenBuf, screenOut);
     flushBuf(buttonsBuf, buttonsOut);
   }
