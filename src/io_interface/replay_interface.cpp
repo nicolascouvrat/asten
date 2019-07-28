@@ -2,27 +2,28 @@
 
 
 ReplayInterface::ReplayInterface(InterfaceType t):
-  in("game.log")
+  screenStream("screen.log")
 {
   target = IOInterface::newIOInterface(t);
 }
 
-bool ReplayInterface::shouldClose() { return done; }
+bool ReplayInterface::shouldClose() {
+  return isClose;
+}
 
-bool ReplayInterface::shouldReset() { return target->shouldReset(); }
+bool ReplayInterface::shouldReset() { return false; }
 
 void ReplayInterface::render() {
   target->render();
 }
 
 void ReplayInterface::colorPixel(int x, int y, int palette) {
-  char cin;
-  in.get(cin);
-  if (cin == EOF) {
-    done = true;
+  uint8_t val = screenStream.read();
+  if (val == utils::SCREENSTREAM_END) {
+    isClose = true;
     return;
   }
-  target->colorPixel(x, y, (int)cin);
+  target->colorPixel(x, y, (int)val);
 }
 
 std::array<ButtonSet, 2> ReplayInterface::getButtons() {

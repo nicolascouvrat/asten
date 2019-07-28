@@ -1,4 +1,5 @@
 #include "screenstream.h"
+#include <iostream>
 
 namespace utils {
 ScreenStream::ScreenStream(std::string fileName):
@@ -9,21 +10,8 @@ void ScreenStream::write(uint8_t palette) {
 }
 
 void ScreenStream::close() {
-  stream.write((char*)&closeSignature, sizeof(closeSignature));
+  stream.write((char*)&SCREENSTREAM_END, sizeof(SCREENSTREAM_END));
   stream.close();
-}
-
-bool ScreenStream::isClose() {
-  int start = stream.tellg();
-  for (int i = 0; i < sizeof(closeSignature); i++) {
-    stream.seekg(start + i);
-
-    if (stream.peek() != closeSignature[i]) {
-      stream.seekg(start);
-      return false;
-    }
-  }
-  return true;
 }
 
 uint8_t ScreenStream::read() {

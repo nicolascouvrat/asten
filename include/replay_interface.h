@@ -5,6 +5,7 @@
 #include <fstream>
 
 #include "io_interface.h"
+#include "screenstream.h"
 
 // ReplayInterface is a wrapper around another interface
 //
@@ -19,8 +20,9 @@ class ReplayInterface: public IOInterface {
     std::array<ButtonSet, 2> getButtons();
   private:
     IOInterface *target;
-    std::ifstream in;
-    bool done;
+    bool isClose;
+    
+    utils::ScreenStream screenStream;
 };
 
 #endif
