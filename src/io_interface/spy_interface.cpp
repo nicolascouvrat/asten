@@ -10,17 +10,15 @@ void flushBuf(std::string& buf, std::ofstream& out) {
 }
 
 SpyInterface::SpyInterface(InterfaceType t):
-  screenOut("screen.log"), btnStream("buttons.log")
+  screenStream("screen.log"), btnStream("buttons.log")
 {
   target = IOInterface::newIOInterface(t);
-  screenBuf.reserve(SpyInterface::BUF_SIZE);
 }
 
 bool SpyInterface::shouldClose() { 
   bool willClose = target->shouldClose();
   if (willClose) {
-    screenBuf.push_back('Y');
-    flushBuf(screenBuf, screenOut);
+    screenStream.close();
     btnStream.flush();
   }
   return willClose;
@@ -54,8 +52,7 @@ void SpyInterface::render() {
 }
 
 void SpyInterface::colorPixel(int x, int y, int palette) {
-  screenBuf.push_back((char)palette);
-  maybeFlush(screenBuf, screenOut);
+  screenStream.write(palette);
   target->colorPixel(x, y, palette);
 }
 

@@ -7,6 +7,7 @@
 
 #include "io_interface.h"
 #include "btnstream.h"
+#include "screenstream.h"
 
 // SpyInterface is a wrapper around another IOInterface.
 //
@@ -23,9 +24,7 @@ class SpyInterface: public IOInterface {
     static const int BUF_SIZE = 1048576; // 1 MB
     IOInterface *target;
 
-    std::string screenBuf;
-    std::ofstream screenOut;
-
+    utils::ScreenStream screenStream;
     utils::BtnStream btnStream;
 
     // identicalCount indicates the number of times getButtons() has been called
