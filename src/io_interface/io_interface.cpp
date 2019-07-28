@@ -26,7 +26,7 @@ utils::ButtonsBuffer ButtonSet::encode(long count) {
 
   uint8_t encoded;
   for (int i = 0; i < 8; i++) {
-    encoded &= buttonsOrdered[i];
+    encoded |= buttonsOrdered[i];
     encoded <<= 1;
   }
 

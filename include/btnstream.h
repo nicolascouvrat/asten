@@ -4,6 +4,8 @@
 #include <string>
 #include <fstream>
 
+#include "utilities.h"
+
 namespace utils {
 // ButtonsBuffer is the compressed representation of a io_interface::ButtonSet
 struct ButtonsBuffer {
@@ -14,6 +16,10 @@ struct ButtonsBuffer {
   // the following order: A, B, SELECT, START, UP, DOWN, LEFT, RIGHT
   uint8_t buttons;
 };
+
+inline std::ostream& operator<< (std::ostream& o, const ButtonsBuffer& buf) {
+  return o << "buttons: " << hex(buf.buttons) << " count: " << buf.count << "\n";
+}
 
 struct ResetBuffer {
   bool reset;
