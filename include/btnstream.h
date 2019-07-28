@@ -26,6 +26,10 @@ struct ResetBuffer {
   long count;
 };
 
+inline std::ostream& operator<< (std::ostream& o, const ResetBuffer& buf) {
+  return o << "reset: " << buf.reset << " count: " << buf.count << "\n";
+}
+
 class BtnStream {
   public:
     BtnStream(std::string fileName);

@@ -26,14 +26,15 @@ class SpyInterface: public IOInterface {
     std::string screenBuf;
     std::ofstream screenOut;
 
-    std::string buttonsBuf;
-    std::ofstream buttonsOut;
     utils::BtnStream btnStream;
 
     // identicalCount indicates the number of times getButtons() has been called
     // before there was a change in currentButtons;
     long identicalCount;
     std::array<ButtonSet, 2> currentButtons;
+
+    long identicalRstCount;
+    bool currentReset;
 
     void maybeFlush(std::string& buf, std::ofstream& out);
 };

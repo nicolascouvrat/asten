@@ -14,7 +14,6 @@ SpyInterface::SpyInterface(InterfaceType t):
 {
   target = IOInterface::newIOInterface(t);
   screenBuf.reserve(SpyInterface::BUF_SIZE);
-  buttonsBuf.reserve(SpyInterface::BUF_SIZE);
 }
 
 bool SpyInterface::shouldClose() { 
@@ -22,12 +21,32 @@ bool SpyInterface::shouldClose() {
   if (willClose) {
     screenBuf.push_back('Y');
     flushBuf(screenBuf, screenOut);
-    flushBuf(buttonsBuf, buttonsOut);
   }
   return willClose;
 }
 
-bool SpyInterface::shouldReset() { return target->shouldReset(); }
+bool SpyInterface::shouldReset() {
+  bool reset = target->shouldReset();
+
+  if (reset == currentReset) {
+    // reset value did not change, increment counter
+    identicalRstCount++;
+    return currentReset;
+  }
+
+  // Write old buttons
+  utils::ResetBuffer encoded;
+  encoded.count = identicalRstCount;
+  encoded.reset = currentReset;
+  std::cout << encoded;
+  btnStream.write(encoded);
+
+  // Reset
+  currentReset = reset;
+  identicalRstCount = 1;
+
+  return currentReset;
+}
 
 void SpyInterface::render() {
   target->render();
