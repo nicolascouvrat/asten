@@ -21,6 +21,7 @@ bool SpyInterface::shouldClose() {
   if (willClose) {
     screenBuf.push_back('Y');
     flushBuf(screenBuf, screenOut);
+    btnStream.flush();
   }
   return willClose;
 }
