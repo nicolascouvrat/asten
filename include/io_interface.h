@@ -4,6 +4,8 @@
 #include <array>
 #include <string>
 
+#include "btnstream.h"
+
 // InterfaceType are the different implementations of IOInterface available
 enum InterfaceType {
   // CLASSIC is a Window/Keyboard application
@@ -39,13 +41,10 @@ struct ButtonSet {
   bool A, B, SELECT, START, UP, DOWN, LEFT, RIGHT;
   // isEqual returns true if the two ButtonSets are equal
   bool isEqual(ButtonSet);
-  // encode returns a string, writable to a file, encoding the ButtonSet
-  // count indicates the number of times the PREVIOUS button set was called, to
-  // avoid encoding the same data over and over again
-  // 
-  // for example, X100AZX10BZ at the beginning of a file means that there was 100 *
-  // the empty button set before switching to A, then 10 * A before switching to B
-  std::string encode(long count);
+  // encode returns a ButtonsBuffer encoding a ButtonSet
+  // count indicates the number of times getButtons() returned that
+  // ButtonSet in a row
+  utils::ButtonsBuffer encode(long count);
 };
 
 // Decode creates a ButtonSet from a properly formatted char array

@@ -6,6 +6,7 @@
 #include <fstream>
 
 #include "io_interface.h"
+#include "btnstream.h"
 
 // SpyInterface is a wrapper around another IOInterface.
 //
@@ -27,6 +28,7 @@ class SpyInterface: public IOInterface {
 
     std::string buttonsBuf;
     std::ofstream buttonsOut;
+    utils::BtnStream btnStream;
 
     // identicalCount indicates the number of times getButtons() has been called
     // before there was a change in currentButtons;

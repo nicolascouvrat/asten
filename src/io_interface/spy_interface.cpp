@@ -10,7 +10,7 @@ void flushBuf(std::string& buf, std::ofstream& out) {
 }
 
 SpyInterface::SpyInterface(InterfaceType t):
-  screenOut("screen.log"), buttonsOut("buttons.log")
+  screenOut("screen.log"), btnStream("buttons.log")
 {
   target = IOInterface::newIOInterface(t);
   screenBuf.reserve(SpyInterface::BUF_SIZE);
@@ -42,17 +42,22 @@ void SpyInterface::colorPixel(int x, int y, int palette) {
 std::array<ButtonSet, 2> SpyInterface::getButtons() {
   auto buttons = target->getButtons();
   if (
-    !buttons[0].isEqual(currentButtons[0]) ||
-    !buttons[1].isEqual(currentButtons[1])
+    buttons[0].isEqual(currentButtons[0]) &&
+    buttons[1].isEqual(currentButtons[1])
   ) {
-    auto encoded = buttons[0].encode(identicalCount);
-    buttonsBuf.append(encoded);
-    maybeFlush(buttonsBuf, buttonsOut);
-    identicalCount = 0;
-    currentButtons = buttons;
-  } else {
-    identicalCount++;
+    // the buttons did not change, increment counter
+    identicalCount ++;
+    return currentButtons;
   }
+
+  // Write old buttons
+  // TODO: support two button sets
+  utils::ButtonsBuffer encoded = currentButtons[0].encode(identicalCount);
+  btnStream.write(encoded);
+
+  // Reset
+  currentButtons = buttons;
+  identicalCount = 1;
   return buttons;
 }
 

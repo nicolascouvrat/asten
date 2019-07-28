@@ -19,25 +19,22 @@ IOInterface* IOInterface::newIOInterface(InterfaceType type) {
   }
 }
 
-std::string ButtonSet::encode(long count) {
-  std::string s;
+utils::ButtonsBuffer ButtonSet::encode(long count) {
+  bool buttonsOrdered[8] = {
+    A, B, SELECT, START, UP, DOWN, LEFT, RIGHT,
+  };
 
-  s += BUTTONS_START;
+  uint8_t encoded;
+  for (int i = 0; i < 8; i++) {
+    encoded &= buttonsOrdered[i];
+    encoded <<= 1;
+  }
 
-  s += std::to_string(count);
-
-  if (A) s.push_back(A_CODE);
-  if (B) s.push_back(B_CODE);
-  if (SELECT) s.push_back(SELECT_CODE);
-  if (START) s.push_back(START_CODE);
-  if (UP) s.push_back(UP_CODE);
-  if (DOWN) s.push_back(DOWN_CODE);
-  if (LEFT) s.push_back(LEFT_CODE);
-  if (RIGHT) s.push_back(RIGHT_CODE);
-
-  s += BUTTONS_END;
-
-  return s;
+  utils::ButtonsBuffer buf;
+  buf.count = count;
+  buf.buttons = encoded;
+  
+  return buf;
 }
 
 bool ButtonSet::isEqual(ButtonSet bs) {

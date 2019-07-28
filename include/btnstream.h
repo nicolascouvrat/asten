@@ -30,7 +30,7 @@ class BtnStream {
     const char btnSignature[3] = {'B', 'T', 'N'};
     const char rstSignature[3] = {'R', 'S', 'T'};
 };
-  
+
 } // namespace utils
 
 #endif
