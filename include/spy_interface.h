@@ -34,8 +34,6 @@ class SpyInterface: public IOInterface {
 
     long identicalRstCount;
     bool currentReset;
-
-    void maybeFlush(std::string& buf, std::ofstream& out);
 };
 
 #endif

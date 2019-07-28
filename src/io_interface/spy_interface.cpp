@@ -2,13 +2,6 @@
 #include <iostream>
 
 
-void flushBuf(std::string& buf, std::ofstream& out) {
-  std::cout << buf.length() << "\n";
-  out << buf;
-  out.flush();
-  buf.resize(0);
-}
-
 SpyInterface::SpyInterface(InterfaceType t):
   screenStream("screen.log"), btnStream("buttons.log")
 {
@@ -78,10 +71,3 @@ std::array<ButtonSet, 2> SpyInterface::getButtons() {
   identicalCount = 1;
   return buttons;
 }
-
-void SpyInterface::maybeFlush(std::string& buf, std::ofstream& out) {
-  if (buf.length() + 100 > SpyInterface::BUF_SIZE) {
-    flushBuf(buf, out);
-  }
-}
-
