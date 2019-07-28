@@ -17,8 +17,8 @@ void BtnStream::write(ResetBuffer& buf) {
   stream.write((char*)&buf.reset, sizeof(buf.reset));
 }
 
-void BtnStream::flush() {
-  stream.flush();
+void BtnStream::close() {
+  stream.close();
 }
 
 } // namespace utils

@@ -12,7 +12,7 @@ bool SpyInterface::shouldClose() {
   bool willClose = target->shouldClose();
   if (willClose) {
     screenStream.close();
-    btnStream.flush();
+    btnStream.close();
   }
   return willClose;
 }

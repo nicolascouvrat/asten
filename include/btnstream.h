@@ -40,7 +40,7 @@ class BtnStream {
     BtnStream(std::string fileName);
     void write(ButtonsBuffer& buf);
     void write(ResetBuffer& buf);
-    void flush();
+    void close();
   private:
     std::fstream stream;
     const char btnSignature[3] = {'B', 'T', 'N'};
