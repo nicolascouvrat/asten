@@ -21,20 +21,7 @@ enum InterfaceType {
   DEBUG_INTERFACE,
 };
 
-// Codes to encode a ButtonSet into a char vector
-// All chars corresponding to an ASCII code >= 64 are safe due to how 
-// colors can only go from 0 to 63
-const char BUTTONS_START = 'X';
-const char BUTTONS_END = 'Z';
-const char A_CODE = 'A';
-const char B_CODE = 'B';
-const char SELECT_CODE = 'S';
-const char START_CODE = 'T';
-const char UP_CODE = 'U';
-const char DOWN_CODE = 'D';
-const char LEFT_CODE = 'L';
-const char RIGHT_CODE = 'R';
-
+//
 // ButtonSet simply is a set of 8 booleans describing which buttons are enabled
 // for one controller
 struct ButtonSet {
@@ -49,10 +36,7 @@ struct ButtonSet {
   long unmarshal(utils::ButtonsBuffer& buf);
 };
 
-// Decode creates a ButtonSet from a properly formatted char array
-long DecodeButtonSet(std::string in, ButtonSet* bs);
-
-
+//
 // IOInterface describes what any I/O implementation should be able to do in
 // order to be usable by the emulator
 class IOInterface {

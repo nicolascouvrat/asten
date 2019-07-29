@@ -23,7 +23,6 @@ utils::ButtonsBuffer ButtonSet::marshal(long count) {
   bool buttonsOrdered[8] = {
     A, B, SELECT, START, UP, DOWN, LEFT, RIGHT,
   };
-  std::cout << A << B << SELECT << START << UP << DOWN << LEFT << RIGHT << "\n";
 
   uint8_t encoded;
   for (int i = 0; i < 7; i++) {
@@ -49,7 +48,6 @@ long ButtonSet::unmarshal(utils::ButtonsBuffer& buf) {
   SELECT = (buf.buttons >> 5) & 1;
   B = (buf.buttons >> 6) & 1;
   A = (buf.buttons >> 7) & 1;
-  std::cout << A << B << SELECT << START << UP << DOWN << LEFT << RIGHT << "\n";
   return buf.count;
 }
 
@@ -62,59 +60,4 @@ bool ButtonSet::isEqual(ButtonSet bs) {
     DOWN == bs.DOWN &&
     LEFT == bs.LEFT &&
     RIGHT == bs.RIGHT;
-}
-
-long DecodeButtonSet(std::string in, ButtonSet* bs) {
-  // Test correct encoding
-  if (in[0] != BUTTONS_START || in[in.length() - 1] != BUTTONS_END) {
-      throw std::runtime_error("invalid button set encoding");
-  }
-
-  // reset all buttons
-  bs->A = false;
-  bs->B = false;
-  bs->SELECT = false;
-  bs->START = false;
-  bs->UP = false;
-  bs->LEFT = false;
-  bs->RIGHT = false;
-  bs->DOWN = false;
-
-  long counter = 0;
-
-  for (auto i = in.begin(); i != in.end(); i++) {
-    if (('0' <= *i) && (*i <= '9')) {
-      counter *= 10;
-      counter += *i - '0';
-      continue;
-    } 
-
-    switch(*i) {
-      case A_CODE:
-        bs->A = true;
-        break;
-      case B_CODE:
-        bs->B = true;
-        break;
-      case SELECT_CODE:
-        bs->SELECT = true;
-        break;
-      case START_CODE:
-        bs->START = true;
-        break;
-      case UP_CODE:
-        bs->UP = true;
-        break;
-      case DOWN_CODE:
-        bs->DOWN = true;
-        break;
-      case LEFT_CODE:
-        bs->LEFT = true;
-        break;
-      case RIGHT_CODE:
-        bs->RIGHT = true;
-        break;
-    }
-  }
-  return counter;
 }

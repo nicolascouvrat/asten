@@ -9,22 +9,6 @@
 #include "btnstream.h"
 #include "screenstream.h"
 
-struct ButtonsStep {
-  long prevCounter;
-  std::array<ButtonSet, 2> buttons;
-};
-
-inline std::ostream& operator<< (std::ostream& o, const ButtonSet& bs) {
-  return o
-    << "A:" << bs.A << " "
-    << "B:" << bs.B << " "
-    << "SELECT:" << bs.SELECT << " "
-    << "START:" << bs.START << " "
-    << "UP:" << bs.UP << " "
-    << "DOWN:" << bs.DOWN << " "
-    << "LEFT:" << bs.LEFT << " "
-    << "RIGHT:" << bs.RIGHT << "\n";
-}
 
 // CompareInterface is a wrapper around another interface
 //
