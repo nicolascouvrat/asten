@@ -28,11 +28,17 @@ class CompareInterface: public IOInterface {
     utils::BtnStream btnStream;
     utils::ScreenStream screenStream;
   
-    std::array<ButtonSet, 2> currentButtons;
     std::queue<utils::ButtonsBuffer> nextButtons;
     std::queue<utils::ResetBuffer> nextResets;
+
     long remainingCount;
+    std::array<ButtonSet, 2> currentButtons;
     void loadNextButtons();
+
+    long remainingRstCount;
+    bool currentReset;
+    void loadNextReset();
+
     bool isDone;
 };
 

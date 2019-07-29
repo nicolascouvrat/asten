@@ -11,8 +11,10 @@ SpyInterface::SpyInterface(InterfaceType t):
 bool SpyInterface::shouldClose() { 
   bool willClose = target->shouldClose();
   if (willClose) {
-    screenStream.close();
+    writeCurrentButtons();
+    writeCurrentReset();
     btnStream.close();
+    screenStream.close();
   }
   return willClose;
 }
@@ -27,11 +29,7 @@ bool SpyInterface::shouldReset() {
   }
 
   // Write old buttons
-  utils::ResetBuffer encoded;
-  encoded.count = identicalRstCount;
-  encoded.reset = currentReset;
-  std::cout << encoded;
-  btnStream.write(encoded);
+  writeCurrentReset();
 
   // Reset
   currentReset = reset;
@@ -62,12 +60,24 @@ std::array<ButtonSet, 2> SpyInterface::getButtons() {
 
   // Write old buttons
   // TODO: support two button sets
-  utils::ButtonsBuffer encoded = currentButtons[0].marshal(identicalCount);
-  std::cout << encoded;
-  btnStream.write(encoded);
+  writeCurrentButtons();
 
   // Reset
   currentButtons = buttons;
   identicalCount = 1;
   return buttons;
+}
+
+void SpyInterface::writeCurrentButtons() {
+  utils::ButtonsBuffer encoded = currentButtons[0].marshal(identicalCount);
+  std::cout << encoded;
+  btnStream.write(encoded);
+}
+
+void SpyInterface::writeCurrentReset() {
+  utils::ResetBuffer encoded;
+  encoded.count = identicalRstCount;
+  encoded.reset = currentReset;
+  std::cout << encoded;
+  btnStream.write(encoded);
 }

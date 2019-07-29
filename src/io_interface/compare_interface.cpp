@@ -11,11 +11,19 @@ CompareInterface::CompareInterface(InterfaceType t):
   btnStream.readAll(nextButtons, nextResets);
   std::cout << nextButtons.size() << "\n";
   loadNextButtons();
+  loadNextReset();
 }
 
 bool CompareInterface::shouldClose() { return isDone; }
 
-bool CompareInterface::shouldReset() { return target->shouldReset(); }
+bool CompareInterface::shouldReset() {
+  if (remainingRstCount == 0) {
+    loadNextReset();
+  }
+
+  remainingRstCount--;
+  return currentReset;
+}
 
 void CompareInterface::render() {
   target->render();
@@ -43,10 +51,27 @@ std::array<ButtonSet, 2> CompareInterface::getButtons() {
   return currentButtons;
 }
 
+// loadNextButtons will charge the next buttonset in the queue
+// 
+// It can be safely used on a empty queue, in which case it will load the zero
+// value of ButtonBuffer
 void CompareInterface::loadNextButtons() {
   auto next = nextButtons.front();
   nextButtons.pop();
   std::cout << "loading: " << next;
   remainingCount = currentButtons[0].unmarshal(next);
+}
+
+// loadNextReset will charge the next reset in the queue
+// 
+// It can be safely used on a empty queue, in which case it will load the zero
+// value of ResetBuffer
+void CompareInterface::loadNextReset() {
+  auto next = nextResets.front();
+  nextResets.pop();
+  std::cout << "loading: " << next;
+  remainingRstCount = next.count;
+  currentReset = next.reset;
+
 }
 

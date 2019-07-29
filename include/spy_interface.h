@@ -26,6 +26,9 @@ class SpyInterface: public IOInterface {
 
     utils::ScreenStream screenStream;
     utils::BtnStream btnStream;
+    
+    void writeCurrentButtons();
+    void writeCurrentReset();
 
     // identicalCount indicates the number of times getButtons() has been called
     // before there was a change in currentButtons;
