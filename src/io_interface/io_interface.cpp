@@ -19,22 +19,38 @@ IOInterface* IOInterface::newIOInterface(InterfaceType type) {
   }
 }
 
-utils::ButtonsBuffer ButtonSet::encode(long count) {
+utils::ButtonsBuffer ButtonSet::marshal(long count) {
   bool buttonsOrdered[8] = {
     A, B, SELECT, START, UP, DOWN, LEFT, RIGHT,
   };
+  std::cout << A << B << SELECT << START << UP << DOWN << LEFT << RIGHT << "\n";
 
   uint8_t encoded;
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < 7; i++) {
     encoded |= buttonsOrdered[i];
     encoded <<= 1;
   }
+
+  encoded |= buttonsOrdered[7]; 
 
   utils::ButtonsBuffer buf;
   buf.count = count;
   buf.buttons = encoded;
   
   return buf;
+}
+
+long ButtonSet::unmarshal(utils::ButtonsBuffer& buf) {
+  RIGHT = (buf.buttons >> 0) & 1;
+  LEFT = (buf.buttons >> 1) & 1;
+  DOWN = (buf.buttons >> 2) & 1;
+  UP = (buf.buttons >> 3) & 1;
+  START = (buf.buttons >> 4) & 1;
+  SELECT = (buf.buttons >> 5) & 1;
+  B = (buf.buttons >> 6) & 1;
+  A = (buf.buttons >> 7) & 1;
+  std::cout << A << B << SELECT << START << UP << DOWN << LEFT << RIGHT << "\n";
+  return buf.count;
 }
 
 bool ButtonSet::isEqual(ButtonSet bs) {

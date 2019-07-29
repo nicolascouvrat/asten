@@ -6,6 +6,8 @@
 #include <queue>
 
 #include "io_interface.h"
+#include "btnstream.h"
+#include "screenstream.h"
 
 struct ButtonsStep {
   long prevCounter;
@@ -39,12 +41,13 @@ class CompareInterface: public IOInterface {
   private:
     IOInterface *target;
 
-    std::ifstream screenIn;
-    std::ifstream buttonsIn;
+    utils::BtnStream btnStream;
+    utils::ScreenStream screenStream;
   
     std::array<ButtonSet, 2> currentButtons;
-    std::queue<ButtonsStep> nextButtons;
-    long currentCount;
+    std::queue<utils::ButtonsBuffer> nextButtons;
+    std::queue<utils::ResetBuffer> nextResets;
+    long remainingCount;
     void loadNextButtons();
     bool isDone;
 };

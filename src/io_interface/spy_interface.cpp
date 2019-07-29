@@ -62,7 +62,7 @@ std::array<ButtonSet, 2> SpyInterface::getButtons() {
 
   // Write old buttons
   // TODO: support two button sets
-  utils::ButtonsBuffer encoded = currentButtons[0].encode(identicalCount);
+  utils::ButtonsBuffer encoded = currentButtons[0].marshal(identicalCount);
   std::cout << encoded;
   btnStream.write(encoded);
 

@@ -41,10 +41,12 @@ struct ButtonSet {
   bool A, B, SELECT, START, UP, DOWN, LEFT, RIGHT;
   // isEqual returns true if the two ButtonSets are equal
   bool isEqual(ButtonSet);
-  // encode returns a ButtonsBuffer encoding a ButtonSet
+  // marshal returns a ButtonsBuffer encoding a ButtonSet
   // count indicates the number of times getButtons() returned that
   // ButtonSet in a row
-  utils::ButtonsBuffer encode(long count);
+  utils::ButtonsBuffer marshal(long count);
+  // unmarshal unpacks a ButtonsBuffer into a ButtonSet, returning count
+  long unmarshal(utils::ButtonsBuffer& buf);
 };
 
 // Decode creates a ButtonSet from a properly formatted char array

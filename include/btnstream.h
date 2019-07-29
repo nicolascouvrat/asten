@@ -3,6 +3,7 @@
 
 #include <string>
 #include <fstream>
+#include <queue>
 
 #include "utilities.h"
 
@@ -41,10 +42,15 @@ class BtnStream {
     void write(ButtonsBuffer& buf);
     void write(ResetBuffer& buf);
     void close();
+    void readAll(std::queue<ButtonsBuffer>& buttons, std::queue<ResetBuffer>& resets);
+    void read(std::queue<ButtonsBuffer>& buttons);
+    void read(std::queue<ResetBuffer>& resets);
   private:
     std::fstream stream;
-    const char btnSignature[3] = {'B', 'T', 'N'};
-    const char rstSignature[3] = {'R', 'S', 'T'};
+    static const int SIG_SIZE = 3;
+    const char btnSignature[SIG_SIZE] = {'B', 'T', 'N'};
+    const char rstSignature[SIG_SIZE] = {'R', 'S', 'T'};
+    const char endSignature[SIG_SIZE] = {'E', 'N', 'D'};
 };
 
 } // namespace utils
