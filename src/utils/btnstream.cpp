@@ -1,8 +1,17 @@
 #include "btnstream.h"
+#include <iostream>
 
 namespace utils {
-BtnStream::BtnStream(std::string fileName):
-  stream(fileName, std::ios::binary | std::ios::out | std::ios::in) {}
+BtnStream::BtnStream(std::string fileName, StreamMode mode) {
+  switch (mode) {
+    case StreamMode::IN:
+      stream.open(fileName, std::ios::binary | std::ios::in);
+      break;
+    case StreamMode::OUT:
+      stream.open(fileName, std::ios::binary | std::ios::out);
+      break;
+  }
+}
 
 void BtnStream::write(ButtonsBuffer& buf) {
   stream.write((char*)&btnSignature, sizeof(btnSignature));

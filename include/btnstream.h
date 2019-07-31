@@ -6,6 +6,7 @@
 #include <queue>
 
 #include "utilities.h"
+#include "streams.h"
 
 namespace utils {
 // ButtonsBuffer is the compressed representation of a io_interface::ButtonSet
@@ -34,11 +35,12 @@ inline std::ostream& operator<< (std::ostream& o, const ResetBuffer& buf) {
   return o << "reset: " << buf.reset << " count: " << buf.count << "\n";
 }
 
+
 // BtnStream is a wrapper around std::fstream that allows for the writing and reading
 // of ButtonsBuffer and ResetBuffer
 class BtnStream {
   public:
-    BtnStream(std::string fileName);
+    BtnStream(std::string fileName, StreamMode mode);
     void write(ButtonsBuffer& buf);
     void write(ResetBuffer& buf);
     void close();

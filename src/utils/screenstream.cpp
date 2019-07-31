@@ -2,8 +2,16 @@
 #include <iostream>
 
 namespace utils {
-ScreenStream::ScreenStream(std::string fileName):
-  stream(fileName, std::ios::binary | std::ios::out | std::ios::in) {}
+ScreenStream::ScreenStream(std::string fileName, StreamMode mode) {
+  switch (mode) {
+    case StreamMode::IN:
+      stream.open(fileName, std::ios::binary | std::ios::in);
+      break;
+    case StreamMode::OUT:
+      stream.open(fileName, std::ios::binary | std::ios::out);
+      break;
+  }
+}
 
 void ScreenStream::write(uint8_t palette) {
   stream.write((char*)&palette, sizeof(palette));

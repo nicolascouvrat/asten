@@ -1,10 +1,13 @@
 #include "compare_interface.h"
+
 #include <iostream>
+
+#include "streams.h"
 
 
 CompareInterface::CompareInterface(InterfaceType t):
-  screenStream("screen.log"),
-  btnStream("buttons.log"),
+  screenStream("screen.log", utils::StreamMode::IN),
+  btnStream("buttons.log", utils::StreamMode::IN),
   currentButtons({0})
 {
   target = IOInterface::newIOInterface(t);
@@ -30,6 +33,10 @@ void CompareInterface::render() {
 }
 
 void CompareInterface::colorPixel(int x, int y, int palette) {
+  if (isDone) {
+    return;
+  }
+
   uint8_t val = screenStream.read();
   if (val == utils::SCREENSTREAM_END) {
     isDone = true;
@@ -38,7 +45,7 @@ void CompareInterface::colorPixel(int x, int y, int palette) {
   if ((int)val != palette) {
     // TODO: this probably does not work for games where random numbers are
     // involved...
-    // throw std::runtime_error("OOPS");
+    std::cout << "OUPS\n";
   }
   target->colorPixel(x, y, palette);
 }
@@ -59,6 +66,7 @@ void CompareInterface::loadNextButtons() {
   auto next = nextButtons.front();
   nextButtons.pop();
   std::cout << "loading: " << next;
+  // TODO: handle second button
   remainingCount = currentButtons[0].unmarshal(next);
 }
 

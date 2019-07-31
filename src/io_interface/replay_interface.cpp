@@ -1,8 +1,9 @@
 #include "replay_interface.h"
 
+#include "streams.h"
 
 ReplayInterface::ReplayInterface(InterfaceType t):
-  screenStream("screen.log")
+  screenStream("screen.log", utils::StreamMode::IN)
 {
   target = IOInterface::newIOInterface(t);
 }

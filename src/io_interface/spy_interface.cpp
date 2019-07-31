@@ -1,9 +1,14 @@
 #include "spy_interface.h"
+
 #include <iostream>
+
+#include "streams.h"
 
 
 SpyInterface::SpyInterface(InterfaceType t):
-  screenStream("screen.log"), btnStream("buttons.log")
+  screenStream("screen.log", utils::StreamMode::OUT), 
+  btnStream("buttons.log", utils::StreamMode::OUT),
+  currentButtons({0}), currentReset(false)
 {
   target = IOInterface::newIOInterface(t);
 }
@@ -75,6 +80,7 @@ void SpyInterface::writeCurrentButtons() {
 }
 
 void SpyInterface::writeCurrentReset() {
+  std::cout << currentReset;
   utils::ResetBuffer encoded;
   encoded.count = identicalRstCount;
   encoded.reset = currentReset;

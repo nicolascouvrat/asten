@@ -21,7 +21,7 @@ enum InterfaceType {
   DEBUG_INTERFACE,
 };
 
-//
+
 // ButtonSet simply is a set of 8 booleans describing which buttons are enabled
 // for one controller
 struct ButtonSet {
