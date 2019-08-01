@@ -8,7 +8,7 @@
 CompareInterface::CompareInterface(InterfaceType t):
   target(IOInterface::newIOInterface(t)),
   btnStream("buttons.log", utils::StreamMode::IN),
-  screenStream("screen.log", utils::StreamMode::IN),
+  screenStream("screen.log", utils::StreamMode::IN, IOInterface::WIDTH*IOInterface::HEIGHT),
   remainingCount(0), currentButtons({0}), 
   remainingRstCount(0), currentReset(false), isDone(false)
 {

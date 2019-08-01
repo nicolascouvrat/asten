@@ -4,7 +4,7 @@
 
 ReplayInterface::ReplayInterface(InterfaceType t):
   target(IOInterface::newIOInterface(t)),
-  screenStream("screen.log", utils::StreamMode::IN),
+  screenStream("screen.log", utils::StreamMode::IN, IOInterface::WIDTH*IOInterface::HEIGHT),
   isClose(false)
 {}
 
