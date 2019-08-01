@@ -51,10 +51,14 @@ set(GLAD_DIR "${EXT_DIR}/glad")
 add_library("glad" "${GLAD_DIR}/src/glad.c")
 target_include_directories("glad" PRIVATE "${GLAD_DIR}/include")
 # include and link it
-# target_link_libraries(${PROJECT_NAME} "glad" "${CMAKE_DL_LIBS}")
 target_include_directories(${PROJECT_NAME} PRIVATE "${GLAD_DIR}/include")
 
 ### RULES FOR INTERNAL LIBRARIES ###
+
+# UTILS
+add_subdirectory("${SRC_DIR}/utils")
+target_include_directories("utils" PRIVATE ${INCLUDE_DIR})
+target_link_libraries(${PROJECT_NAME} "utils")
 
 # INTERFACE
 add_subdirectory("${SRC_DIR}/io_interface")
@@ -64,12 +68,8 @@ target_include_directories("io_interface" PRIVATE "${GLFW_DIR}/include")
 target_include_directories("io_interface" PRIVATE "${GLAD_DIR}/include")
 target_link_libraries("io_interface" "glfw" "${GLFW_LIBRARIES}")
 target_link_libraries("io_interface" "glad" "${CMAKE_DL_LIBS}")
+target_link_libraries("io_interface" "utils")
 target_link_libraries(${PROJECT_NAME} "io_interface")
-
-# UTILS
-add_subdirectory("${SRC_DIR}/utils")
-target_include_directories("utils" PRIVATE ${INCLUDE_DIR})
-target_link_libraries(${PROJECT_NAME} "utils")
 
 # CONSOLE
 add_subdirectory("${SRC_DIR}/console")
@@ -77,8 +77,6 @@ target_include_directories("console" PRIVATE ${INCLUDE_DIR})
 target_include_directories("console" PRIVATE "${GLFW_DIR}/include")
 target_include_directories("console" PRIVATE "${GLAD_DIR}/include")
 target_link_libraries("console" "io_interface")
-# target_link_libraries("console" "glfw" "${GLFW_LIBRARIES}")
-# target_link_libraries("console" "glad" "${CMAKE_DL_LIBS}")
 target_link_libraries(${PROJECT_NAME} "console")
 
 

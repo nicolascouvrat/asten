@@ -40,12 +40,12 @@ ClassicInterface::~ClassicInterface() {
 // it will return correct size for the screen. However, the position requires a
 // -1 to correct it).
 float ClassicInterface::adaptWidth(int value) {
-  float divisor = (float) 2 / (NATIVE_NES_WIDTH * ZOOM_FACTOR);
+  float divisor = (float) 2 / (IOInterface::WIDTH * ZOOM_FACTOR);
   return (float) value * divisor;
 }
 
 float ClassicInterface::adaptHeight(int value) {
-  float divisor = (float) 2 / (NATIVE_NES_HEIGHT * ZOOM_FACTOR);
+  float divisor = (float) 2 / (IOInterface::HEIGHT * ZOOM_FACTOR);
   return (float) value * divisor;
 }
 
@@ -62,8 +62,8 @@ void ClassicInterface::initWindow() {
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
   // Initialize window
-  int height = NATIVE_NES_HEIGHT * ZOOM_FACTOR;
-  int width = NATIVE_NES_WIDTH * ZOOM_FACTOR;
+  int height = IOInterface::HEIGHT * ZOOM_FACTOR;
+  int width = IOInterface::WIDTH * ZOOM_FACTOR;
   window = glfwCreateWindow(width, height, WINDOW_NAME, NULL, NULL);
   if (window == NULL)
     throw Error("Could not create game window.");
@@ -100,13 +100,13 @@ void ClassicInterface::render() {
   glClearColor(1.0f, 0.0f, 0.1f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  int tileCount = NATIVE_NES_WIDTH * NATIVE_NES_HEIGHT;
+  int tileCount = IOInterface::WIDTH * IOInterface::HEIGHT;
   glBindBuffer(GL_ARRAY_BUFFER, colorVBO);
   glBufferSubData(GL_ARRAY_BUFFER, 0, 3 * sizeof(float) * tileCount, colors);
 
   shaderProgram.use();
   glBindVertexArray(VAO);
-  glDrawArraysInstanced(GL_TRIANGLES, 0, 6, NATIVE_NES_WIDTH * NATIVE_NES_HEIGHT);
+  glDrawArraysInstanced(GL_TRIANGLES, 0, 6, IOInterface::WIDTH * IOInterface::HEIGHT);
   glBindVertexArray(0);
   calculateFPS();
 
@@ -143,11 +143,11 @@ std::array<ButtonSet, 2> ClassicInterface::getButtons() {
 // glorified pixels). Offsets are ordered LINE PER LINE, TOP TO BOTTOM and LEFT
 // TO RIGHT.
 void ClassicInterface::initGrid() {
-  offsets = new float[NATIVE_NES_WIDTH * NATIVE_NES_HEIGHT * 2];
+  offsets = new float[IOInterface::WIDTH * IOInterface::HEIGHT * 2];
   int i = 0;
   float xOffset, yOffset;
-  for (int y = 0; y < NATIVE_NES_HEIGHT * ZOOM_FACTOR; y += ZOOM_FACTOR) {
-    for (int x = 0; x < NATIVE_NES_WIDTH * ZOOM_FACTOR; x += ZOOM_FACTOR) {
+  for (int y = 0; y < IOInterface::HEIGHT * ZOOM_FACTOR; y += ZOOM_FACTOR) {
+    for (int x = 0; x < IOInterface::WIDTH * ZOOM_FACTOR; x += ZOOM_FACTOR) {
       // we fill it up line per line
       xOffset = adaptWidth(x) - 1;
       yOffset = -(adaptHeight(y) - 1);
@@ -159,11 +159,11 @@ void ClassicInterface::initGrid() {
 
 // The color array has to be adjusted with the offset array!
 void ClassicInterface::initColor() {
-  colors = new float[NATIVE_NES_WIDTH * NATIVE_NES_HEIGHT * 3];
+  colors = new float[IOInterface::WIDTH * IOInterface::HEIGHT * 3];
   bool isEven = false;
   float color = 0.0;
-  float incrementC = (float) 1 / (NATIVE_NES_WIDTH * NATIVE_NES_HEIGHT);
-  for (int i = 0; i < NATIVE_NES_WIDTH * NATIVE_NES_HEIGHT * 3; i += 3) {
+  float incrementC = (float) 1 / (IOInterface::WIDTH * IOInterface::HEIGHT);
+  for (int i = 0; i < IOInterface::WIDTH * IOInterface::HEIGHT * 3; i += 3) {
     colors[i] = color;
     colors[i + 1] = color;
     colors[i + 2] = color;
@@ -174,7 +174,7 @@ void ClassicInterface::initColor() {
 
 // X goes left to right, Y top to bottom
 void ClassicInterface::colorPixel(int x, int y, int paletteIndex) {
-  int index = (y * NATIVE_NES_WIDTH + x) * 3;
+  int index = (y * IOInterface::WIDTH + x) * 3;
   Color color = palette[paletteIndex];
   colors[index] = color.r; // red
   colors[index + 1] = color.g; // green
@@ -184,7 +184,7 @@ void ClassicInterface::colorPixel(int x, int y, int paletteIndex) {
 // Handles OpenGL related logic (creating, binding buffers and attribute
 // pointers).
 void ClassicInterface::initVAO() {
-  int tileCount = NATIVE_NES_WIDTH * NATIVE_NES_HEIGHT;
+  int tileCount = IOInterface::WIDTH * IOInterface::HEIGHT;
   glGenVertexArrays(1, &VAO);
   glGenBuffers(1, &quadVBO);
   glGenBuffers(1, &colorVBO);

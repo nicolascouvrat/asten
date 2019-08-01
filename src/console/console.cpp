@@ -1,7 +1,6 @@
 #include "console.h"
 
 #include "mapper.h"
-#include "io_interface.h"
 
 
 Mapper *Console::getMapper() { return mapper; }
