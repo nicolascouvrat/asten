@@ -6,21 +6,24 @@
 
 
 SpyInterface::SpyInterface(InterfaceType t):
+  target(IOInterface::newIOInterface(t)),
   screenStream("screen.log", utils::StreamMode::OUT), 
   btnStream("buttons.log", utils::StreamMode::OUT),
-  currentButtons({0}), currentReset(false)
-{
-  target = IOInterface::newIOInterface(t);
-}
+  identicalCount(0), currentButtons({0}), 
+  identicalRstCount(0), currentReset(false)
+{}
 
 bool SpyInterface::shouldClose() { 
   bool willClose = target->shouldClose();
   if (willClose) {
+    // onClose, we want to write any leftover and close files to make sure the
+    // streams are flushed
     writeCurrentButtons();
     writeCurrentReset();
     btnStream.close();
     screenStream.close();
   }
+
   return willClose;
 }
 

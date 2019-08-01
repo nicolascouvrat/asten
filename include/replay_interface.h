@@ -20,9 +20,9 @@ class ReplayInterface: public IOInterface {
     std::array<ButtonSet, 2> getButtons();
   private:
     IOInterface *target;
-    bool isClose;
-    
     utils::ScreenStream screenStream;
+
+    bool isClose;
 };
 
 #endif

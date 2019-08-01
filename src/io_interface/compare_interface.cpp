@@ -6,13 +6,15 @@
 
 
 CompareInterface::CompareInterface(InterfaceType t):
-  screenStream("screen.log", utils::StreamMode::IN),
+  target(IOInterface::newIOInterface(t)),
   btnStream("buttons.log", utils::StreamMode::IN),
-  currentButtons({0})
+  screenStream("screen.log", utils::StreamMode::IN),
+  remainingCount(0), currentButtons({0}), 
+  remainingRstCount(0), currentReset(false), isDone(false)
 {
-  target = IOInterface::newIOInterface(t);
+  // Read everything from the button stream up front, then load the first button
+  // and first reset
   btnStream.readAll(nextButtons, nextResets);
-  std::cout << nextButtons.size() << "\n";
   loadNextButtons();
   loadNextReset();
 }
@@ -33,6 +35,10 @@ void CompareInterface::render() {
 }
 
 void CompareInterface::colorPixel(int x, int y, int palette) {
+  // Due to how the ppu (calling colorPixel) cycles several times for each cpu
+  // (calling shouldClose()) cycle, it is possible that we try to render a few
+  // more pixels before realizing that in fact we should be done.
+  // Return straight away to avoid any problems.
   if (isDone) {
     return;
   }
@@ -59,10 +65,11 @@ std::array<ButtonSet, 2> CompareInterface::getButtons() {
 }
 
 // loadNextButtons will charge the next buttonset in the queue
-// 
-// It can be safely used on a empty queue, in which case it will load the zero
-// value of ButtonBuffer
 void CompareInterface::loadNextButtons() {
+  if (nextButtons.empty()) {
+    return;
+  }
+
   auto next = nextButtons.front();
   nextButtons.pop();
   std::cout << "loading: " << next;
@@ -71,10 +78,11 @@ void CompareInterface::loadNextButtons() {
 }
 
 // loadNextReset will charge the next reset in the queue
-// 
-// It can be safely used on a empty queue, in which case it will load the zero
-// value of ResetBuffer
 void CompareInterface::loadNextReset() {
+  if (nextResets.empty()) {
+    return;
+  }
+
   auto next = nextResets.front();
   nextResets.pop();
   std::cout << "loading: " << next;

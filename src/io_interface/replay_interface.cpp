@@ -3,10 +3,10 @@
 #include "streams.h"
 
 ReplayInterface::ReplayInterface(InterfaceType t):
-  screenStream("screen.log", utils::StreamMode::IN)
-{
-  target = IOInterface::newIOInterface(t);
-}
+  target(IOInterface::newIOInterface(t)),
+  screenStream("screen.log", utils::StreamMode::IN),
+  isClose(false)
+{}
 
 bool ReplayInterface::shouldClose() {
   return isClose;
