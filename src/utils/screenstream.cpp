@@ -5,16 +5,51 @@ namespace utils {
 ByteAggregator::ByteAggregator(int capacity):
   val(0), count(0), cap(capacity), locked(false) {}
 
-void ByteAggregator::load(uint8_t byte) {}
+void ByteAggregator::load(uint8_t byte) {
+  if (locked && byte != val) {
+    throw std::runtime_error("writing a different value to a locked ByteAggregator");
+  }
 
-bool ByteAggregator::canLoad(uint8_t byte) { return false; }
+  if (count == cap) {
+    throw std::runtime_error("writing to a full ByteAggregator");
+  }
+
+  if (!locked) {
+    val = byte;
+    locked = true;
+  }
+
+  count++;
+}
+
+bool ByteAggregator::canLoad(uint8_t byte) {
+  if (count == cap) {
+    return false;
+  }
+
+  if (locked && byte != val) {
+    return false;
+  }
+
+  return true;
+}
 
 std::vector<uint8_t> ByteAggregator::aggregate() {
   std::vector<uint8_t> r;
+  r.push_back(val);
+  // std::cout << (int) val << " count=" << count << "\n";
+  while (count != 0) {
+    uint8_t b = count & 0xff;
+    r.push_back(b);
+    count >>= 8;
+  }
   return r;
 }
 
-void ByteAggregator::reset() {}
+void ByteAggregator::reset() {
+  locked = false;
+  count = 0;
+}
 
 ScreenStream::ScreenStream(std::string fileName, StreamMode mode, int screenSize):
   diffs(screenSize/8), colors(screenSize, 255), it(0),
@@ -68,6 +103,7 @@ void ScreenStream::write(uint8_t palette) {
     // write, otherwise load the value in the aggregator and move on
     if (!diffAggregator.canLoad(diffs[diffIndex])) {
       auto aggregated = diffAggregator.aggregate();
+      // std::cout << "writing diffByte=" << aggregated.size() << "\n";
       stream.write((char*)aggregated.data(), aggregated.size());
       diffAggregator.reset();
     }
@@ -97,7 +133,7 @@ void ScreenStream::write(uint8_t palette) {
 
     // compressed should not have more than 2 * 240 * 256 bytes
     int compressedSize = compressed.size();
-    std::cout << "writing colorDiffsSize=" << compressed.size() << "\n";
+    // std::cout << "writing colorDiffsSize=" << compressed.size() << "\n";
     stream.write((char*)&compressedSize, sizeof(int));
     stream.write((char*)compressed.data(), compressed.size());
 
