@@ -53,7 +53,7 @@ std::vector<uint8_t> ByteAggregator::aggregate() {
     count >>= 8;
     // Set msb to 1, signifying to the decoded that this value has 2 bytes of
     // count instead of one
-    val |= 0x8;
+    val |= 0x80;
   }
 
   if (count != 0) {
@@ -73,7 +73,7 @@ void ByteAggregator::reset() {
 }
 
 ScreenStream::ScreenStream(std::string fileName, StreamMode mode, int screenSize):
-  colorAggregator(0xffff)
+  colorAggregator(0xffff), currentColor(0), count(0)
 {
   switch (mode) {
     case StreamMode::IN:
@@ -85,11 +85,13 @@ ScreenStream::ScreenStream(std::string fileName, StreamMode mode, int screenSize
   }
 }
 
+int writeCounter = 0;
 void ScreenStream::write(uint8_t palette) {
   if (!colorAggregator.canLoad(palette)) {
     auto aggregated = colorAggregator.aggregate();
     // std::cout << aggregated.size() << "\n";
     stream.write((char*)aggregated.data(), aggregated.size());
+    writeCounter ++;
     colorAggregator.reset();
   }
   colorAggregator.load(palette);
@@ -103,9 +105,28 @@ void ScreenStream::close() {
 }
 
 uint8_t ScreenStream::read() {
-  uint8_t decoded;
-  stream.read((char*)&decoded, sizeof(decoded));
-  return decoded;
+  if (count != 0) {
+    count--;
+    return currentColor;
+  }
+
+  uint8_t byte;
+  stream.read((char*)&byte, sizeof(byte));
+
+  // discard msb
+  currentColor = byte & 0x7f;
+  // decide how to fill count depending on the msb
+  if ((byte >> 7) == 0) {
+    // in this case, we have only one byte of count, so reuse byte
+    stream.read((char*)&byte, sizeof(byte));
+    count = byte;
+  } else {
+    // in this case, we have only one byte of count, so reuse byte
+    stream.read((char*)&count, sizeof(count));
+  }
+
+  count--;
+  return currentColor;
 }
 } // namespace utils
 

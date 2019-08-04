@@ -43,6 +43,8 @@ class ScreenStream {
     uint8_t read();
   private:
     std::fstream stream;
+    uint8_t currentColor;
+    uint16_t count;
     ByteAggregator colorAggregator;
 };
 } // namespace utils
