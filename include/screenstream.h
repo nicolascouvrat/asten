@@ -43,19 +43,6 @@ class ScreenStream {
     uint8_t read();
   private:
     std::fstream stream;
-    // diffs is of length screenSize/8, where each bit represents one pixel with
-    // a value of 0 if its color value stayed the same, 1 if it changed
-    std::vector<uint8_t> diffs;
-    // colors is of length screenSize, each byte being the current color of a
-    // pixel.
-    std::vector<uint8_t> colors;
-    // it points to where we currently are in colors and diffs
-    int it;
-
-    // colorDiffs stores the colors of the pixels which color actually changed
-    std::vector<uint8_t> colorDiffs;
-
-    ByteAggregator diffAggregator;
     ByteAggregator colorAggregator;
 };
 } // namespace utils
