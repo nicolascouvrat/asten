@@ -41,6 +41,10 @@ bool ByteAggregator::canLoad(uint8_t byte) {
 std::vector<uint8_t> ByteAggregator::aggregate() {
   std::vector<uint8_t> r;
   // std::cout << (int) val << " count=" << count << "\n";
+
+  // TODO: this should probably use the write() function to ensure endianess is
+  // correct? Right now we write in little endian so if the platform is little
+  // endian then it can decode, else no
   uint8_t b = count & 0xff;
   r.push_back(b);
   count >>= 8;
@@ -112,6 +116,13 @@ uint8_t ScreenStream::read() {
 
   uint8_t byte;
   stream.read((char*)&byte, sizeof(byte));
+
+  // XXX: Because we know that we never write anything > 63 (0x3f) to the
+  // ByteAggregator, the only way we get something bigger than 0xbf is when we
+  // stumble upon SCREENSTREAM_END, in which case we can return directly
+  if (byte == SCREENSTREAM_END) {
+    return SCREENSTREAM_END;
+  }
 
   // discard msb
   currentColor = byte & 0x7f;
