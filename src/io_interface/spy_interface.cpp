@@ -7,7 +7,7 @@
 
 SpyInterface::SpyInterface(InterfaceType t):
   target(IOInterface::newIOInterface(t)),
-  screenStream("screen.log", utils::StreamMode::OUT), 
+  screenStream("screen.log", utils::StreamMode::OUT, IOInterface::WIDTH*IOInterface::HEIGHT), 
   btnStream("buttons.log", utils::StreamMode::OUT),
   identicalCount(0), currentButtons({0}), 
   identicalRstCount(0), currentReset(false)
