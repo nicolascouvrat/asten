@@ -7,6 +7,18 @@
 
 constexpr Color ClassicInterface::palette[64];
 
+// XXX: this is a little weird, but lets us package our shaders in a more
+// convenient way (no need to manually copy files and open them after as they
+// will directly be added at preprocessing time).
+// 
+// It does require to add a R"()" (raw string) to the shader's source files.
+const std::string ClassicInterface::fragmentShaderSource = 
+  #include "classic_fragment_shader.fs"
+;
+
+const std::string ClassicInterface::vertexShaderSource =
+  #include "classic_vertex_shader.vs"
+;
 
 ClassicInterface::ClassicInterface():
   log(Logger::getLogger("ClassicInterface")),
@@ -75,8 +87,10 @@ void ClassicInterface::initWindow() {
 }
 
 void ClassicInterface::initShaderProgram() {
-  shaderProgram = ResourceManager::createShaderProgram(
-      "nes_shader_program", "shaders/nes_vertex_shader.vs", "shaders/nes_fragment_shader.fs");
+  shaderProgram.compileAndLink(
+    ClassicInterface::vertexShaderSource.c_str(),
+    ClassicInterface::fragmentShaderSource.c_str()
+  );
 }
 
 bool ClassicInterface::shouldClose() { return window == NULL || glfwWindowShouldClose(window); }

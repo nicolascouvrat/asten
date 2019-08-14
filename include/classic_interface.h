@@ -4,11 +4,11 @@
 #include <stdexcept>
 #include <chrono>
 #include <array>
+#include <string>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "resource_manager.h"
 #include "shader_program.h"
 #include "logger.h"
 #include "io_interface.h"
@@ -55,6 +55,10 @@ class ClassicInterface: public IOInterface {
       Color(0xE4E594), Color(0xCFEF96), Color(0xBDF4AB), Color(0xB3F3CC), Color(0xB5EBF2), Color(0xB8B8B8), Color(0x000000), Color(0x000000),
     };
     static const int ZOOM_FACTOR = 3;
+    // Source code of the GL shaders
+    static const std::string vertexShaderSource;
+    static const std::string fragmentShaderSource;
+
     static float adaptWidth(int);
     static float adaptHeight(int);
     Logger log;

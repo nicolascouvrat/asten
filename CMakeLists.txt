@@ -8,6 +8,7 @@ set(EXT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external")
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(ROM_DIR "${CMAKE_CURRENT_SOURCE_DIR}/roms")
+set(SHADERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/shaders")
 
 # add sources
 file(GLOB SOURCES "nes.cpp")
@@ -17,12 +18,6 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
 # include directory
 target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_DIR})
-# copy shaders, this is necessary for the compiled binary to find them when running
-add_custom_command(
-  TARGET ${PROJECT_NAME} POST_BUILD # do it only if build succeeds
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${SRC_DIR}/shaders ${CMAKE_CURRENT_BINARY_DIR}/shaders
-)
 # copy game
 add_custom_command(
   TARGET ${PROJECT_NAME} POST_BUILD # do it only if build succeeds
@@ -66,6 +61,7 @@ target_include_directories("io_interface" PRIVATE ${INCLUDE_DIR})
 # io_interface is the place where glfw and glad are actually used, so the linking needs to be done at this step
 target_include_directories("io_interface" PRIVATE "${GLFW_DIR}/include")
 target_include_directories("io_interface" PRIVATE "${GLAD_DIR}/include")
+target_include_directories("io_interface" PRIVATE ${SHADERS_DIR})
 target_link_libraries("io_interface" "glfw" "${GLFW_LIBRARIES}")
 target_link_libraries("io_interface" "glad" "${CMAKE_DL_LIBS}")
 target_link_libraries("io_interface" "utils")
@@ -79,7 +75,15 @@ target_include_directories("console" PRIVATE "${GLAD_DIR}/include")
 target_link_libraries("console" "io_interface")
 target_link_libraries(${PROJECT_NAME} "console")
 
+# TESTING
+SET(BUILD_TESTING
+  "ON"
+  CACHE
+  BOOL
+  "Build with tests"
+)
 
-
-
-
+IF (BUILD_TESTING)
+  ENABLE_TESTING()
+  ADD_SUBDIRECTORY("tests")
+ENDIF() 
