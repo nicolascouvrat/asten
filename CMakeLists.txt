@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.13.3)
 
+# Force CXX 11
+SET(CMAKE_CXX_STANDARD 11)
 ### RULES FOR MAIN PROJECT ###
 
 project(nes-cpp)
@@ -7,6 +9,7 @@ project(nes-cpp)
 set(EXT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external")
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
 set(ROM_DIR "${CMAKE_CURRENT_SOURCE_DIR}/roms")
 set(SHADERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/shaders")
 
@@ -51,9 +54,9 @@ target_include_directories(${PROJECT_NAME} PRIVATE "${GLAD_DIR}/include")
 ### RULES FOR INTERNAL LIBRARIES ###
 
 # UTILS
-add_subdirectory("${SRC_DIR}/utils")
-target_include_directories("utils" PRIVATE ${INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME} "utils")
+add_subdirectory("${SRC_DIR}/utils")
+#target_include_directories("utils" PRIVATE ${INCLUDE_DIR})
 
 # INTERFACE
 add_subdirectory("${SRC_DIR}/io_interface")
