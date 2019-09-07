@@ -1,3 +1,5 @@
 ADD_SUBDIRECTORY("cpu_reset")
-ADD_EXECUTABLE("test_dummy" "test_dummy.cpp")
-ADD_TEST("dummy" "test_dummy")
+SET(TEST_DIRS "a" "b")
+FOREACH(TEST_DIR ${TEST_DIRS})
+  MESSAGE(${TEST_DIR})
+ENDFOREACH()

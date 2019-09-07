@@ -8,7 +8,10 @@ project(nes-cpp)
 # set aliases
 set(EXT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external")
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
+
 set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
+set(GLFW_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/glfw/include")
+set(GLAD_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/glad/include")
 
 set(ROM_DIR "${CMAKE_CURRENT_SOURCE_DIR}/roms")
 set(SHADERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/shaders")
@@ -30,40 +33,20 @@ add_custom_command(
 
 ### RULES FOR EXTERNAL LIBRARIES ###
 
-# GLFW
-set(GLFW_DIR "${EXT_DIR}/glfw")
-# disable unneeded stuff
-set(GLFW_BUILD_EXAMPLES OFF CACHE INTERNAL "GLFW example programs")
-set(GLFW_BUILD_TESTS OFF CACHE INTERNAL "GLFW test programs")
-set(GLFW_BUILD_DOCS OFF CACHE INTERNAL "GLFW docs")
-set(GLFW_INSTALL OFF CACHE INTERNAL "GLFW install target")
-# use the sub CMakeLists
-add_subdirectory("${GLFW_DIR}")
-target_link_libraries(${PROJECT_NAME} "glfw" "${GLFW_LIBRARIES}")
-target_include_directories(${PROJECT_NAME} PRIVATE "${GLFW_DIR}/include")
-# target_compile_definitions(${PROJECT_NAME} PRIVATE "GLFW_INCLUDE_NONE")
-
-# GLAD
-set(GLAD_DIR "${EXT_DIR}/glad")
-# create our own mini library named "glad"
-add_library("glad" "${GLAD_DIR}/src/glad.c")
-target_include_directories("glad" PRIVATE "${GLAD_DIR}/include")
-# include and link it
-target_include_directories(${PROJECT_NAME} PRIVATE "${GLAD_DIR}/include")
+add_subdirectory(external)
 
 ### RULES FOR INTERNAL LIBRARIES ###
 
 # UTILS
 target_link_libraries(${PROJECT_NAME} "utils")
 add_subdirectory("${SRC_DIR}/utils")
-#target_include_directories("utils" PRIVATE ${INCLUDE_DIR})
 
 # INTERFACE
 add_subdirectory("${SRC_DIR}/io_interface")
 target_include_directories("io_interface" PRIVATE ${INCLUDE_DIR})
 # io_interface is the place where glfw and glad are actually used, so the linking needs to be done at this step
-target_include_directories("io_interface" PRIVATE "${GLFW_DIR}/include")
-target_include_directories("io_interface" PRIVATE "${GLAD_DIR}/include")
+target_include_directories("io_interface" PRIVATE ${GLFW_INCLUDE_DIR})
+target_include_directories("io_interface" PRIVATE ${GLAD_INCLUDE_DIR})
 target_include_directories("io_interface" PRIVATE ${SHADERS_DIR})
 target_link_libraries("io_interface" "glfw" "${GLFW_LIBRARIES}")
 target_link_libraries("io_interface" "glad" "${CMAKE_DL_LIBS}")
@@ -72,10 +55,6 @@ target_link_libraries(${PROJECT_NAME} "io_interface")
 
 # CONSOLE
 add_subdirectory("${SRC_DIR}/console")
-target_include_directories("console" PRIVATE ${INCLUDE_DIR})
-target_include_directories("console" PRIVATE "${GLFW_DIR}/include")
-target_include_directories("console" PRIVATE "${GLAD_DIR}/include")
-target_link_libraries("console" "io_interface")
 target_link_libraries(${PROJECT_NAME} "console")
 
 # TESTING
