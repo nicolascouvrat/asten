@@ -14,7 +14,7 @@
 // It will mimic its properties all the while sending usage statistics
 class SpyInterface: public IOInterface {
   public:
-    SpyInterface(InterfaceType targetType);
+    SpyInterface(InterfaceType targetType, std::string btnLogPath, std::string scrnLogPath);
     bool shouldClose();
     bool shouldReset();
     void render();

@@ -2,9 +2,9 @@
 
 #include "streams.h"
 
-ReplayInterface::ReplayInterface(InterfaceType t):
-  target(IOInterface::newIOInterface(t)),
-  screenStream("screen.log", utils::StreamMode::IN, IOInterface::WIDTH*IOInterface::HEIGHT),
+ReplayInterface::ReplayInterface(InterfaceType t, std::string btnLogPath, std::string scrnLogPath):
+  target(IOInterface::newIOInterface(t, "", "")),
+  screenStream(scrnLogPath, utils::StreamMode::IN, IOInterface::WIDTH*IOInterface::HEIGHT),
   isClose(false)
 {}
 

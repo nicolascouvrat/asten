@@ -7,9 +7,10 @@ set(integration_tests
 # This assumes several things as far as naming and folder organization are concerned. Given a
 # directory "cpu"
 #   - the name of the .cpp should be {dir}.cpp, so here cpu.cpp
-#   - it will create a test test_{dir}, here test_cpu
-#   - it will copy buttons.log and screen.log
-#   - it will copy the {dir}.nes file, here cpu.nes
+#   - the nes code file should be {dir}.nes, here cpu.nes
+#   - the button log file should be {dir}.btn, here cpu.btn
+#   - the screen log file should be {dir}.scrn, here cpu.scrn
+# It will create a test test_{dir}, here test_cpu
 foreach(test ${integration_tests})
   add_executable(${test} "${test}/${test}.cpp")
   set_property(TARGET ${test} PROPERTY CXX_STANDARD 11)
@@ -22,8 +23,8 @@ foreach(test ${integration_tests})
   add_test("test_${test}" ${test})
 
   set(to_copy
-    "${CMAKE_CURRENT_SOURCE_DIR}/${test}/buttons.log"
-    "${CMAKE_CURRENT_SOURCE_DIR}/${test}/screen.log"
+    "${CMAKE_CURRENT_SOURCE_DIR}/${test}/${test}.btn"
+    "${CMAKE_CURRENT_SOURCE_DIR}/${test}/${test}.scrn"
     "${CMAKE_CURRENT_SOURCE_DIR}/${test}/${test}.nes"
   )
   add_custom_command(

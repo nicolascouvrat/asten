@@ -36,7 +36,6 @@ struct ButtonSet {
   long unmarshal(utils::ButtonsBuffer& buf);
 };
 
-//
 // IOInterface describes what any I/O implementation should be able to do in
 // order to be usable by the emulator
 class IOInterface {
@@ -45,7 +44,9 @@ class IOInterface {
     // colorPixel's x should be < WIDTH and y < HEIGHT
     static const int WIDTH = 256;
     static const int HEIGHT = 240;
-    static IOInterface* newIOInterface(InterfaceType type);
+    // btnLogPath and scrnLogPath will be used in the case were the interface
+    // of type type creates or reads from button and screen log files
+    static IOInterface* newIOInterface(InterfaceType type, std::string btnLogPath, std::string scrnLogPath);
     // shouldClose returns true if the interface received the instruction to
     // close down
     virtual bool shouldClose() = 0;
