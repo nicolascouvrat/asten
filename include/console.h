@@ -17,8 +17,10 @@ class Mapper;
 class Console {
   public:
     // Creates a console that will run the .nes file at romPath, with an
-    // IOInterface of type type
-    Console(std::string romPath, InterfaceType type);
+    // IOInterface of type type. In the case where the interface is a type that
+    // results in the creation of button and screen log files, these will be
+    // fetched from (or saved at) btnLogPath and scrnLogPath respectively
+    Console(std::string romPath, InterfaceType type, std::string btnLogPath, std::string scrnLogPath);
     Mapper *getMapper();
     CPU& getCpu();
     PPU& getPpu();

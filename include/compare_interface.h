@@ -4,6 +4,7 @@
 #include <array>
 #include <fstream>
 #include <queue>
+#include <string>
 
 #include "io_interface.h"
 #include "btnstream.h"
@@ -16,7 +17,7 @@
 // output
 class CompareInterface: public IOInterface {
   public:
-    CompareInterface(InterfaceType targetType);
+    CompareInterface(InterfaceType targetType, std::string btnLogPath, std::string scrnLogPath);
     bool shouldClose();
     bool shouldReset();
     void render();

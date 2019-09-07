@@ -15,11 +15,11 @@ Controller& Console::getLeftController() { return leftController; }
 
 Controller& Console::getRightController() { return rightController; }
 
-Console::Console(std::string romPath, InterfaceType type): 
+Console::Console(std::string romPath, InterfaceType type, std::string btnLogPath, std::string scrnLogPath): 
   log(Logger::getLogger("Console")),
   cpu(*this), ppu(*this),
   mapper(Mapper::fromNesFile(*this, romPath)),
-  interface(IOInterface::newIOInterface(type))
+  interface(IOInterface::newIOInterface(type, btnLogPath, scrnLogPath))
 {
   log.setLevel(DEBUG);
   cpu.reset();

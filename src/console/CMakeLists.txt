@@ -1,8 +1,19 @@
-cmake_minimum_required(VERSION 3.13.3)
+#
+# Console library
+#
 
-project(console)
+set(SOURCES
+  console.cpp
+  controller.cpp
+  cpu.cpp
+  mapper.cpp
+  memory.cpp
+  ppu.cpp)
 
-file(GLOB LIB_CONSOLE_SRC "*.cpp")
-add_library(${PROJECT_NAME} ${LIB_CONSOLE_SRC})
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
+add_library(console ${SOURCES})
+set_property(TARGET console PROPERTY CXX_STANDARD 11)
 
+target_include_directories(console PRIVATE ${INCLUDE_DIR})
+
+target_link_libraries(console io_interface)
+target_link_libraries(console utils)

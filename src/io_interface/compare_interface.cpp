@@ -4,11 +4,10 @@
 
 #include "streams.h"
 
-
-CompareInterface::CompareInterface(InterfaceType t):
-  target(IOInterface::newIOInterface(t)),
-  btnStream("buttons.log", utils::StreamMode::IN),
-  screenStream("screen.log", utils::StreamMode::IN, IOInterface::WIDTH*IOInterface::HEIGHT),
+CompareInterface::CompareInterface(InterfaceType t, std::string btnLogPath, std::string scrnLogPath):
+  target(IOInterface::newIOInterface(t, "", "")),
+  btnStream(btnLogPath, utils::StreamMode::IN),
+  screenStream(scrnLogPath, utils::StreamMode::IN, IOInterface::WIDTH*IOInterface::HEIGHT),
   remainingCount(0), currentButtons({0}), 
   remainingRstCount(0), currentReset(false), isDone(false)
 {

@@ -4,18 +4,18 @@
 #include "replay_interface.h"
 #include "compare_interface.h"
 
-IOInterface* IOInterface::newIOInterface(InterfaceType type) {
+IOInterface* IOInterface::newIOInterface(InterfaceType type, std::string btnLogPath, std::string scrnLogPath) {
   switch (type) {
     case CLASSIC:
       return new ClassicInterface();
     case SINK:
       return new IOSink();
     case MONITOR:
-      return new SpyInterface(InterfaceType::CLASSIC);
+      return new SpyInterface(InterfaceType::CLASSIC, btnLogPath, scrnLogPath);
     case REPLAY:
-      return new ReplayInterface(InterfaceType::CLASSIC);
+      return new ReplayInterface(InterfaceType::CLASSIC, btnLogPath, scrnLogPath);
     case DEBUG_INTERFACE:
-      return new CompareInterface(InterfaceType::CLASSIC);
+      return new CompareInterface(InterfaceType::CLASSIC, btnLogPath, scrnLogPath);
   }
 }
 

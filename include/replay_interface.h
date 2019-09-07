@@ -3,6 +3,7 @@
 
 #include <array>
 #include <fstream>
+#include <string>
 
 #include "io_interface.h"
 #include "screenstream.h"
@@ -12,7 +13,7 @@
 // It will read from a saved monitor file and display whatever was saved there
 class ReplayInterface: public IOInterface {
   public:
-    ReplayInterface(InterfaceType targetType);
+    ReplayInterface(InterfaceType targetType, std::string btnLogPath, std::string scrnLogPath);
     bool shouldClose();
     bool shouldReset();
     void render();

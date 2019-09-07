@@ -1,7 +1,14 @@
-cmake_minimum_required(VERSION 3.13.3)
+#
+# Utils library
+#
 
-project(utils)
+set(SOURCES
+  btnstream.cpp
+  byte_aggregator.cpp
+  logger.cpp
+  screenstream.cpp)
+    
+add_library(utils ${SOURCES})
+set_property(TARGET utils PROPERTY CXX_STANDARD 11)
 
-file(GLOB LIB_UTILS_SRC "*.cpp")
-add_library(${PROJECT_NAME} ${LIB_UTILS_SRC})
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
+target_include_directories(utils PRIVATE ${INCLUDE_DIR})
