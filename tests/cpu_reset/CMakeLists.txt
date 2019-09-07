@@ -1,4 +1,6 @@
 ADD_EXECUTABLE("test_ram_after_reset" "test_ram_after_reset.cpp")
+set_property(TARGET test_ram_after_reset PROPERTY CXX_STANDARD 11)
+
 ADD_TEST("ram_after_reset" "test_ram_after_reset")
 TARGET_INCLUDE_DIRECTORIES("test_ram_after_reset" PRIVATE ${INCLUDE_DIR})
 TARGET_LINK_LIBRARIES("test_ram_after_reset" "io_interface")
