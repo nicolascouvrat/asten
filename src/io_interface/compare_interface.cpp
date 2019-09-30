@@ -4,6 +4,10 @@
 
 #include "streams.h"
 
+std::runtime_error compareError() {
+  return std::runtime_error("comparison error");
+}
+
 CompareInterface::CompareInterface(InterfaceType t, std::string btnLogPath, std::string scrnLogPath):
   target(IOInterface::newIOInterface(t, "", "")),
   btnStream(btnLogPath, utils::StreamMode::IN),
@@ -48,9 +52,9 @@ void CompareInterface::colorPixel(int x, int y, int palette) {
     return;
   }
   if ((int)val != palette) {
-    // TODO: this probably does not work for games where random numbers are
-    // involved...
-    std::cout << "OUPS\n";
+    // XXX: This simple equality test is fine for fully deterministic programs
+    // (i.e. tests) but will fail otherwise.
+    throw compareError();
   }
   target->colorPixel(x, y, palette);
 }
