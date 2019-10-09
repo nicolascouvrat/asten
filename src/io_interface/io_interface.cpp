@@ -15,7 +15,7 @@ IOInterface* IOInterface::newIOInterface(InterfaceType type, std::string btnLogP
     case REPLAY:
       return new ReplayInterface(InterfaceType::CLASSIC, btnLogPath, scrnLogPath);
     case DEBUG_INTERFACE:
-      return new CompareInterface(InterfaceType::CLASSIC, btnLogPath, scrnLogPath);
+      return new CompareInterface(InterfaceType::SINK, btnLogPath, scrnLogPath);
   }
 }
 

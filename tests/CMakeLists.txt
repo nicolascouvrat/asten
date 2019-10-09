@@ -2,7 +2,8 @@
 # Build all tests
 #
 set(integration_tests
-  ram_after_reset)
+  ram_after_reset
+  nestest)
 
 # This assumes several things as far as naming and folder organization are concerned. Given a
 # directory "cpu"

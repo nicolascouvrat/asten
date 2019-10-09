@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13.3)
 
-project(nes-cpp)
+project(asten)
 
 #
 # Options
@@ -37,7 +37,7 @@ add_subdirectory("${SRC_DIR}/console")
 # Main executable
 #
 
-set(SOURCES nes.cpp)
+set(SOURCES asten.cpp)
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
@@ -47,19 +47,17 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME} console)
 target_link_libraries(${PROJECT_NAME} utils)
 
-
-# Copy rom files after build success
-add_custom_command(
-  TARGET ${PROJECT_NAME} POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${ROM_DIR} ${CMAKE_CURRENT_BINARY_DIR}/roms
-)
-
 #
 # Testing
 #
 
-IF (BUILD_TESTING)
+if (BUILD_TESTING)
   enable_testing()
   add_subdirectory(tests)
-ENDIF() 
+endif() 
+
+#
+# Install
+#
+
+install(TARGETS ${PROJECT_NAME} DESTINATION bin)

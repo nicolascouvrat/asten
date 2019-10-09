@@ -1,19 +1,30 @@
-# NES-CPP
+# ASTE(N)
 
-Yet another NES emulator.
+Stands for **Another STandard Emulator (Nes)**. This is a homebaked version of a NES emulator, that
+supports very basic functionality.
 
 ## Installation
 
+### Compile
+
+After cloning this repository, in the repository folder
+
 ```
-# in the main folder
 mkdir build
 cd build
 cmake ..
 make
-./nes-cpp
+sudo make install
 ```
 
-Still in development, tested on linux and iOS.
-No sound.
+### Usage
 
+Simply run:
 
+```
+asten <ROM_FILE>
+```
+
+## Compatibility
+
+This has been tested and should work on both IOS and linux.
