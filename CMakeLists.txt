@@ -47,22 +47,14 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME} console)
 target_link_libraries(${PROJECT_NAME} utils)
 
-
-# Copy rom files after build success
-add_custom_command(
-  TARGET ${PROJECT_NAME} POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${ROM_DIR} ${CMAKE_CURRENT_BINARY_DIR}/roms
-)
-
 #
 # Testing
 #
 
-IF (BUILD_TESTING)
+if (BUILD_TESTING)
   enable_testing()
   add_subdirectory(tests)
-ENDIF() 
+endif() 
 
 #
 # Install
