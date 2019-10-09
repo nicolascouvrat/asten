@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13.3)
 
-project(nes-cpp)
+project(asten)
 
 #
 # Options
@@ -37,7 +37,7 @@ add_subdirectory("${SRC_DIR}/console")
 # Main executable
 #
 
-set(SOURCES nes.cpp)
+set(SOURCES asten.cpp)
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
@@ -63,3 +63,9 @@ IF (BUILD_TESTING)
   enable_testing()
   add_subdirectory(tests)
 ENDIF() 
+
+#
+# Install
+#
+
+install(TARGETS ${PROJECT_NAME} DESTINATION bin)
