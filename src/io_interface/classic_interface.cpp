@@ -65,9 +65,10 @@ float ClassicInterface::adaptHeight(int value) {
 void ClassicInterface::initWindow() {
   // Initialize GLFW
   glfwInit();
+  glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+  // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 #ifdef __APPLE__
   // this is necessary to compile on OSX
@@ -81,7 +82,7 @@ void ClassicInterface::initWindow() {
     throw Error("Could not create game window.");
   glfwMakeContextCurrent(window);
   // Initialize GLAD
-  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+  if (!gladLoadGLES2Loader((GLADloadproc)glfwGetProcAddress))
     throw Error("Could not load GLAD.");
   glViewport(0, 0, width, height);
 }
