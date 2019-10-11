@@ -3,6 +3,7 @@
 #include "spy_interface.h"
 #include "replay_interface.h"
 #include "compare_interface.h"
+#include <iostream>
 
 IOInterface* IOInterface::newIOInterface(InterfaceType type, std::string btnLogPath, std::string scrnLogPath) {
   switch (type) {
@@ -13,7 +14,7 @@ IOInterface* IOInterface::newIOInterface(InterfaceType type, std::string btnLogP
     case MONITOR:
       return new SpyInterface(InterfaceType::CLASSIC, btnLogPath, scrnLogPath);
     case REPLAY:
-      return new ReplayInterface(InterfaceType::CLASSIC, btnLogPath, scrnLogPath);
+      return new ReplayInterface(InterfaceType::SINK, btnLogPath, scrnLogPath);
     case DEBUG_INTERFACE:
       return new CompareInterface(InterfaceType::SINK, btnLogPath, scrnLogPath);
   }
@@ -60,4 +61,27 @@ bool ButtonSet::isEqual(ButtonSet bs) {
     DOWN == bs.DOWN &&
     LEFT == bs.LEFT &&
     RIGHT == bs.RIGHT;
+}
+
+IOSink::IOSink():
+  log(Logger::getLogger("IOSink")),
+  timeStamp(std::chrono::high_resolution_clock::now()),
+  frameCounter(0)
+{
+  log.setLevel(DEBUG);
+}
+
+void IOSink::calculateFPS() {
+  auto now = std::chrono::high_resolution_clock::now();
+  frameCounter++;
+  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - timeStamp);
+  if (duration.count() > 1000) {
+    log.debug() << "FPS: " << frameCounter << "\n";
+    frameCounter = 0;
+    timeStamp = now;
+  }
+}
+
+void IOSink::render() {
+  calculateFPS();
 }

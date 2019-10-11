@@ -3,8 +3,10 @@
 
 #include <array>
 #include <string>
+#include <chrono>
 
 #include "btnstream.h"
+#include "logger.h"
 
 // InterfaceType are the different implementations of IOInterface available
 enum InterfaceType {
@@ -68,9 +70,16 @@ class IOSink: public IOInterface {
   public:
     bool shouldClose() { return false; };
     bool shouldReset() { return false; };
-    void render() {};
+    void render();
     void colorPixel(int, int, int) {};
     std::array<ButtonSet, 2> getButtons() { return std::array<ButtonSet, 2>(); };
+    IOSink();
+  private:
+    Logger log;
+    // Used for FPS calculations
+    std::chrono::time_point<std::chrono::high_resolution_clock> timeStamp;
+    int frameCounter;
+    void calculateFPS();
 };
 
 #endif
