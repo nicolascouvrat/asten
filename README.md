@@ -50,8 +50,21 @@ Why bother creating another (imperfect) emulator when there are so many out ther
 * Challenging myself with creating an emulator
 * Learning more about CPUs and graphical units using legacy hardware (arguably easier to understand
   than modern one)
-* Learning C++ (that I had not touched before)
+* Learning C++ (that I had not touched before) and CMake with a real, consequent project
 
 Besides, another goal of mine (in line with learning C++ from the ground up) was to _not_ use any
 fancy libraries such as Boost. Outside of graphical libraries required to compile the UI, the Asten
 core is written in pure vanilla C++11!
+
+# Screenshots
+
+## v0.0
+
+![Donkey Kong](asten_dk.jpeg "Donkey Kong")
+
+# Passing tests
+
+* `nestest`
+* `ram_after_reset`
+
+See [here](https://github.com/christopherpow/nes-test-roms) for test list.
