@@ -17,6 +17,7 @@ target_include_directories(io_interface PRIVATE ${INCLUDE_DIR})
 target_include_directories(io_interface PRIVATE ${GLFW_INCLUDE_DIR})
 target_include_directories(io_interface PRIVATE ${GLAD_INCLUDE_DIR})
 target_include_directories(io_interface PRIVATE ${SHADERS_DIR})
+target_include_directories(io_interface PRIVATE ${CONFIG_DIR})
 
 target_link_libraries(io_interface glfw)
 target_link_libraries(io_interface glad)

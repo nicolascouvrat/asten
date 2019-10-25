@@ -1,0 +1,8 @@
+#ifndef GUARD_VERSION_H
+#define GUARD_VERSION_H
+
+// The configured Asten version
+#define ASTEN_VERSION_MAJOR @ASTEN_VERSION_MAJOR@
+#define ASTEN_VERSION_MINOR @ASTEN_VERSION_MINOR@
+
+#endif

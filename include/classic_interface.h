@@ -12,6 +12,7 @@
 #include "shader_program.h"
 #include "logger.h"
 #include "io_interface.h"
+#include "version.h"
 
 struct Color {
   float r, g, b;
@@ -22,7 +23,8 @@ struct Color {
   {}
 };
 
-const char* const WINDOW_NAME = "NES Emulator OwO";
+const std::string WINDOW_NAME = 
+  "Asten v" + std::to_string(ASTEN_VERSION_MAJOR) + "." + std::to_string(ASTEN_VERSION_MINOR);
 
 class ClassicInterface: public IOInterface {
   public:
