@@ -76,7 +76,7 @@ void ClassicInterface::initWindow() {
   // Initialize window
   int height = IOInterface::HEIGHT * ZOOM_FACTOR;
   int width = IOInterface::WIDTH * ZOOM_FACTOR;
-  window = glfwCreateWindow(width, height, WINDOW_NAME, NULL, NULL);
+  window = glfwCreateWindow(width, height, WINDOW_NAME.c_str(), NULL, NULL);
   if (window == NULL)
     throw Error("Could not create game window.");
   glfwMakeContextCurrent(window);
