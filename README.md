@@ -60,7 +60,7 @@ core is written in pure vanilla C++11!
 
 ## v0.0
 
-![Donkey Kong](asten_dk.jpeg "Donkey Kong")
+![Donkey Kong](asten_dk.jpg "Donkey Kong")
 
 # Passing tests
 
